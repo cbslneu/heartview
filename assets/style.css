@@ -1,0 +1,506 @@
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,200;0,400;0,600;1,200;1,400&display=swap');
+
+/* Style the page elements */
+body, #main {
+    background-color: #cbcacf;
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    font-size: 11pt;
+    font-weight: 400;
+    letter-spacing: 1px;
+    position: relative;
+    min-height: 98vh;
+}
+p {
+    font-size: 10.5pt;
+    letter-spacing: 0.5pt;
+    margin-top: 20px;
+    margin-bottom: 0px;
+}
+a {
+    color: #f0e7ec;
+    font-weight: bold;
+    text-decoration: none;
+    transition: 0.3s ease-in-out;
+}
+a:hover {
+    color: #ffbbae !important;
+    text-decoration: none;
+}
+h1 {
+    font-size: 40px;
+    color: #cbcacf;
+    padding: 30px;
+}
+h2, h4 {
+    font-size: 15pt;
+    color: #313c42;
+    margin-top: 6px;
+    letter-spacing: 2px !important;
+}
+h6 {
+    color: #47555e;
+    letter-spacing: 0.5pt;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-size: 12pt;
+    font-weight: bold;
+    text-transform: none;
+}
+.banner {  /* header */
+    background-color: #313c42;
+    color: #cbcacf;
+    padding: 15px;
+}
+.logo {  /* app logo */
+    height: 70px;
+    margin-left: 10px;
+}
+.banner .col-3 {  /* navigation links */
+    text-align: right;
+    font-size: 12pt;
+    letter-spacing: 1.5pt;
+    width: auto;
+    align-items: center;
+    display: flex;
+    margin-right: 20px;
+}
+.app {  /* main app container */
+    color: #372e27 !important;
+    padding: 30px;
+}
+.data-summary {  /* data summary panel */
+    background-color: #f0e7ec;
+    color: #313c42;
+    border-radius: 3px;
+    min-width: 350px;
+    max-width: 350px;
+    word-wrap: break-word;
+    height: auto;
+    float: left;
+}
+.data-summary-divs {
+    display: block;
+}
+.data-summary h2 {  /* data summary title */
+    margin-top: 0;
+    float: left;
+    padding-bottom: 5px;
+}
+.data-about {
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1pt;
+    padding-right: 5px;
+}
+.data-label {
+    letter-spacing: 0.3pt;
+    font-size: 10pt;
+}
+.qa {  /* expected-to-missing beats container */
+    max-width: 100%;
+    padding-left: 385px;
+    height: auto;
+}
+.bottom {  /* footer */
+    position: fixed !important;
+    height: 3.5rem;
+    bottom: -5px;
+    width: 100%;
+    text-align: center;
+    background-color: #313c42;
+    color: #cbcacf;
+    padding-top: 1.1rem;
+}
+
+/* Style the offcanvas and its elements */
+.h5 {
+    text-transform: none !important;
+    letter-spacing: 0px;
+    color: #313c42;
+    font-size: 22pt;
+    font-weight: 800;
+}
+.offcanvas-header {
+    height: 10px;
+}
+.offcanvas-header .btn-close {
+    margin-top: 5px;
+    margin-left: 15px;
+    background-color: transparent;
+}
+.offcanvas-body h4 {
+    padding-top: 20px;
+}
+.btn-close:hover {
+    background-color: transparent !important;
+}
+#run-data:disabled {
+    background-color: #bababa;
+    pointer-events: none;
+}
+#configure:disabled {
+    background-color: #bababa;
+    pointer-events: none;
+}
+input[type="checkbox"] {
+    padding-top: 3px;
+    margin-right: 8px;
+}
+.dash-default-spinner {
+    margin-top: -25px !important;
+    margin-left: 90px !important;
+    float: right !important;
+}
+.dash-default-spinner > div {
+    background-color: #ffa891 !important;
+}
+.progress-bar {
+    background-color: #ffa891 !important;
+}
+.progress-output {
+    font-size: 12px;
+    font-style: italic;
+    letter-spacing: 0.3pt;
+}
+#progress-spin {
+    float: right;
+    margin-right: 10px;
+}
+#progress-text-div {
+    margin-top: -33px;
+    margin-right: 10px;
+    float: right;
+}
+#header-filter {
+    padding-top: 15px;
+    /*color: #bababa;*/
+}
+#file-check {
+    font-size: 11px;
+    font-style: italic;
+    margin-top: 5px;
+    float: right;
+}
+
+/* Style the tooltips */
+.tooltip-inner {
+    background-color: #313c42;
+    color: #ffffff;
+    font-family: Poppins, sans-serif;
+    font-size: 9pt;
+    letter-spacing: 0.5pt;
+    font-weight: 400;
+    border-radius: 5px;
+}
+.bs-tooltip-top .tooltip-arrow::before,
+.bs-tooltip-auto[data-popper-placement^=top] .tooltip-arrow::before {
+    border-top-color: #313c42;
+}
+.bs-tooltip-end .tooltip-arrow::before,
+.bs-tooltip-auto[data-popper-placement^=right] .tooltip-arrow::before {
+    border-right-color: #313c42;
+}
+.bs-tooltip-bottom .tooltip-arrow::before,
+.bs-tooltip-auto[data-popper-placement^=bottom] .tooltip-arrow::before {
+    border-bottom-color: #313c42;
+}
+.bs-tooltip-start .tooltip-arrow::before,
+.bs-tooltip-auto[data-popper-placement^=left] .tooltip-arrow::before {
+    border-left-color: #313c42;
+}
+.rc-slider-tooltip-inner {
+    background-color: #f0e7ec;
+    color: #313c42;
+    border: 1px solid #c6c6c6;
+}
+
+/* Style the user input elements */
+input[type="number"] {
+    line-height: 18px;
+    width: 55px;
+    color: #313c42;
+}
+input[type="radio"] {
+    color: #ffa891;
+    margin-right: 8px;
+}
+input[type="text"] {
+    width: 300px;
+    color: #313c42;
+    letter-spacing: 1px;
+}
+#filter-selector label {
+    /*color: #bababa;*/
+}
+button {
+    background-color: #47555e;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 2px;
+    border: 2px solid transparent !important;
+    color: #ffffff;
+    text-align: center;
+    border-radius: 4px;
+    padding: 8px;
+    width: 100%;
+}
+button:hover {
+    background-color: #313d44 !important;
+    color: #ffffff;
+    cursor: pointer !important;
+}
+#setup-data-type {
+    margin-top: -28px;
+    margin-left: 65px;
+}
+.setup-data-dropdowns {  /* dbc.Row containing dropdowns */
+    --bs-gutter-x: 0.5rem !important;
+    font-size: 10pt;
+}
+.Select-control {  /* dropdown menus */
+    border: 1px dashed #777777 !important;
+    color: #372e27;
+}
+.Select-placeholder {  /* placeholder text in dropdowns */
+    color: #777777 !important;
+}
+.Select-clear {  /* clear 'x' in dropdowns */
+    line-height: 34px !important;
+}
+#setup-timestamp {
+    flex: 1 0 20%;
+}
+#setup-cardio {
+    flex: 1 0 8%;
+}
+#run-data {
+    width: 100px;
+    margin-top: 10px;
+}
+.variables {
+    margin-top: 5px;
+}
+label {
+    padding-right: 15px;
+    margin-top: 5px;
+}
+.fa-arrow-right-arrow-left {
+    color: #ffa891;
+    font-size: 12pt;
+}
+.fa-pen-to-square {  /* reload data icon */
+    color: #313d44;
+    margin-left: 110px;
+    font-size: 17pt;
+    cursor: pointer;
+}
+.fa-pen-to-square:hover {  /* reload data icon */
+    color: #ee8a78;
+}
+.filter {  /* data segmenting button */
+    width: auto;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    margin-left: 12px;
+}
+
+/* Style the chart elements */
+.figs {  /* main chart container */
+    padding: 10px;
+    /*margin-top: 15px;*/
+    font-size: 14px;
+    background-color: #f0e7ec;
+    border-radius: 3px;
+    height: auto;
+}
+
+/* Style the summary table */
+table, tbody {
+    margin-top: 15px;
+    border: 0 !important;
+    color: #313c42 !important;
+}
+tr, td {
+    padding: 0 !important;
+    border-style: none;
+    padding-left: 5px;
+    font-size: 10pt;
+    letter-spacing: 0.5pt;
+    line-height: 18pt;
+}
+th {
+    text-align: left !important;
+    text-transform: none !important;
+    font-size: 1.0rem !important;
+    padding: 0 !important;
+    border-style: none !important;
+}
+td:first-child {  /* style only first column */
+    width: 285px !important;
+}
+/*.segmentTable td:first-child {*/
+/*    width: 315px !important;*/
+/*}*/
+th:first-child {  /* style only first table header */
+    text-align: left !important;
+    letter-spacing: 1pt;
+    padding: 0 !important;
+    text-transform: uppercase !important;
+    font-size: 12pt !important;
+    line-height: 20pt !important;
+}
+
+/* Style the configuration exporter modal */
+#config-check {
+    text-align: center;
+    padding: 5px 0px 5px 0px;
+}
+
+/* Style the summary exporter modal */
+.modal-content {
+    border-radius: 5px !important;
+}
+#ok-export, #config-btn {
+    background-color: #47555e;
+    position: relative;
+    float: left;
+    max-width: 225px;
+}
+#ok-export:hover, #config-btn:hover {
+    background-color: #313d44;
+}
+#close-export, #close-config1 {
+    background-color: #ffbbae;
+    padding: 8px;
+    font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 2px;
+    position: relative;
+    float: right;
+    max-width: 225px;
+}
+#close-config2 {
+    background-color: #47555e;
+    padding: 8px;
+    font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 2px;
+    position: relative;
+    /*float: right;*/
+}
+#close-export:hover, #close-config1:hover {
+    background-color: #ffa891 !important;
+}
+.fa-download {
+    color: #ee8a78;
+    font-size: 14pt;
+}
+#export-type {
+    display: inline-block;
+    margin-left: 10px;
+    margin-top: 10px;
+}
+
+/* Style the raw data section*/
+.raw-plots {
+    margin-top: 30px;
+    margin-bottom: 50px;
+}
+.graph-settings {
+    margin-bottom: 20px;
+    /*position: relative;*/
+    height: 2rem;
+}
+.graph-settings button {
+    width: 65px;
+    height: auto;
+    padding: 5px 8px 5px 8px;
+    /*margin-right: 10px;*/
+    position: absolute;
+}
+#load-raw {
+    /*background-color: #313d44;*/
+}
+#load-ibi {
+    left: 105px;
+    /*background-color: #313d44;*/
+}
+#load-acc {
+    left: 179px;
+    /*background-color: #313d44;*/
+}
+.slider-label {
+    position: absolute;
+    right: 640px;
+}
+.slider {
+    width: 650px;
+    position: absolute;
+    right: 5px;
+}
+.rc-slider-track {
+    background-color: #ffa891;
+}
+.rc-slider-handle, .rc-slider-handle-click-focused,
+.rc-slider-handle-click-focused:focus, .rc-slider-handle:hover {
+    border-color: #ffa891 !important;
+}
+.rc-slider-handle-dragging {
+    border-color: #ffa891 !important;
+    box-shadow: 0 0 0 5px #ffa891 !important;
+}
+
+.raw-plots .tab {
+    padding: 10px !important;
+    font-size: 24px;
+    background-color: #e3d6dd !important;
+    color: #b2a2ab;
+    border: 0px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+.raw-plots .tab:hover {
+    background-color: #e3d6dd !important;
+}
+.raw-plots .tab--selected {
+    padding: 10px;
+    font-weight: 800;
+    background-color: #f0e7ec !important;
+    color: #313c42;
+    border: 0px !important;
+    border-top: 3px #47555e solid !important;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+.raw-plots .tab--selected:hover {
+    padding: 10px;
+    font-weight: bold;
+    background-color: #f0e7ec !important;
+    color: #313c42;
+    border-top: 3px #313c42 solid !important;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+.raw-plots .tab-content {
+    border: 0;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+    padding-top: 3px;
+    background-color: #f0e7ec;
+}
+.raw-plots .tab-header {
+    font-size: 20px;
+    letter-spacing: 2px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #313c42;
+    margin-left: 15px;
+}
+
+/* Style the raw ECG signal section*/
+#ecg-segment {
+    margin-top: 5px;
+}
