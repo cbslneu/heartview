@@ -1,9 +1,7 @@
-import dash_bootstrap_components as dbc
 import pandas as pd
 import numpy as np
 import datetime as dt
 import heartpy as hp
-import plotly.graph_objects as go
 from zipfile import ZipFile, ZipExtFile
 
 def get_fs(file):
@@ -13,7 +11,7 @@ def get_fs(file):
     return fs
 
 def get_start_time(file):
-    """Get the Unix-formatted start time of an Emmpatica E4 recording."""
+    """Get the Unix-formatted start time of an Empatica E4 recording."""
     contents = pd.read_csv(file, header = None, nrows = 2, usecols = [0])
     if type(file) is ZipExtFile:
         if 'IBI' in file.name:
@@ -61,7 +59,6 @@ def preprocess_e4(e4_zip):
     acc = acc.apply(lambda x: (x / 64) * 9.81)
     acc.insert(0, 'Timestamp', np.arange(acc_start, acc_end, (1/ acc_fs)))
     acc['Timestamp'] = acc['Timestamp'].apply(lambda t: dt.datetime.fromtimestamp(t))
-    acc['Magnitude'] = np.sqrt(acc[['X', 'Y', 'Z']].apply(lambda x: x ** 2).sum(axis = 1))
 
     # Pre-process HR
     hr_end = bvp_start + len(hr)
@@ -87,58 +84,9 @@ def preprocess_e4(e4_zip):
 
     return e4_data
 
-# def preprocess_e4(e4_zip):
-#     """Pre-process Empatica E4 data."""
-#
-#     with ZipFile(e4_zip) as z:
-#         bvp = pd.read_csv(z.open('BVP.csv'), header = 1, names = ['BVP'])
-#         bvp_fs = get_fs(z.open('BVP.csv'))
-#         start = get_start_time(z.open('BVP.csv'))
-#         hr = pd.read_csv(z.open('HR.csv'), header = 1, names = ['HR'])
-#         ibi = pd.read_csv(z.open('IBI.csv'), header = 0,
-#                           names = ['Seconds', 'IBI'])
-#         ibi_start = get_start_time(z.open('IBI.csv'))
-#
-#     # Pre-process IBI
-#     ibi.insert(0, 'Timestamp', (ibi['Seconds'] + ibi_start).apply(
-#         lambda t: dt.datetime.fromtimestamp(t)))
-#
-#     # Pre-process BVP
-#     end = start + (len(bvp) / bvp_fs)
-#     bvp.insert(0, 'Unix', np.arange(start, end, 1 / bvp_fs))
-#     bvp.insert(1, 'Timestamp', bvp['Unix'].apply(
-#         lambda unix: dt.datetime.fromtimestamp(unix)))
-#     for n in range(len(ibi)):
-#         ix = round(start + ibi.loc[n, 'Seconds'])
-#         bvp.loc[(bvp['Unix'] >= ix) & (bvp['Unix'] <= ix), 'Peak'] = 1
-#
-#     # Pre-process HR
-#     hr_end = start + len(hr)
-#     hr.insert(0, 'Unix', np.arange(start, hr_end))
-#     hr.insert(1, 'Timestamp', hr['Unix'].apply(
-#         lambda t: dt.datetime.fromtimestamp(t)))
-#
-#     # -- check for and add invalid beats
-#     hr.insert(hr.shape[1], 'Invalid', hr['HR'].apply(
-#         lambda x: 1 if x < 30 or x > 220 else 0))
-#
-#     # -- get peak locations
-#     for n in range(len(ibi)):
-#         ix = round(ibi_start + ibi.loc[n, 'Seconds'])
-#         hr.loc[(hr['Unix'] >= ix) & (hr['Unix'] <= ix), 'Peak'] = 1
-#
-#     e4_data = {'bvp': bvp,
-#                'hr': hr,
-#                'ibi': ibi,
-#                'fs': bvp_fs,
-#                'start time': start}
-#
-#     return e4_data
-
 def get_e4_peaks(ibi, fs, start_time):
     """Get peak locations from Empatica E4 IBI file."""
 
-    # ibi = pd.read_csv(ibi_file, header = 0, names = ['Seconds', 'IBI'])
     ibi['IBI'] = ibi['IBI'] * 1000
     ibi['HR'] = 60000 / ibi['IBI']
     end = start_time + ibi.iloc[-1]['Seconds']
@@ -157,16 +105,6 @@ def get_e4_peaks(ibi, fs, start_time):
         df.loc[(df['Unix'] >= unix) & (df['Unix'] < (unix + 1/fs)), 'IBI'] = IBI
         df.loc[(df['Unix'] >= unix) & (df['Unix'] < (unix + 1/fs)), 'HR'] = HR
 
-    # for n in range(len(ibi)):
-    #     unix = start_time + ibi['Seconds'].iloc[n]
-    #     IBI = ibi['IBI'].iloc[n]
-    #     HR = ibi['HR'].iloc[n]
-    #     df.at[df[(df['Unix'] >= unix) &
-    #            (df['Unix'] < unix + 1 / fs)].index.values.item(), 'Peak'] = 1
-    #     df.at[df[(df['Unix'] >= unix) &
-    #            (df['Unix'] < unix + 1 / fs)].index.values.item(), 'IBI'] = IBI
-    #     df.at[df[(df['Unix'] >= unix) &
-    #              (df['Unix'] < unix + 1 / fs)].index.values.item(), 'HR'] = HR
     return df
 
 def get_e4_interval_data(df, seg_size):

@@ -18,7 +18,6 @@ def compute_magnitude(x, y, z):
     magnitude : pd.Series
         A series of acceleration magnitude values.
     """
-    square_roots = np.sqrt([x, y, z]).T
-    magnitude = pd.DataFrame(square_roots).apply(
-        lambda x: x ** 2).sum(axis = 1)
+    axes = pd.concat([x, y, z], axis = 1)
+    magnitude = np.sqrt(axes.apply(lambda x: x ** 2).sum(axis = 1))
     return magnitude
