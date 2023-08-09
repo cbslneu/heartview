@@ -354,7 +354,7 @@ th:first-child {  /* style only first table header */
 }
 
 /* Style the configuration exporter modal */
-#config-check {
+#config-check, #export-confirm {
     text-align: center;
     padding: 5px 0px 5px 0px;
 }
@@ -382,7 +382,7 @@ th:first-child {  /* style only first table header */
     float: right;
     max-width: 225px;
 }
-#close-config2 {
+#close-export2, #close-config2 {
     background-color: #47555e;
     padding: 8px;
     font-weight: bold;
@@ -422,15 +422,12 @@ th:first-child {  /* style only first table header */
     position: absolute;
 }
 #load-raw {
-    /*background-color: #313d44;*/
 }
 #load-ibi {
     left: 105px;
-    /*background-color: #313d44;*/
 }
 #load-acc {
     left: 179px;
-    /*background-color: #313d44;*/
 }
 .slider-label {
     position: absolute;
