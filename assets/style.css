@@ -164,14 +164,11 @@ input[type="checkbox"] {
     font-style: italic;
     letter-spacing: 0.3pt;
 }
-#progress-spin {
+#progress-bar {
     float: right;
     margin-right: 10px;
-}
-#progress-text-div {
-    margin-top: -33px;
-    margin-right: 10px;
-    float: right;
+    margin-top: -27px;
+    width: 175px;
 }
 #header-filter {
     padding-top: 15px;
