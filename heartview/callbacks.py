@@ -5,6 +5,7 @@ from heartview import default
 from os import listdir, stat
 from math import ceil
 import dash_uploader as du
+import json
 import zipfile
 import pandas as pd
 
@@ -19,13 +20,14 @@ def get_callbacks(app):
         Output('memory-load', 'data')],
         id = 'dash-uploader')
     def db_get_file_types(filenames):
-        """Save data type and check whether the uploaded file is valid."""
+        """Save the data type to the local memory depending on the file type."""
         temp = './temp'
         session = listdir(temp)[0]
         file = sorted(
             listdir(f'{temp}/{session}'),
             key = lambda t: -stat(f'{temp}/{session}/{t}').st_mtime)[0]
         filename = f'{temp}/{session}/{file}'
+        size = stat(filename).st_size * 1e-6
 
         if filenames[0].endswith(('edf', 'EDF')):
             if default.check_edf(filenames[0]) == 'ECG':
@@ -34,8 +36,9 @@ def get_callbacks(app):
                            style = {'color': '#63e6be', 'marginRight': '5px'}),
                     html.Span('Data loaded.')
                 ]
-                data = {'type': 'ECG',
-                        'filename': filenames[0]}
+                data = {'type': 'Actiwave',
+                        'filename': filenames[0],
+                        'file size': size}
                 disable_run = False
             else:
                 file_check = [
@@ -63,8 +66,9 @@ def get_callbacks(app):
                                         'marginRight': '5px'}),
                         html.Span('Data loaded.')
                     ]
-                    data = {'type': 'PPG',
-                            'filename': filename}
+                    data = {'type': 'E4',
+                            'filename': filename,
+                            'file size': size}
                     disable_run = False
             if filenames[0].endswith('csv'):
                 file_check = [
@@ -73,7 +77,8 @@ def get_callbacks(app):
                     html.Span('Data loaded.')
                 ]
                 data = {'type': 'csv',
-                        'filename': filename}
+                        'filename': filename,
+                        'file size': size}
                 disable_run = False
 
         return [file_check, disable_run, data]
@@ -97,65 +102,74 @@ def get_callbacks(app):
         [Output('setup-data', 'hidden'),
          Output('segment-data', 'hidden'),
          Output('ecg-filters', 'hidden'),
+         Output('data-variables', 'hidden'),
          Output('sampling-rate', 'value'),
          Output('data-type-dropdown-1', 'options'),
-         Output('data-type-dropdown-1', 'value'),
          Output('data-type-dropdown-2', 'options'),
-         Output('data-type-dropdown-2', 'value'),
          Output('data-type-dropdown-3', 'options'),
-         Output('data-type-dropdown-3', 'value'),
          Output('data-type-dropdown-4', 'options'),
-         Output('data-type-dropdown-4', 'value'),
          Output('data-type-dropdown-5', 'options'),
-         Output('data-type-dropdown-5', 'value'),
          Output('filter-selector', 'value'),
          Output('seg-size', 'value')],
-        [Input('memory-load', 'data'),
-         Input('configs-dropdown', 'value')]
+        Input('memory-load', 'data'),
+        Input('configs-dropdown', 'value')
     )
     def db_handle_csv_params(data, config_file):
-        """Outputs options for data variable dropdowns according to a
-        loaded CSV or configuration file."""
+        """Outputs dropdown values according to uploaded CSV data."""
         loaded = ctx.triggered_id
         if loaded is None:
             raise PreventUpdate
         else:
+            hide_setup = False
+            hide_segsize = False
             if loaded == 'memory-load':
-                print(f'Upload: {loaded}')
                 if data['type'] != 'csv':
-                    raise PreventUpdate
+                    if data['type'] == 'Actiwave':
+                        filters = []
+                        seg_size = 60
+                        fs = 1000
+                        hide_data_vars = True
+                        hide_filters = False
+                        drop1, drop2, drop3, drop4, drop5 = (
+                            [] for _ in range(5))
+                    else:
+                        filters = []
+                        hide_filters = True
+                        hide_setup = True
+                        hide_data_vars = True
+                        seg_size = 60
+                        fs = 64
+                        drop1, drop2, drop3, drop4, drop5 = (
+                            [] for _ in range(5))
                 else:
-                    drop1 = default.get_csv_headers(data['filename'])
-                    drop2 = default.get_csv_headers(data['filename'])
-                    drop3 = default.get_csv_headers(data['filename'])
-                    drop4 = default.get_csv_headers(data['filename'])
-                    drop5 = default.get_csv_headers(data['filename'])
+                    drop1 = default._get_csv_headers(data['filename'])
+                    drop2 = default._get_csv_headers(data['filename'])
+                    drop3 = default._get_csv_headers(data['filename'])
+                    drop4 = default._get_csv_headers(data['filename'])
+                    drop5 = default._get_csv_headers(data['filename'])
                     filters = []
                     seg_size = 60
                     fs = 1000
-                    d1, d2, d3, d4, d5 = (None for _ in range(5))
-
+                    hide_data_vars = False
+                    hide_filters = False
             if loaded == 'configs-dropdown':
-                configs = default._load_config(config_file)
+                cfg = open(f'./configs/{config_file}')
+                configs = json.load(cfg)
                 filters = configs['filters']
                 fs = configs['sampling rate']
+                hide_data_vars = False
+                hide_filters = False
                 seg_size = configs['segment size']
                 headers = list(configs['headers'].keys())
-                selected = list(configs['headers'].values())
-                options, vals = [], []
+                options = []
                 for n in range(len(headers)):
                     options.append(
                         {'label': headers[n],
                          'value': headers[n].lower()})
-                    vals.append(selected[n])
                 drop1, drop2, drop3, drop4, drop5 = (options for _ in range(5))
-                d1, d2, d3, d4, d5 = vals
 
-            hide_setup, hide_segsize, hide_filters = False, False, False
-
-        return [hide_setup, hide_segsize, hide_filters, fs,
-                drop1, d1, drop2, d2, drop3, d3, drop4, d4, drop5, d5,
-                filters, seg_size]
+        return [hide_setup, hide_segsize, hide_filters, hide_data_vars, fs,
+                drop1, drop2, drop3, drop4, drop5, filters, seg_size]
 
     # =================== TOGGLE EXPORT CONFIGURATION MODAL ===================
     @app.callback(
@@ -201,8 +215,8 @@ def get_callbacks(app):
             hide_config_check = False
             hide_config_btns = True
             hide_config_close = False
-            json_object = default._create_configs(fs, seg_size, filters,
-                                                  headers)
+            json_object = default._create_configs(
+                fs, seg_size, filters, headers)
             default._export_configs(json_object, filename)
 
             return [hide_config_desc, hide_config_check,
@@ -229,19 +243,22 @@ def get_callbacks(app):
         if n == 0:
             raise PreventUpdate
         else:
+            # *** TIME THE FUNCTION ***
+            print('Pipeline started.')
+            pipeline_start = time()
+
             data_type = load_data['type']
             filename = load_data['filename']
             file = filename.split("/")[-1].split(".")[0]
+            size = load_data['file size']
             data = {}
 
             # Read uploaded data file
-            if data_type == 'ECG' or data_type == 'csv':
-                if data_type == 'ECG':
-                    data['type'] = 'Actiwave'
+            if data_type == 'Actiwave' or data_type == 'csv':
+                if data_type == 'Actiwave':
                     ecg, acc = ECG.read_actiwave(filename)
                     fs = ECG.get_fs(filename)
                 else:
-                    data['type'] = 'csv'
                     if (d3 is not None) \
                             & (d4 is not None) \
                             & (d5 is not None):
@@ -282,39 +299,36 @@ def get_callbacks(app):
                 ecg.to_csv(f'./temp/{file}_ECG.csv', index = False)
 
                 # Compute IBIs from peaks
-                ibi = ECG.compute_ibis(ecg, 'Timestamp', fs, seg_size,
-                                       peaks_ix)
+                ibi = ECG.compute_ibis(ecg, 'Timestamp', peaks_ix)
                 ibi.to_csv(f'./temp/{file}_IBI.csv', index = False)
 
                 # Get second-by-second HR and IBI values
                 interval_data = ECG.get_seconds(ecg, 'Peak', fs, seg_size)
 
-            elif data_type == 'PPG':
+            else:
                 e4_data = PPG.preprocess_e4(filename)
-                ibi, acc = e4_data['ibi'], e4_data['acc']
+                ibi, acc, bvp = e4_data['ibi'], e4_data['acc'], e4_data['bvp']
                 fs = e4_data['fs']
                 start_time = e4_data['start time']
 
                 # Extract PPG peaks from IBIs
                 peaks = PPG.get_e4_peaks(ibi, fs, start_time)
+                ibi = peaks[~peaks['IBI'].isna()].reset_index(drop = True)
 
                 # Get second-by-second HR and IBI values
                 interval_data = PPG.get_e4_interval_data(peaks, seg_size)
 
-                e4_data['bvp'].to_csv(f'./temp/{file}_BVP.csv', index = False)
-                acc.to_csv(f'./temp/{file}_ACC.csv', index = False)
+                bvp.to_csv(f'./temp/{file}_BVP.csv', index = False)
                 ibi.to_csv(f'./temp/{file}_IBI.csv', index = False)
-
-                data['type'] = 'E4'
 
             # Pre-process acceleration data
             try:
                 acc
             except NameError:
-                acc_exists = False
+                pass
             else:
                 acc['Magnitude'] = ACC.compute_magnitude(
-                    acc['X', acc['Y'], acc['Z']])
+                    acc['X'], acc['Y'], acc['Z'])
                 acc.to_csv(f'./temp/{file}_ACC.csv', index = False)
 
             # Assess signal quality by segment
@@ -324,6 +338,7 @@ def get_callbacks(app):
             metrics.to_csv('./temp/sqa_metrics.csv', index = False)
 
             # Store data variables in memory
+            data['type'] = data_type
             data['fs'] = fs
             data['filename'] = file
             data['interval data'] = interval_data.to_dict()
@@ -341,6 +356,7 @@ def get_callbacks(app):
             raise PreventUpdate
         else:
             return True
+        
     # === Update segment range slider =========================================
     @app.callback(
         [Output('segment-range-slider', 'max'),
@@ -385,21 +401,27 @@ def get_callbacks(app):
             fs = int(data['fs'])
             seg_size = int(seg_size)
             sqa = pd.read_csv('./temp/sqa_metrics.csv')
+
+            # Set the device name and get the total number of segments
             if data['type'] == 'E4':
-                bvp = pd.DataFrame.from_dict(data['bvp'])
-                ibi = pd.DataFrame.from_dict(data['ibi'])
                 device = 'Empatica E4'
+                dtype = 'BVP'
+                bvp = pd.read_csv(f'./temp/{file}_BVP.csv')
                 n_seg = ceil((len(bvp) / fs) / seg_size)
             else:
                 if data['type'] == 'Actiwave':
                     device = 'Actiwave Cardio'
                 else:
                     device = 'Other'
+                dtype = 'ECG'
                 ecg = pd.read_csv(f'./temp/{file}_ECG.csv')
                 n_seg = ceil((len(ecg) / fs) / seg_size)
+
+            # Create SQA plot and table
             exp2missing = SQA.plot_expected2missing(sqa, file)
             table = SQA.display_summary_table(sqa)
 
+            # Style dashboard buttons for plots
             inactive = {'backgroundColor': '#47555e'}
             active = {'backgroundColor': '#313d44'}
 
@@ -407,21 +429,26 @@ def get_callbacks(app):
 
             # ACC Plots
             if db_input == 'load-acc':
-                acc = pd.read_csv(f'./temp/{file}_ACC.csv')
-                if slider is not [round(n_seg * 0.5), n_seg - 1] or \
-                        selected_seg is not [round(n_seg * 0.5), n_seg - 1]:
-                    seg_num = slider[0]
-                    seg_n = (slider[1] - slider[0]) * (seg_size / 60)
-                    acc_plot = default.plot_signal(
-                        acc, 'Timestamp', 'Magnitude',
-                        fs, seg_num, seg_n, 'acc')
+                if f'{file}_ACC.csv' in listdir('./temp'):
+                    acc = pd.read_csv(f'./temp/{file}_ACC.csv')
+                    if slider is not [round(n_seg * 0.5), n_seg - 1] or \
+                            selected_seg is not [round(n_seg * 0.5),
+                                                 n_seg - 1]:
+                        seg_num = slider[0]
+                        seg_n = (slider[1] - slider[0]) * (seg_size / 60)
+                        acc_plot = default.plot_signal(
+                            acc, 'Timestamp', 'Magnitude', fs,
+                            seg_size, seg_num, seg_n, 'acc')
+                    else:
+                        acc_plot = default.plot_signal(
+                            acc, 'Timestamp', 'Magnitude', fs,
+                            seg_size, round(n_seg * 0.5), 1, 'acc')
+                    return [inactive, inactive, active,
+                            None, device, file, table, dtype, acc_plot]
                 else:
-                    acc_plot = default.plot_signal(
-                        acc, 'Timestamp', 'Magnitude',
-                        fs, round(n_seg * 0.5), 1, 'acc')
-
-                return [inactive, inactive, active,
-                        None, device, file, table, acc_plot]
+                    return [inactive, inactive, active, None, device, file,
+                            table,
+                            dtype, default.blank_fig('none')]
 
             # IBI Plots
             elif db_input == 'load-ibi':
@@ -431,16 +458,16 @@ def get_callbacks(app):
                     seg_num = slider[0]
                     seg_n = (slider[1] - slider[0]) * (seg_size / 60)
                     ibi_plot = default.plot_signal(
-                        ibi, 'Timestamp', 'IBI',
-                        fs, seg_num, seg_n, 'ibi'
+                        ibi, 'Timestamp', 'IBI', 1,
+                        seg_size, seg_num, seg_n, 'ibi'
                     )
                 else:
                     ibi_plot = default.plot_signal(
-                        ibi, 'Timestamp', 'IBI',
-                        fs, round(n_seg * 0.5), 1, 'ibi')
+                        ibi, 'Timestamp', 'IBI', 1,
+                        seg_size, round(n_seg * 0.5), 1, 'ibi')
 
                 return [inactive, active, inactive,
-                        None, device, file, table, ibi_plot]
+                        None, device, file, table, dtype, ibi_plot]
 
             # ECG/BVP Plots
             else:
@@ -451,28 +478,28 @@ def get_callbacks(app):
                     if data['type'] == 'E4':
                         bvp = pd.read_csv(f'./temp/{file}_BVP.csv')
                         raw_plot = default.plot_signal(
-                            bvp, 'Timestamp', 'BVP',
-                            fs, seg_num, seg_n, 'bvp')
+                            bvp, 'Timestamp', 'BVP', fs,
+                            seg_size, seg_num, seg_n, 'bvp', 'Peak')
                     else:
                         ecg = pd.read_csv(f'./temp/{file}_ECG.csv')
                         raw_plot = default.plot_signal(
-                            ecg, 'Timestamp', 'ECG',
-                            fs, seg_num, seg_n, 'ecg', 'Peak')
+                            ecg, 'Timestamp', 'ECG', fs,
+                            seg_size, seg_num, seg_n, 'ecg', 'Peak')
                 else:
                     if data['type'] == 'E4':
                         bvp = pd.read_csv(f'./temp/{file}_BVP.csv')
                         raw_plot = default.plot_signal(
-                            bvp, 'Timestamp', 'BVP',
-                            fs, round(n_seg * 0.5), 1, 'bvp', 'Peak')
+                            bvp, 'Timestamp', 'BVP', fs,
+                            seg_size, round(n_seg * 0.5), 1, 'bvp', 'Peak')
                     else:
                         ecg = pd.read_csv(f'./temp/{file}_ECG.csv')
                         raw_plot = default.plot_signal(
-                            ecg, 'Timestamp', 'ECG',
-                            fs, round(n_seg * 0.5), 1, 'ecg', 'Peak'
+                            ecg, 'Timestamp', 'ECG', fs,
+                            seg_size, round(n_seg * 0.5), 1, 'ecg', 'Peak'
                         )
 
                 return [active, inactive, inactive,
-                        exp2missing, device, file, table, raw_plot]
+                        exp2missing, device, file, table, dtype, raw_plot]
 
     # === Open export summary modal ===========================================
     @app.callback(
@@ -488,7 +515,8 @@ def get_callbacks(app):
 
     # === Download summary data ===============================================
     @app.callback(
-        Output('download-summary', 'data'),
+        [Output('export-description', 'hidden'),
+         Output('export-confirm', 'hidden')],
         Input('ok-export', 'n_clicks'),
         State('export-type', 'value'),
         State('memory-db', 'data')
@@ -498,12 +526,6 @@ def get_callbacks(app):
             raise PreventUpdate
         else:
             file = data['filename']
-            df = pd.read_csv('/temp/sqa_metrics.csv')
-
-            if file_type == 'CSV':
-                return dcc.send_data_frame(
-                    df.to_csv, f'{file}_heartview_sqa_summary.csv')
-            else:
-                return dcc.send_data_frame(
-                    df.to_csv, f'{file}_heartview_sqa_summary.xlsx',
-                    sheet_name = 'Sheet 1')
+            data_type = data['type']
+            default._export_sqa(file, data_type, file_type.lower())
+            return [True, False]

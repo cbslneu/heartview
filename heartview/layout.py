@@ -1,4 +1,3 @@
-from heartview import default
 from dash import html, dcc
 from heartview import default
 import dash_bootstrap_components as dbc
@@ -48,38 +47,40 @@ layout = html.Div(id = 'main', children = [
                        style = {'marginLeft': '5px'},
                        id = 'data-var-help')],
                 style = {'display': 'flex', 'alignItems': 'center'}),
-            dbc.Tooltip('Set your sampling rate and map the headers in '
+            dbc.Tooltip('Set your sampling rate and/or map the headers in '
                         'your file to the corresponding data variables.',
                         target = 'data-var-help'),
             html.Span('Sampling Rate: '),
             dcc.Input(id = 'sampling-rate', value = 1000, type = 'number',
                       style = {'display': 'inline',
                                'marginLeft': '3px'}),
-            html.P('Variables:', className = 'variables'),
-            dbc.Row([
-                dbc.Col(
-                    dcc.Dropdown(id = 'data-type-dropdown-1',
-                                 placeholder = 'Timestamp',
-                                 options = ['<Var>', '<Var>']),
-                    id = 'setup-timestamp'),
-                dbc.Col(
-                    dcc.Dropdown(id = 'data-type-dropdown-2',
-                                 placeholder = 'ECG',
-                                 options = ['<Var>', '<Var>']),
-                    id = 'setup-cardio'),
-                dbc.Col(
-                    dcc.Dropdown(id = 'data-type-dropdown-3',
-                                 placeholder = 'X',
-                                 options = ['<Var>', '<Var>'])),
-                dbc.Col(
-                    dcc.Dropdown(id = 'data-type-dropdown-4',
-                                 placeholder = 'Y',
-                                 options = ['<Var>', '<Var>'])),
-                dbc.Col(
-                    dcc.Dropdown(id = 'data-type-dropdown-5',
-                                 placeholder = 'Z',
-                                 options = ['<Var>', '<Var>'])),
-            ], className = 'setup-data-dropdowns')
+            html.Div(id = 'data-variables', children = [
+                html.P('Variables:', className = 'variables'),
+                dbc.Row([
+                    dbc.Col(
+                        dcc.Dropdown(id = 'data-type-dropdown-1',
+                                     placeholder = 'Timestamp',
+                                     options = ['<Var>', '<Var>']),
+                        id = 'setup-timestamp'),
+                    dbc.Col(
+                        dcc.Dropdown(id = 'data-type-dropdown-2',
+                                     placeholder = 'ECG',
+                                     options = ['<Var>', '<Var>']),
+                        id = 'setup-cardio'),
+                    dbc.Col(
+                        dcc.Dropdown(id = 'data-type-dropdown-3',
+                                     placeholder = 'X',
+                                     options = ['<Var>', '<Var>'])),
+                    dbc.Col(
+                        dcc.Dropdown(id = 'data-type-dropdown-4',
+                                     placeholder = 'Y',
+                                     options = ['<Var>', '<Var>'])),
+                    dbc.Col(
+                        dcc.Dropdown(id = 'data-type-dropdown-5',
+                                     placeholder = 'Z',
+                                     options = ['<Var>', '<Var>'])),
+                ], className = 'setup-data-dropdowns')
+            ]),
         ]),
         html.Div(id = 'segment-data', hidden = True, children = [
             html.H4(children = [
@@ -110,6 +111,8 @@ layout = html.Div(id = 'main', children = [
                 'width': '100px', 'marginLeft': '10px', 'marginTop': '20px'},
                         disabled = False)
         ]),
+
+        # Configuration File Exporter
         dbc.Modal(id = 'config-modal', is_open = False, children = [
             dbc.ModalHeader(dbc.ModalTitle('Export Configuration')),
             dbc.ModalBody(children = [
@@ -138,6 +141,8 @@ layout = html.Div(id = 'main', children = [
                          hidden = True)
             ], style = {'display': 'inline'})
         ], backdrop = 'static', centered = True),
+
+        # SQA Pipeline Progress Indicator
         dcc.Loading(children = [html.Div(id = 'progress-spin')],
                     type = 'default', color = '#ffa891'),
     ], id = 'offcanvas', style = {'width': 450}, is_open = True),
@@ -156,6 +161,7 @@ layout = html.Div(id = 'main', children = [
 
     # MAIN DASHBOARD
     html.Div(className = 'app', children = [
+
         # Panel 1: Data Summary
         html.Div(className = 'data-summary', children = [
             html.Div(children = [
@@ -165,26 +171,35 @@ layout = html.Div(id = 'main', children = [
                 dbc.Tooltip('Reload data file', target = 'reload-data')
             ], style = {'display': 'flex'}),
             html.Div(className = 'data-summary-divs', children = [
-                html.Span('Device:', className = 'dat-about'),
+                html.Span('Device:', className = 'data-about'),
                 html.Span('<device>', className = 'data-label', id = 'device')]),
             html.Div(className = 'data-summary-divs', children = [
                 html.Span('Filename:', className = 'data-about'),
                 html.Span('<file>', className = 'data-label', id = 'filename')]),
             html.Div(className = 'data-summary-divs', id = 'summary-table',
                      children = [default.blank_table()]),
+
+            # Data Summary Exporter
             html.Div(children = [
                 html.Button('Export Summary', id = 'export-summary', n_clicks = 0),
                 dbc.Modal(id = 'export-modal', is_open = False, children = [
                     dbc.ModalHeader(dbc.ModalTitle('Export Summary')),
                     dbc.ModalBody(children = [
-                        html.Div('Download summary data as a comma-separated '
-                                 'value (.csv) or Excel (.xlsx) file.'),
-                        html.Div(children = [
-                            html.I(
-                                className = 'fa-solid fa-download fa-bounce'),
-                            dcc.RadioItems(['CSV', 'Excel'], inline = True,
-                                           id = 'export-type')
-                        ], style = {'textAlign': 'center'}),
+                        html.Div(id = 'export-description', children = [
+                            html.Div('Download summary data as a Zip archive '
+                                     'file (.zip) or Excel (.xlsx) file.'),
+                            html.Div(children = [
+                                html.I(
+                                    className = 'fa-solid fa-download fa-bounce'),
+                                dcc.RadioItems(['Zip', 'Excel'], inline = True,
+                                               id = 'export-type')
+                            ], style = {'textAlign': 'center'})
+                        ]),
+                        html.Div(id = 'export-confirm', children = [
+                            html.I(className = 'fa-solid fa-circle-check',
+                                   style = {'color': '#63e6be', 'fontSize': '26pt'}),
+                            html.P('Exported to: /downloads', style = {'marginTop': '5px'})
+                        ], hidden = True)
                     ]),
                     dbc.ModalFooter(children = [
                         html.Button('OK', n_clicks = 0, id = 'ok-export'),
@@ -199,12 +214,12 @@ layout = html.Div(id = 'main', children = [
             html.H2('Expected-to-Missing Beats'),
             html.Div(className = 'figs', children = [
                 dcc.Graph(id = 'peaks',
-                          figure = default.blank_fig(),
+                          figure = default.blank_fig('pending'),
                           style = {'height': '268px'})
             ]),
         ]),
 
-        # Bottom Tabs: Raw ECG/BVP, IBI, and ACC Plots
+        # Bottom Panel: Raw ECG/BVP, IBI, and ACC Plots
         html.Div(className = 'raw-plots', children = [
             html.Div(className = 'graph-settings', children = [
                 html.Button(html.Span('ECG', id = 'data-type'),
@@ -222,12 +237,14 @@ layout = html.Div(id = 'main', children = [
             html.Div(className = 'figs', children = [
                 dcc.Loading(type = 'circle', color = '#3a4952', children = [
                     dcc.Graph(id = 'raw-data',
-                              figure = default.blank_fig(),
+                              figure = default.blank_fig('pending'),
                               style = {'height': '300px'})
                 ])
             ])
         ]),
     ]),
+
+    # FOOTER
     html.Div(className = 'bottom', children = [
         html.Span('Created by the '),
         html.A(href = 'https://github.com/cbslneu', children = [

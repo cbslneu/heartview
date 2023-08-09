@@ -1,5 +1,7 @@
-from os import listdir, path, remove
+from os import listdir, path, remove, makedirs
+from pathlib import Path
 from shutil import rmtree
+from zipfile import ZipFile
 import dash_bootstrap_components as dbc
 import pandas as pd
 import numpy as np
@@ -76,13 +78,75 @@ def _load_config(filename):
     configs = json.load(cfg)
     return configs
 
-def get_csv_headers(csv):
+def _export_sqa(file, data_type, type: str):
+    """Export the SQA summary data in Zip or Excel format."""
+    files = ['./temp/sqa_metrics.csv', './temp/peaks_by_segment.csv']
+    if data_type == 'E4':
+        files.append(f'./temp/{file}_BVP.csv')
+        files.append(f'./temp/{file}_ACC.csv')
+        files.append(f'./temp/{file}_IBI.csv')
+    else:
+        if data_type == 'Actiwave':
+            files.append(f'./temp/{file}_ECG.csv')
+            files.append(f'./temp/{file}_ACC.csv')
+            files.append(f'./temp/{file}_IBI.csv')
+        else:
+            files.append(f'./temp/{file}_ECG.csv')
+            files.append(f'./temp/{file}_IBI.csv')
+            if f'{file}_ACC.csv' in listdir('./temp'):
+                files.append(f'./temp/{file}_ACC.csv')
+    if not path.exists('./downloads/'):
+        makedirs('./downloads')
+    else:
+        pass
+    if type == 'zip':
+        with ZipFile(f'./downloads/{file}_sqa_summary.zip', 'w') as archive:
+            for csv in files:
+                archive.write(csv)
+    if type == 'excel':
+        with pd.ExcelWriter(f'./downloads/{file}_sqa_summary.xlsx') as xlsx:
+            for csv in files:
+                df = pd.read_csv(csv)
+                fname = Path(csv).stem
+                df.to_excel(xlsx, sheet_name = fname, index = False)
+    return None
+
+def _get_csv_headers(csv):
     """Get the headers of a user-uploaded CSV file in a list."""
     initial = pd.read_csv(csv, nrows = 1)
     headers = initial.columns.tolist()
     return headers
 
-def blank_fig():
+def segment_data(data, fs, seg_size):
+    """Segment data into specific window sizes.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        The data frame containing the data to be segmented.
+    fs : int
+        The sampling rate.
+    seg_size : int
+        The window size, in seconds, into which the data should be
+        segmented.
+
+    Returns
+    -------
+    df : pd.DataFrame
+        The original data frame with data segmented with labels in a
+        'Segment' column.
+    """
+    df = data.copy()
+    df.insert(0, 'Segment', 0)
+    segment = 1
+    for n in range(0, len(df), int(seg_size * fs)):
+        df.loc[n:(n + int(seg_size * fs)), 'Segment'] = segment
+        segment += 1
+
+    return df
+
+
+def blank_fig(context):
     """Display the default blank figure."""
     fig = go.Figure(go.Scatter(x = [], y = []))
     fig.update_layout(template = None,
@@ -94,12 +158,20 @@ def blank_fig():
     fig.update_yaxes(showgrid = False,
                      showticklabels = False,
                      zeroline = False)
-    fig.add_annotation(text = '<i>Input participant data to view...</i>',
-                       xref = 'paper', yref = 'paper',
-                       font = dict(family = 'Poppins',
-                                   size = 14,
-                                   color = '#3a4952'),
-                       x = 0.5, y = 0.5, showarrow = False)
+    if context == 'pending':
+        fig.add_annotation(text = '<i>Input participant data to view...</i>',
+                           xref = 'paper', yref = 'paper',
+                           font = dict(family = 'Poppins',
+                                       size = 14,
+                                       color = '#3a4952'),
+                           x = 0.5, y = 0.5, showarrow = False)
+    if context == 'none':
+        fig.add_annotation(text = '<i>No data to view.</i>',
+                           xref = 'paper', yref = 'paper',
+                           font = dict(family = 'Poppins',
+                                       size = 14,
+                                       color = '#3a4952'),
+                           x = 0.5, y = 0.5, showarrow = False)
     return fig
 
 def blank_table():
@@ -120,7 +192,7 @@ def blank_table():
         bordered = False)
 
 
-def plot_signal(df, x, y, fs, segment, n_segments = 1,
+def plot_signal(df, x, y, fs, seg_size = 60, segment = 1, n_segments = 1,
                 signal_type = None, peaks = None):
     """Visualize a signal.
 
@@ -134,14 +206,17 @@ def plot_signal(df, x, y, fs, segment, n_segments = 1,
         The column(s) of the signal data (y-axis values).
     fs : int, float
         The sampling rate.
-    segment : int, float
-        The segment number. For example, segment `1` denotes the first
-        segment of the recording.
+    seg_size : int
+        The size of the segment, in seconds; by default, 60.
+    segment : int, float, None
+        The segment number; by default, 1. For example, segment `1`
+        denotes the first segment of the recording. This argument can also
+        be set to `None` if `df` contains a 'Segment' column.
     n_segments : int, float
         The number of segments to be visualized; by default, 1.
     signal_type : str
-        The type of signal being plotted (i.e., 'ecg', 'bvp', 'acc', 'ibi');
-        by default, None.
+        The type of signal being plotted (i.e., 'ecg', 'bvp', 'acc',
+        'ibi'); by default, None.
     peaks : str
         The column containing peak occurrences, i.e., a sequence of
         `0` and/or `1` denoting False or True occurrences of peaks.
@@ -153,10 +228,15 @@ def plot_signal(df, x, y, fs, segment, n_segments = 1,
         The signal visualization.
     """
 
+    if segment is None and \
+            'segment' in [c.lower() for c in df.columns.tolist()]:
+        seg = df.loc[(df.Segment >= 1) & (df.Segment <= 2)]
+    else:
+        start = int(segment - 1) * seg_size * fs
+        end = int(((segment - 1) + n_segments) * seg_size * fs)
+        seg = df.iloc[start:end]
+
     # Set plotting parameters
-    start = int((segment - 1) * 60 * fs)
-    end = int(((segment - 1) + n_segments) * 60 * fs)
-    seg = df.iloc[start:end]
     plt.rcParams['font.size'] = 14
     palette1 = {'blue': '#4c73c2',
                 'red': '#eb4034',
@@ -199,7 +279,7 @@ def plot_signal(df, x, y, fs, segment, n_segments = 1,
                 name = f'{y[yval]}'))
 
         # Add peaks
-        if peaks != None:
+        if peaks is not None:
             fig.add_trace(go.Scatter(
                 x = seg[x],
                 y = np.where(seg[peaks] == 1, seg[y[0]], np.nan),
@@ -215,6 +295,7 @@ def plot_signal(df, x, y, fs, segment, n_segments = 1,
         height = 300,
         margin = dict(l = 10, r = 30, b = 50, t = 50, pad = 3)
     )
+    # Label axes and set trace colors according to signal type
     if signal_type == 'ecg' or signal_type == 'bvp':
         if isinstance(y, list):
             for d in range(len(fig.data)):
@@ -242,96 +323,6 @@ def plot_signal(df, x, y, fs, segment, n_segments = 1,
                 line_color = palette1['red']).update_layout(yaxis_title = 'ms')
     else:
         return fig
-
-# def plot_signal(df, x, y, fs, segment, n_segments = 1, peaks = None):
-#     """Visualize a signal.
-#
-#     Parameters
-#     ----------
-#     df : pandas.DataFrame
-#         The data frame containing the signal data.
-#     x : str
-#         The column containing the x-axis value (e.g., `'Time'`).
-#     y : str, list
-#         The column(s) of the signal data (y-axis values).
-#     fs : int, float
-#         The sampling rate.
-#     segment : int, float
-#         The segment number. For example, segment `1` denotes the first
-#         segment of the recording.
-#     n_segments : int, float
-#         The number of segments to be visualized; by default, 1.
-#     peaks : str
-#         The column containing peak occurrences, i.e., a sequence of
-#         `0` and/or `1` denoting False or True occurrences of peaks.
-#         By default, peaks will be plotted on the first trace.
-#
-#     Returns
-#     -------
-#     fig : matplotlib.axes.AxesSubplot
-#         The signal visualization.
-#     """
-#
-#     # Set plotting parameters
-#     start = int((segment - 1) * 60 * fs)
-#     end = int(((segment - 1) + n_segments) * 60 * fs)
-#     seg = df.iloc[start:end]
-#     plt.rcParams['font.size'] = 14
-#     palette = ['#bdbdbd', '#4c73c2', '#eb4034', '#63b068']
-#
-#     fig = go.Figure()
-#
-#     # Plot single signal
-#     if not isinstance(y, list):
-#         fig.add_trace(go.Scatter(
-#             x = seg[x],
-#             y = seg[y],
-#             mode = 'lines',
-#             hovertemplate = '%{x}' + '<br>%{y:.2f}' + '<extra></extra>',
-#             name = f'{y}'))
-#
-#         # Add peaks
-#         if peaks != None:
-#             fig.add_trace(go.Scatter(
-#                 x = seg[x],
-#                 y = np.where(seg[peaks] == 1, seg[y], np.nan),
-#                 mode = 'markers',
-#                 marker = dict(size = 8, color = 'gold', line_width = 1),
-#                 hovertemplate = '<b>Peak</b>: %{y} <extra></extra>',
-#                 name = 'Peaks'))
-#         fig.update_layout(yaxis_title = y)
-#
-#     # Plot multiple signals
-#     else:
-#         for yval in range(len(y)):
-#             fig.add_trace(go.Scatter(
-#                 x = seg[x],
-#                 y = seg[y[yval]],
-#                 mode = 'lines',
-#                 marker = dict(color = palette[yval]),
-#                 hovertemplate = '%{x}' + '<br>%{y:.2f}' + '<extra></extra>',
-#                 name = f'{y[yval]}'))
-#
-#         # Add peaks
-#         if peaks != None:
-#             fig.add_trace(go.Scatter(
-#                 x = seg[x],
-#                 y = np.where(seg[peaks] == 1, seg[y[0]], np.nan),
-#                 mode = 'markers',
-#                 marker = dict(size = 8, color = 'gold', line_width = 1),
-#                 hovertemplate = '<b>Peak</b>: %{y} <extra></extra>',
-#                 name = 'Peaks'))
-#
-#     ymin = np.nanmin(seg[y].values.flatten()) * 0.95
-#     ymax = np.nanmax(seg[y].values.flatten()) * 1.03
-#     fig.update_layout(
-#         yaxis_range = (ymin, ymax),
-#         xaxis_title = x,
-#         template = 'simple_white',
-#         height = 300,
-#         margin = dict(l = 10, r = 30, b = 50, t = 50, pad = 3)
-#     )
-#     return fig
 
 def plot_ibi_from_ecg(df, x, y, segment, n_segments):
     """Visualize an IBI series generated from ECG data.
