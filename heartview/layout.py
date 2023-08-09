@@ -143,8 +143,7 @@ layout = html.Div(id = 'main', children = [
         ], backdrop = 'static', centered = True),
 
         # SQA Pipeline Progress Indicator
-        dcc.Loading(children = [html.Div(id = 'progress-spin')],
-                    type = 'default', color = '#ffa891'),
+        html.Progress(id = 'progress-bar', value = '0', hidden = True)
     ], id = 'offcanvas', style = {'width': 450}, is_open = True),
 
     # NAVIGATION BAR

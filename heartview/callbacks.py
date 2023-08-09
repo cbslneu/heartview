@@ -1,4 +1,4 @@
-from dash import html, Input, Output, State, ctx, dcc
+from dash import html, Input, Output, State, ctx, callback
 from dash.exceptions import PreventUpdate
 from heartview.pipeline import ECG, PPG, SQA, ACC
 from heartview import default
@@ -222,36 +222,64 @@ def get_callbacks(app):
 
             return [hide_config_desc, hide_config_check,
                     hide_config_btns, hide_config_close]
+        
+    # ================== SHOW PIPELINE PROGRESS INDICATOR ====================
+    @app.callback(
+        Output('progress-bar', 'hidden'),
+        Input('run-data', 'n_clicks')
+    )
+    def show_progress_bar(n):
+        if n == 0:
+            raise PreventUpdate
+        else:
+            return False
 
     # ============================ RUN PIPELINE ==============================
-    @app.callback(
-        [Output('progress-spin', 'children'),
-         Output('memory-db', 'data')],
-        [Input('run-data', 'n_clicks'),
-         State('memory-load', 'data'),
-         State('sampling-rate', 'value'),
-         State('data-type-dropdown-1', 'value'),
-         State('data-type-dropdown-2', 'value'),
-         State('data-type-dropdown-3', 'value'),
-         State('data-type-dropdown-4', 'value'),
-         State('data-type-dropdown-5', 'value'),
-         State('seg-size', 'value'),
-         State('filter-selector', 'value')]
+    @callback(
+        output = Output('memory-db', 'data'),
+        inputs = [
+            Input('run-data', 'n_clicks'),
+            State('memory-load', 'data'),
+            State('sampling-rate', 'value'),
+            State('data-type-dropdown-1', 'value'),
+            State('data-type-dropdown-2', 'value'),
+            State('data-type-dropdown-3', 'value'),
+            State('data-type-dropdown-4', 'value'),
+            State('data-type-dropdown-5', 'value'),
+            State('seg-size', 'value'),
+            State('filter-selector', 'value')
+        ],
+        background = True,
+        running = [
+            (
+                    Output('progress-bar', 'style'),
+                    {'visibility': 'visible'},
+                    {'visibility': 'visible'},
+            )
+        ],
+        progress = [
+            Output('progress-bar', 'value'),
+            Output('progress-bar', 'max')
+        ],
+        prevent_initial_call = True
     )
-    def run_pipeline(n, load_data, fs, d1, d2, d3, d4, d5, seg_size, filters):
+    def run_pipeline(set_progress, n, load_data, fs, d1, d2, d3, d4, d5,
+                     seg_size, filters):
         """Read Actiwave Cardio, Empatica E4, or CSV-formatted data, save
         the data to the local memory, and load the progress spinner."""
         if n == 0:
             raise PreventUpdate
         else:
+            total_progress = 6
+
             data_type = load_data['type']
             filename = load_data['filename']
             file = filename.split("/")[-1].split(".")[0]
-            size = load_data['file size']
             data = {}
 
             # Read uploaded data file
             if data_type == 'Actiwave' or data_type == 'csv':
+                set_progress(('1', str(total_progress)))
                 if data_type == 'Actiwave':
                     ecg, acc = ECG.read_actiwave(filename)
                     fs = ECG.get_fs(filename)
@@ -277,6 +305,7 @@ def get_callbacks(app):
                                        d2: 'ECG'})
 
                 # Filter ECG signal
+                set_progress(('2', str(total_progress)))
                 if len(filters) <= 1:
                     if 'baseline-muscle' in filters:
                         ecg['Filtered'] = ECG.baseline_muscle_filter(
@@ -291,32 +320,39 @@ def get_callbacks(app):
                         ecg['BM'], fs, 20, 60)
 
                 # Detect R peaks
+                set_progress(('3', str(total_progress)))
                 peaks_ix = ECG.detect_rpeaks(ecg, 'Filtered', fs)
                 ecg.loc[peaks_ix, 'Peak'] = 1
                 ecg.to_csv(f'./temp/{file}_ECG.csv', index = False)
 
                 # Compute IBIs from peaks
+                set_progress(('4', str(total_progress)))
                 ibi = ECG.compute_ibis(ecg, 'Timestamp', peaks_ix)
                 ibi.to_csv(f'./temp/{file}_IBI.csv', index = False)
 
                 # Get second-by-second HR and IBI values
+                set_progress(('5', str(total_progress)))
                 interval_data = ECG.get_seconds(ecg, 'Peak', fs, seg_size)
 
             else:
+                set_progress(('2', str(total_progress)))
                 e4_data = PPG.preprocess_e4(filename)
                 ibi, acc, bvp = e4_data['ibi'], e4_data['acc'], e4_data['bvp']
                 fs = e4_data['fs']
                 start_time = e4_data['start time']
 
                 # Extract PPG peaks from IBIs
+                set_progress(('3', str(total_progress)))
                 peaks = PPG.get_e4_peaks(ibi, fs, start_time)
                 ibi = peaks[~peaks['IBI'].isna()].reset_index(drop = True)
 
                 # Get second-by-second HR and IBI values
+                set_progress(('4', str(total_progress)))
                 interval_data = PPG.get_e4_interval_data(peaks, seg_size)
 
                 bvp.to_csv(f'./temp/{file}_BVP.csv', index = False)
                 ibi.to_csv(f'./temp/{file}_IBI.csv', index = False)
+                set_progress(('5', str(total_progress)))
 
             # Pre-process acceleration data
             try:
@@ -333,6 +369,7 @@ def get_callbacks(app):
             peaks_by_seg.to_csv('./temp/peaks_by_segment.csv', index = False)
             metrics = SQA.compute_metrics(peaks_by_seg)
             metrics.to_csv('./temp/sqa_metrics.csv', index = False)
+            set_progress(('6', str(total_progress)))
 
             # Store data variables in memory
             data['type'] = data_type
@@ -340,7 +377,7 @@ def get_callbacks(app):
             data['filename'] = file
             data['interval data'] = interval_data.to_dict()
 
-            return ['', data]
+            return data
 
     # ===================== CONTROL DASHBOARD ELEMENTS ========================
     # === Toggle offcanvas ====================================================
