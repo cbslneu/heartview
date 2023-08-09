@@ -4,6 +4,7 @@ from heartview.pipeline import ECG, PPG, SQA, ACC
 from heartview import default
 from os import listdir, stat
 from math import ceil
+from time import sleep
 import dash_uploader as du
 import json
 import zipfile
@@ -243,10 +244,6 @@ def get_callbacks(app):
         if n == 0:
             raise PreventUpdate
         else:
-            # *** TIME THE FUNCTION ***
-            print('Pipeline started.')
-            pipeline_start = time()
-
             data_type = load_data['type']
             filename = load_data['filename']
             file = filename.split("/")[-1].split(".")[0]
@@ -505,18 +502,21 @@ def get_callbacks(app):
     @app.callback(
         Output('export-modal', 'is_open'),
         [Input('export-summary', 'n_clicks'),
-         Input('close-export', 'n_clicks')],
+         Input('close-export', 'n_clicks'),
+         Input('close-export2', 'n_clicks')],
         State('export-modal', 'is_open')
     )
-    def toggle_export_modal(n1, n2, is_open):
-        if n1 or n2:
+    def toggle_export_modal(n1, n2, n3, is_open):
+        if n1 or n2 or n3:
             return not is_open
         return is_open
 
     # === Download summary data ===============================================
     @app.callback(
         [Output('export-description', 'hidden'),
-         Output('export-confirm', 'hidden')],
+         Output('export-confirm', 'hidden'),
+         Output('export-modal-btns', 'hidden'),
+         Output('export-close-btn', 'hidden')],
         Input('ok-export', 'n_clicks'),
         State('export-type', 'value'),
         State('memory-db', 'data')
@@ -528,4 +528,5 @@ def get_callbacks(app):
             file = data['filename']
             data_type = data['type']
             default._export_sqa(file, data_type, file_type.lower())
-            return [True, False]
+            sleep(1.0)
+            return [True, False, True, False]

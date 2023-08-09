@@ -202,9 +202,16 @@ layout = html.Div(id = 'main', children = [
                         ], hidden = True)
                     ]),
                     dbc.ModalFooter(children = [
-                        html.Button('OK', n_clicks = 0, id = 'ok-export'),
-                        dcc.Download(id = 'download-summary'),
-                        dbc.Button('Cancel', n_clicks = 0, id = 'close-export')
+                        html.Div(id = 'export-modal-btns', children = [
+                            html.Button('OK', n_clicks = 0, id = 'ok-export'),
+                            dcc.Download(id = 'download-summary'),
+                            dbc.Button('Cancel', n_clicks = 0,
+                                       id = 'close-export'),
+                        ]),
+                        html.Div(id = 'export-close-btn', children = [
+                            dbc.Button('Done', n_clicks = 0,
+                                       id = 'close-export2')],
+                                 hidden = True)
                     ], style = {'display': 'inline'})
                 ], backdrop = 'static', centered = True)
             ], style = {'paddingTop': '20px'})], style = {'padding': '15px'}),
