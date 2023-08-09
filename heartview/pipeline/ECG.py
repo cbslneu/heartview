@@ -1,13 +1,8 @@
-from os import listdir, path
 from scipy.signal import hilbert, filtfilt, butter, iirnotch
-from itertools import islice
-from dateutil import parser
-import ast
 import pyedflib
 import pandas as pd
 import numpy as np
 import datetime as dt
-import plotly.express as px
 
 def get_fs(edf):
     """Get ECG sampling rate from an Actiwave Cardio device."""
@@ -225,7 +220,7 @@ def detect_rpeaks(df, signal, fs):
     return id_maxes
 
 # IBI EXTRACTION
-def compute_ibis(data, ts_col, fs, seg_size, peaks_ix):
+def compute_ibis(data, ts_col, peaks_ix):
     """Compute interbeat intervals from peak locations in ECG data.
 
     Parameters
@@ -234,40 +229,28 @@ def compute_ibis(data, ts_col, fs, seg_size, peaks_ix):
         The data frame containing the ECG data and a timestamp column.
     ts_col : str
         The name of the column containing timestamp values.
-    fs : int
-        The sampling rate.
-    seg_size : int
-        The window size of each segment.
     peaks_ix : array_like
         An array of indices corresponding to peak occurrences.
 
     Returns
     -------
     ibi : pd.DataFrame
-        A data frame containing IBI values.
+        A data frame containing timestamps and IBI values.
     """
-    data.index = data.index.astype(int)
-    data['Segment'] = pd.Series(data.index).apply(
-        lambda x: (((x // fs) + 1) // seg_size) + 1)
+    df = data.copy()
+    df.index = df.index.astype(int)
 
-    seg = 1
-    chunk = int(fs * seg_size)
-    for n in range(0, len(data), chunk):
-        data.loc[n:(n + chunk - 1), 'Segment'] = seg
-        seg += 1
-    data[ts_col] = pd.to_datetime(data[ts_col])
-    ts = data.loc[peaks_ix, [ts_col, 'Segment']].reset_index(drop = True)
-    segs = []
+    # Get timestamps array
+    peaks_ts = df.loc[peaks_ix, ts_col].reset_index(drop = True)
+    peaks_ts = pd.to_datetime(peaks_ts)
+
+    # Get IBIs in milliseconds
     ibis = []
-    for n in range(1, len(ts)):
-        seg = ts.loc[n, 'Segment'].item()
-        segs.append(seg)
-        nn_s = (data.loc[n, ts_col] - data.loc[n - 1, ts_col]).total_seconds()
-        nn_ms = nn_s * 1000
-        ibis.append(nn_ms)
-    ibi = pd.DataFrame({'Segment': segs,
-                        'Timestamp': ts.loc[1:, ts_col],
-                        'IBI': ibis}).reset_index(drop = True)
+    for n in range(1, len(peaks_ts)):
+        ibis.append((peaks_ts[n] - peaks_ts[n - 1]).total_seconds() * 1000)
+    ibis.insert(0, np.nan)
+    ibi = pd.DataFrame({ts_col: peaks_ts, 'IBI': ibis})
+
     return ibi
 
 # SECOND-BY-SECOND PRE-PROCESSING
