@@ -14,11 +14,12 @@ def clear_temp():
     temp = './temp'
     temp_contents = listdir(temp)
     if len(temp_contents) > 0:
-        for session in temp_contents:
-            if path.isdir(temp + '/' + session):
-                rmtree(temp + '/' + session)
-            if path.isfile(temp + '/' + session):
-                remove(temp + '/' + session)
+        session = [s for s in temp_contents if path.isdir(f'{temp}/{s}')]
+        for s in session:
+            if path.isdir(temp + '/' + s):
+                rmtree(temp + '/' + s)
+            if path.isfile(temp + '/' + s):
+                remove(temp + '/' + s)
     return None
 
 def check_edf(edf):

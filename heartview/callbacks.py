@@ -2,7 +2,7 @@ from dash import html, Input, Output, State, ctx, callback
 from dash.exceptions import PreventUpdate
 from heartview.pipeline import ECG, PPG, SQA, ACC
 from heartview import default
-from os import listdir, stat
+from os import listdir, stat, path
 from math import ceil
 from time import sleep
 import dash_uploader as du
@@ -15,20 +15,24 @@ def get_callbacks(app):
 
     # ============================= DATA UPLOAD ===============================
     du.configure_upload(app, './temp')
-    @du.callback(output = [
-        Output('file-check', 'children'),
-        Output('run-data', 'disabled'),
-        Output('memory-load', 'data')],
-        id = 'dash-uploader')
+    @du.callback(
+        output = [
+            Output('file-check', 'children'),
+            Output('run-data', 'disabled'),
+            Output('configure', 'disabled'),
+            Output('memory-load', 'data')
+        ],
+        id = 'dash-uploader'
+    )
     def db_get_file_types(filenames):
         """Save the data type to the local memory depending on the file type."""
+        # global time_start
         temp = './temp'
-        session = listdir(temp)[0]
+        session = [s for s in listdir(temp) if path.isdir(f'{temp}/{s}')][0]
         file = sorted(
             listdir(f'{temp}/{session}'),
             key = lambda t: -stat(f'{temp}/{session}/{t}').st_mtime)[0]
         filename = f'{temp}/{session}/{file}'
-        size = stat(filename).st_size * 1e-6
 
         if filenames[0].endswith(('edf', 'EDF')):
             if default.check_edf(filenames[0]) == 'ECG':
@@ -38,9 +42,9 @@ def get_callbacks(app):
                     html.Span('Data loaded.')
                 ]
                 data = {'type': 'Actiwave',
-                        'filename': filenames[0],
-                        'file size': size}
+                        'filename': filenames[0]}
                 disable_run = False
+                disable_configure = False
             else:
                 file_check = [
                     html.I(className = 'fa-solid fa-circle-xmark',
@@ -48,6 +52,7 @@ def get_callbacks(app):
                     html.Span('Invalid data type!')]
                 data = 'invalid'
                 disable_run = True
+                disable_configure = True
         else:
             if filenames[0].endswith('zip'):
                 z = zipfile.ZipFile(filename)
@@ -60,6 +65,7 @@ def get_callbacks(app):
                         html.Span('Invalid data type!')
                     ]
                     disable_run = True
+                    disable_configure = True
                 else:
                     file_check = [
                         html.I(className = 'fa-solid fa-circle-check',
@@ -68,9 +74,9 @@ def get_callbacks(app):
                         html.Span('Data loaded.')
                     ]
                     data = {'type': 'E4',
-                            'filename': filename,
-                            'file size': size}
+                            'filename': filename}
                     disable_run = False
+                    disable_configure = False
             if filenames[0].endswith('csv'):
                 file_check = [
                     html.I(className = 'fa-solid fa-circle-check',
@@ -78,11 +84,11 @@ def get_callbacks(app):
                     html.Span('Data loaded.')
                 ]
                 data = {'type': 'csv',
-                        'filename': filename,
-                        'file size': size}
+                        'filename': filename}
                 disable_run = False
+                disable_configure = False
 
-        return [file_check, disable_run, data]
+        return [file_check, disable_run, disable_configure, data]
 
     # ==================== ENABLE CONFIGURATION DROPDOWN ======================
     @app.callback(
