@@ -25,8 +25,8 @@ def get_callbacks(app):
         id = 'dash-uploader'
     )
     def db_get_file_types(filenames):
-        """Save the data type to the local memory depending on the file type."""
-        # global time_start
+        """Save the data type to the local memory depending on the file
+        type."""
         temp = './temp'
         session = [s for s in listdir(temp) if path.isdir(f'{temp}/{s}')][0]
         file = sorted(
@@ -35,7 +35,7 @@ def get_callbacks(app):
         filename = f'{temp}/{session}/{file}'
 
         if filenames[0].endswith(('edf', 'EDF')):
-            if default.check_edf(filenames[0]) == 'ECG':
+            if default._check_edf(filenames[0]) == 'ECG':
                 file_check = [
                     html.I(className = 'fa-solid fa-circle-check',
                            style = {'color': '#63e6be', 'marginRight': '5px'}),
@@ -122,7 +122,7 @@ def get_callbacks(app):
         Input('configs-dropdown', 'value')
     )
     def db_handle_csv_params(data, config_file):
-        """Outputs dropdown values according to uploaded CSV data."""
+        """Output dropdown values according to uploaded CSV data."""
         loaded = ctx.triggered_id
         if loaded is None:
             raise PreventUpdate
@@ -187,6 +187,7 @@ def get_callbacks(app):
          State('config-modal', 'is_open')]
     )
     def toggle_config_modal(n, n1, n2, is_open):
+        """Open and close the Export Configuration modal."""
         if n or n1 or n2:
             return not is_open
         return is_open
@@ -210,6 +211,7 @@ def get_callbacks(app):
     )
     def write_confirm_config(n, fs, seg_size, d1, d2, d3, d4, d5, filters,
                              filename):
+        """Export the configuration file and confirm the export."""
         if n == 0:
             raise PreventUpdate
         else:
@@ -230,15 +232,17 @@ def get_callbacks(app):
                     hide_config_btns, hide_config_close]
         
     # ================== SHOW PIPELINE PROGRESS INDICATOR ====================
-    @app.callback(
-        Output('progress-bar', 'hidden'),
-        Input('run-data', 'n_clicks')
-    )
-    def show_progress_bar(n):
-        if n == 0:
-            raise PreventUpdate
-        else:
-            return False
+    # @app.callback(
+    #     Output('progress-bar-container', 'hidden'),
+    #     Input('run-data', 'n_clicks')
+    # )
+    # def show_progress_bar(n):
+    #     """Un-hide the pipeline progress bar."""
+    #     if n == 0:
+    #         raise PreventUpdate
+    #     else:
+    #         unhide_progress = False
+    #         return unhide_progress
 
     # ============================ RUN PIPELINE ==============================
     @callback(
@@ -257,15 +261,16 @@ def get_callbacks(app):
         ],
         background = True,
         running = [
-            (
-                    Output('progress-bar', 'style'),
-                    {'visibility': 'visible'},
-                    {'visibility': 'visible'},
-            )
+            (Output('progress-bar', 'style'),
+             {'visibility': 'visible'}, {'visibility': 'visible'}),
+            (Output('stop-run', 'hidden'), False, True),
+            (Output('run-data', 'disabled'), True, False),
+            (Output('configure', 'disabled'), True, False)
         ],
+        cancel = [Input('stop-run', 'n_clicks')],
         progress = [
             Output('progress-bar', 'value'),
-            Output('progress-bar', 'max')
+            Output('progress-bar', 'label')
         ],
         prevent_initial_call = True
     )
@@ -285,7 +290,8 @@ def get_callbacks(app):
 
             # Read uploaded data file
             if data_type == 'Actiwave' or data_type == 'csv':
-                set_progress(('1', str(total_progress)))
+                perc = (1 / total_progress) * 100
+                set_progress((perc, f'{perc:.0f}%'))
                 if data_type == 'Actiwave':
                     ecg, acc = ECG.read_actiwave(filename)
                     fs = ECG.get_fs(filename)
@@ -311,7 +317,8 @@ def get_callbacks(app):
                                        d2: 'ECG'})
 
                 # Filter ECG signal
-                set_progress(('2', str(total_progress)))
+                perc = (2 / total_progress) * 100
+                set_progress((perc * 100, f'{perc:.0f}%'))
                 if len(filters) <= 1:
                     if 'baseline-muscle' in filters:
                         ecg['Filtered'] = ECG.baseline_muscle_filter(
@@ -326,39 +333,47 @@ def get_callbacks(app):
                         ecg['BM'], fs, 20, 60)
 
                 # Detect R peaks
-                set_progress(('3', str(total_progress)))
+                perc = (3 / total_progress) * 100
+                set_progress((perc * 100, f'{perc:.0f}%'))
                 peaks_ix = ECG.detect_rpeaks(ecg, 'Filtered', fs)
                 ecg.loc[peaks_ix, 'Peak'] = 1
                 ecg.to_csv(f'./temp/{file}_ECG.csv', index = False)
 
                 # Compute IBIs from peaks
-                set_progress(('4', str(total_progress)))
+                perc = (4 / total_progress) * 100
+                set_progress((perc * 100, f'{perc:.0f}%'))
                 ibi = ECG.compute_ibis(ecg, 'Timestamp', peaks_ix)
                 ibi.to_csv(f'./temp/{file}_IBI.csv', index = False)
 
                 # Get second-by-second HR and IBI values
-                set_progress(('5', str(total_progress)))
+                perc = (5 / total_progress) * 100
+                set_progress((perc * 100, f'{perc:.0f}%'))
                 interval_data = ECG.get_seconds(ecg, 'Peak', fs, seg_size)
 
             else:
-                set_progress(('2', str(total_progress)))
+                perc = (2 / total_progress) * 100
+                set_progress((perc * 100, f'{perc:.0f}%'))
                 e4_data = PPG.preprocess_e4(filename)
                 ibi, acc, bvp = e4_data['ibi'], e4_data['acc'], e4_data['bvp']
                 fs = e4_data['fs']
                 start_time = e4_data['start time']
 
                 # Extract PPG peaks from IBIs
-                set_progress(('3', str(total_progress)))
+                perc = (3 / total_progress) * 100
+                set_progress((perc * 100, f'{perc:.0f}%'))
                 peaks = PPG.get_e4_peaks(ibi, fs, start_time)
                 ibi = peaks[~peaks['IBI'].isna()].reset_index(drop = True)
 
                 # Get second-by-second HR and IBI values
-                set_progress(('4', str(total_progress)))
+                perc = (4 / total_progress) * 100
+                set_progress((perc * 100, f'{perc:.0f}%'))
                 interval_data = PPG.get_e4_interval_data(peaks, seg_size)
 
                 bvp.to_csv(f'./temp/{file}_BVP.csv', index = False)
                 ibi.to_csv(f'./temp/{file}_IBI.csv', index = False)
-                set_progress(('5', str(total_progress)))
+
+                perc = (5 / total_progress) * 100
+                set_progress((perc * 100, f'{perc:.0f}%'))
 
             # Pre-process acceleration data
             try:
@@ -375,7 +390,8 @@ def get_callbacks(app):
             peaks_by_seg.to_csv('./temp/peaks_by_segment.csv', index = False)
             metrics = SQA.compute_metrics(peaks_by_seg)
             metrics.to_csv('./temp/sqa_metrics.csv', index = False)
-            set_progress(('6', str(total_progress)))
+            perc = (6 / total_progress) * 100
+            set_progress((perc * 100, f'{perc:.0f}%'))
 
             # Store data variables in memory
             data['type'] = data_type
@@ -392,6 +408,7 @@ def get_callbacks(app):
         Input('reload-data', 'n_clicks')
     )
     def reload_data(n):
+        """Open and close the offcanvas."""
         if n == 0:
             raise PreventUpdate
         else:
@@ -429,10 +446,11 @@ def get_callbacks(app):
         Input('load-acc', 'n_clicks'),
         Input('segment-range-slider', 'value'),
         State('seg-size', 'value'),
-        State('segment-range-slider', 'value')
+        State('segment-range-slider', 'value'),
+        State('segment-range-slider', 'max')
     )
     def db_render_summary(data, raw_btn, ibi_btn, acc_btn,
-                          slider, seg_size, selected_seg):
+                          slider, seg_size, selected_seg, slider_max):
         """Display the dashboard's summary visualizations and table."""
         if data is None:
             raise PreventUpdate
@@ -445,7 +463,6 @@ def get_callbacks(app):
             # Set the device name and get the total number of segments
             if data['type'] == 'E4':
                 device = 'Empatica E4'
-                dtype = 'BVP'
                 bvp = pd.read_csv(f'./temp/{file}_BVP.csv')
                 n_seg = ceil((len(bvp) / fs) / seg_size)
             else:
@@ -453,7 +470,6 @@ def get_callbacks(app):
                     device = 'Actiwave Cardio'
                 else:
                     device = 'Other'
-                dtype = 'ECG'
                 ecg = pd.read_csv(f'./temp/{file}_ECG.csv')
                 n_seg = ceil((len(ecg) / fs) / seg_size)
 
@@ -476,19 +492,23 @@ def get_callbacks(app):
                                                  n_seg - 1]:
                         seg_num = slider[0]
                         seg_n = (slider[1] - slider[0]) * (seg_size / 60)
-                        acc_plot = default.plot_signal(
-                            acc, 'Timestamp', 'Magnitude', fs,
-                            seg_size, seg_num, seg_n, 'acc')
+                        if seg_num == slider_max:
+                            acc_plot = default.plot_signal(
+                                acc, 'Timestamp', 'Magnitude', fs,
+                                seg_size, seg_num, 1, 'acc')
+                        else:
+                            acc_plot = default.plot_signal(
+                                acc, 'Timestamp', 'Magnitude', fs,
+                                seg_size, seg_num, seg_n, 'acc')
                     else:
                         acc_plot = default.plot_signal(
                             acc, 'Timestamp', 'Magnitude', fs,
                             seg_size, round(n_seg * 0.5), 1, 'acc')
                     return [inactive, inactive, active,
-                            None, device, file, table, dtype, acc_plot]
+                            None, device, file, table, acc_plot]
                 else:
                     return [inactive, inactive, active, None, device, file,
-                            table,
-                            dtype, default.blank_fig('none')]
+                            table, default.blank_fig('none')]
 
             # IBI Plots
             elif db_input == 'load-ibi':
@@ -497,9 +517,14 @@ def get_callbacks(app):
                         selected_seg is not [round(n_seg * 0.5), n_seg - 1]:
                     seg_num = slider[0]
                     seg_n = (slider[1] - slider[0]) * (seg_size / 60)
-                    ibi_plot = default.plot_signal(
-                        ibi, 'Timestamp', 'IBI', 1,
-                        seg_size, seg_num, seg_n, 'ibi'
+                    if seg_num == slider_max:
+                        ibi_plot = default.plot_signal(
+                            ibi, 'Timestamp', 'IBI', 1,
+                            seg_size, seg_num, 1, 'ibi')
+                    else:
+                        ibi_plot = default.plot_signal(
+                            ibi, 'Timestamp', 'IBI', 1,
+                            seg_size, seg_num, seg_n, 'ibi'
                     )
                 else:
                     ibi_plot = default.plot_signal(
@@ -507,7 +532,7 @@ def get_callbacks(app):
                         seg_size, round(n_seg * 0.5), 1, 'ibi')
 
                 return [inactive, active, inactive,
-                        None, device, file, table, dtype, ibi_plot]
+                        None, device, file, table, ibi_plot]
 
             # ECG/BVP Plots
             else:
@@ -517,14 +542,24 @@ def get_callbacks(app):
                     seg_n = (slider[1] - slider[0]) * (seg_size / 60)
                     if data['type'] == 'E4':
                         bvp = pd.read_csv(f'./temp/{file}_BVP.csv')
-                        raw_plot = default.plot_signal(
-                            bvp, 'Timestamp', 'BVP', fs,
-                            seg_size, seg_num, seg_n, 'bvp', 'Peak')
+                        if seg_num == slider_max:
+                            raw_plot = default.plot_signal(
+                                bvp, 'Timestamp', 'BVP', fs,
+                                seg_size, seg_num, 1, 'bvp', 'Peak')
+                        else:
+                            raw_plot = default.plot_signal(
+                                bvp, 'Timestamp', 'BVP', fs,
+                                seg_size, seg_num, seg_n, 'bvp', 'Peak')
                     else:
                         ecg = pd.read_csv(f'./temp/{file}_ECG.csv')
-                        raw_plot = default.plot_signal(
-                            ecg, 'Timestamp', 'ECG', fs,
-                            seg_size, seg_num, seg_n, 'ecg', 'Peak')
+                        if seg_num == slider_max:
+                            raw_plot = default.plot_signal(
+                                ecg, 'Timestamp', 'ECG', fs,
+                                seg_size, seg_num, 1, 'ecg', 'Peak')
+                        else:
+                            raw_plot = default.plot_signal(
+                                ecg, 'Timestamp', 'ECG', fs,
+                                seg_size, seg_num, seg_n, 'ecg', 'Peak')
                 else:
                     if data['type'] == 'E4':
                         bvp = pd.read_csv(f'./temp/{file}_BVP.csv')
@@ -539,7 +574,7 @@ def get_callbacks(app):
                         )
 
                 return [active, inactive, inactive,
-                        exp2missing, device, file, table, dtype, raw_plot]
+                        exp2missing, device, file, table, raw_plot]
 
     # === Open export summary modal ===========================================
     @app.callback(
@@ -550,6 +585,7 @@ def get_callbacks(app):
         State('export-modal', 'is_open')
     )
     def toggle_export_modal(n1, n2, n3, is_open):
+        """Open and close the Export Summary modal."""
         if n1 or n2 or n3:
             return not is_open
         return is_open
@@ -565,6 +601,7 @@ def get_callbacks(app):
         State('memory-db', 'data')
     )
     def export_summary(n, file_type, data):
+        """Export the SQA summary file and confirm the export."""
         if n == 0:
             raise PreventUpdate
         else:

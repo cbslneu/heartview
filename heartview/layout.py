@@ -105,10 +105,10 @@ layout = html.Div(id = 'main', children = [
                  'value': 'powerline'}])
         ]),
         html.Div(children = [
-            html.Button('Run', n_clicks = 0, id = 'run-data', style = {
-                'width': '100px', 'marginTop': '20px'}, disabled = True),
-            html.Button('Save', n_clicks = 0, id = 'configure', style = {
-                'width': '100px', 'marginLeft': '10px', 'marginTop': '20px'},
+            html.Button('Run', n_clicks = 0, id = 'run-data', disabled = True),
+            html.Button('Stop', n_clicks = 0, id = 'stop-run', hidden = True,
+                        disabled = False),
+            html.Button('Save', n_clicks = 0, id = 'configure',
                         disabled = False)
         ]),
 
@@ -143,7 +143,7 @@ layout = html.Div(id = 'main', children = [
         ], backdrop = 'static', centered = True),
 
         # SQA Pipeline Progress Indicator
-        html.Progress(id = 'progress-bar', value = '0', hidden = True)
+        dbc.Progress(id = 'progress-bar', animated = True)
     ], id = 'offcanvas', style = {'width': 450}, is_open = True),
 
     # NAVIGATION BAR
@@ -183,23 +183,31 @@ layout = html.Div(id = 'main', children = [
                 html.Button('Export Summary', id = 'export-summary', n_clicks = 0),
                 dbc.Modal(id = 'export-modal', is_open = False, children = [
                     dbc.ModalHeader(dbc.ModalTitle('Export Summary')),
-                    dbc.ModalBody(children = [
-                        html.Div(id = 'export-description', children = [
-                            html.Div('Download summary data as a Zip archive '
-                                     'file (.zip) or Excel (.xlsx) file.'),
-                            html.Div(children = [
-                                html.I(
-                                    className = 'fa-solid fa-download fa-bounce'),
-                                dcc.RadioItems(['Zip', 'Excel'], inline = True,
-                                               id = 'export-type')
-                            ], style = {'textAlign': 'center'})
+                    dcc.Loading(
+                        type = 'circle', color = '#3a4952', children = [
+                            dbc.ModalBody(children = [
+                                html.Div(id = 'export-description', children = [
+                                    html.Div('Download summary data as a Zip '
+                                             'archive file (.zip) or Excel '
+                                             '(.xlsx) file.'),
+                                    html.Div(children = [
+                                        html.I(
+                                            className = 'fa-solid fa-download '
+                                                        'fa-bounce'),
+                                        dcc.RadioItems(
+                                            ['Zip', 'Excel'], inline = True,
+                                            id = 'export-type')
+                                    ], style = {'textAlign': 'center'})
+                                ]),
+                                html.Div(id = 'export-confirm', children = [
+                                    html.I(className = 'fa-solid fa-circle-check',
+                                           style = {'color': '#63e6be',
+                                                    'fontSize': '26pt'}),
+                                    html.P('Exported to: /downloads',
+                                           style = {'marginTop': '5px'})
+                                ], hidden = True)
+                            ])
                         ]),
-                        html.Div(id = 'export-confirm', children = [
-                            html.I(className = 'fa-solid fa-circle-check',
-                                   style = {'color': '#63e6be', 'fontSize': '26pt'}),
-                            html.P('Exported to: /downloads', style = {'marginTop': '5px'})
-                        ], hidden = True)
-                    ]),
                     dbc.ModalFooter(children = [
                         html.Div(id = 'export-modal-btns', children = [
                             html.Button('OK', n_clicks = 0, id = 'ok-export'),
