@@ -1,7 +1,7 @@
-/* Google Fonts */
+/* GOOGLE FONTS */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,200;0,400;0,600;1,200;1,400&display=swap');
 
-/* Style the page elements */
+/* ========================== MAIN PAGE ELEMENTS ========================== */
 body, #main {
     background-color: #cbcacf;
     margin: 0;
@@ -114,7 +114,7 @@ h6 {
     padding-top: 1.1rem;
 }
 
-/* Style the offcanvas and its elements */
+/* ========================== OFFCANVAS ELEMENTS ========================== */
 .h5 {
     text-transform: none !important;
     letter-spacing: 0px;
@@ -156,6 +156,17 @@ input[type="checkbox"] {
 .dash-default-spinner > div {
     background-color: #ffa891 !important;
 }
+#header-filter {  /* ECG filters header */
+    padding-top: 15px;
+}
+#file-check {  /* data upload confirmation text */
+    font-size: 11px;
+    font-style: italic;
+    margin-top: 5px;
+    float: right;
+}
+
+/* ================= DATA UPLOAD & PIPELINE PROGRESS BARS ================= */
 .progress-bar {
     background-color: #ffa891 !important;
 }
@@ -167,21 +178,14 @@ input[type="checkbox"] {
 #progress-bar {
     float: right;
     margin-right: 10px;
-    margin-top: -27px;
+    margin-top: -30px;
     width: 175px;
-}
-#header-filter {
-    padding-top: 15px;
-    /*color: #bababa;*/
-}
-#file-check {
-    font-size: 11px;
-    font-style: italic;
-    margin-top: 5px;
-    float: right;
+    height: 20px;
+    background-color: transparent;
+    border-radius: 5px;
 }
 
-/* Style the tooltips */
+/* =============================== TOOLTIPS =============================== */
 .tooltip-inner {
     background-color: #313c42;
     color: #ffffff;
@@ -213,7 +217,7 @@ input[type="checkbox"] {
     border: 1px solid #c6c6c6;
 }
 
-/* Style the user input elements */
+/* ========================== USER INPUT ELEMENTS ========================= */
 input[type="number"] {
     line-height: 18px;
     width: 55px;
@@ -227,9 +231,6 @@ input[type="text"] {
     width: 300px;
     color: #313c42;
     letter-spacing: 1px;
-}
-#filter-selector label {
-    /*color: #bababa;*/
 }
 button {
     background-color: #47555e;
@@ -249,10 +250,6 @@ button:hover {
     color: #ffffff;
     cursor: pointer !important;
 }
-#setup-data-type {
-    margin-top: -28px;
-    margin-left: 65px;
-}
 .setup-data-dropdowns {  /* dbc.Row containing dropdowns */
     --bs-gutter-x: 0.5rem !important;
     font-size: 10pt;
@@ -267,17 +264,28 @@ button:hover {
 .Select-clear {  /* clear 'x' in dropdowns */
     line-height: 34px !important;
 }
-#setup-timestamp {
+#setup-timestamp {  /* dropdown 1*/
     flex: 1 0 20%;
 }
-#setup-cardio {
+#setup-cardio {  /* dropdown 2*/
     flex: 1 0 8%;
 }
-#run-data {
+#run-data {  /* run button */
     width: 100px;
-    margin-top: 10px;
+    margin-top: 20px;
 }
-.variables {
+#stop-run {  /* stop button*/
+    width: 100px;
+    margin-top: 20px;
+    margin-left: -100px;
+    background-color: #ee8a78;
+}
+#configure {  /* save button */
+    width: 100px;
+    margin-left: 10px;
+    margin-top: 20px;
+}
+.variables {  /* map variables header */
     margin-top: 5px;
 }
 label {
@@ -288,33 +296,26 @@ label {
     color: #ffa891;
     font-size: 12pt;
 }
-.fa-pen-to-square {  /* reload data icon */
+.fa-pen-to-square {     /* reload data icon */
     color: #313d44;
     margin-left: 110px;
     font-size: 17pt;
     cursor: pointer;
 }
-.fa-pen-to-square:hover {  /* reload data icon */
+.fa-pen-to-square:hover {
     color: #ee8a78;
 }
-.filter {  /* data segmenting button */
-    width: auto;
-    padding-top: 2px;
-    padding-bottom: 2px;
-    margin-left: 12px;
-}
 
-/* Style the chart elements */
-.figs {  /* main chart container */
+/* ============================ CHART ELEMENTS ============================ */
+.figs {  /* chart container */
     padding: 10px;
-    /*margin-top: 15px;*/
     font-size: 14px;
     background-color: #f0e7ec;
     border-radius: 3px;
     height: auto;
 }
 
-/* Style the summary table */
+/* ============================ SUMMARY TABLE ============================= */
 table, tbody {
     margin-top: 15px;
     border: 0 !important;
@@ -338,9 +339,6 @@ th {
 td:first-child {  /* style only first column */
     width: 285px !important;
 }
-/*.segmentTable td:first-child {*/
-/*    width: 315px !important;*/
-/*}*/
 th:first-child {  /* style only first table header */
     text-align: left !important;
     letter-spacing: 1pt;
@@ -350,13 +348,13 @@ th:first-child {  /* style only first table header */
     line-height: 20pt !important;
 }
 
-/* Style the configuration exporter modal */
+/* ===================== CONFIGURATION EXPORTER MODAL ===================== */
 #config-check, #export-confirm {
     text-align: center;
     padding: 5px 0px 5px 0px;
 }
 
-/* Style the summary exporter modal */
+/* ======================== SUMMARY EXPORTER MODAL ======================== */
 .modal-content {
     border-radius: 5px !important;
 }
@@ -386,7 +384,6 @@ th:first-child {  /* style only first table header */
     font-size: 14px;
     letter-spacing: 2px;
     position: relative;
-    /*float: right;*/
 }
 #close-export:hover, #close-config1:hover {
     background-color: #ffa891 !important;
@@ -395,35 +392,31 @@ th:first-child {  /* style only first table header */
     color: #ee8a78;
     font-size: 14pt;
 }
-#export-type {
+#export-type {  /* exported file type */
     display: inline-block;
     margin-left: 10px;
     margin-top: 10px;
 }
 
-/* Style the raw data section*/
+/* =========================== RAW PLOT SECTION =========================== */
 .raw-plots {
     margin-top: 30px;
     margin-bottom: 50px;
 }
 .graph-settings {
     margin-bottom: 20px;
-    /*position: relative;*/
     height: 2rem;
 }
 .graph-settings button {
     width: 65px;
     height: auto;
     padding: 5px 8px 5px 8px;
-    /*margin-right: 10px;*/
     position: absolute;
 }
-#load-raw {
-}
-#load-ibi {
+#load-ibi {  /* IBI chart button */
     left: 105px;
 }
-#load-acc {
+#load-acc {  /* ACC chart button */
     left: 179px;
 }
 .slider-label {
@@ -446,7 +439,6 @@ th:first-child {  /* style only first table header */
     border-color: #ffa891 !important;
     box-shadow: 0 0 0 5px #ffa891 !important;
 }
-
 .raw-plots .tab {
     padding: 10px !important;
     font-size: 24px;
@@ -492,9 +484,4 @@ th:first-child {  /* style only first table header */
     text-transform: uppercase;
     color: #313c42;
     margin-left: 15px;
-}
-
-/* Style the raw ECG signal section*/
-#ecg-segment {
-    margin-top: 5px;
 }
