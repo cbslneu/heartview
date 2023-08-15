@@ -230,19 +230,6 @@ def get_callbacks(app):
 
             return [hide_config_desc, hide_config_check,
                     hide_config_btns, hide_config_close]
-        
-    # ================== SHOW PIPELINE PROGRESS INDICATOR ====================
-    # @app.callback(
-    #     Output('progress-bar-container', 'hidden'),
-    #     Input('run-data', 'n_clicks')
-    # )
-    # def show_progress_bar(n):
-    #     """Un-hide the pipeline progress bar."""
-    #     if n == 0:
-    #         raise PreventUpdate
-    #     else:
-    #         unhide_progress = False
-    #         return unhide_progress
 
     # ============================ RUN PIPELINE ==============================
     @callback(
