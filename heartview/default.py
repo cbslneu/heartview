@@ -249,7 +249,7 @@ def plot_signal(df, x, y, fs, seg_size = 60, segment = 1, n_segments = 1,
                 'red': '#eb4034',
                 'green': '#63b068',
                 'grey': '#bdbdbd'}
-    palette2 = ['#ec2049', '#2f9599', '#f7db4f', '#63b068']
+    palette2 = ['#ec2049', '#176196', '#f7db4f', '#63b068']
 
     # Set up the figure
     fig = go.Figure()
@@ -307,7 +307,7 @@ def plot_signal(df, x, y, fs, seg_size = 60, segment = 1, n_segments = 1,
         if isinstance(y, list):
             for d in range(len(fig.data)):
                 fig.data[d].line.color = palette2[d]
-            return fig
+            return fig.update_layout(yaxis_title = signal_type.upper())
         else:
             return fig.update_traces(
                 line_color = palette1['blue']).update_layout(yaxis_title = y)
