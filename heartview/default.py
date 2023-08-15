@@ -10,19 +10,24 @@ import json
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 
-def clear_temp():
+def _clear_temp():
     temp = './temp'
-    temp_contents = listdir(temp)
+    temp_contents = [f for f in listdir(temp) if
+                     not f.startswith('.') and f != '00.txt']
     if len(temp_contents) > 0:
-        session = [s for s in temp_contents if path.isdir(f'{temp}/{s}')]
-        for s in session:
+        files = [f for f in temp_contents if
+                 not path.isdir(f'{temp}/{f}') and f != '00.txt']
+        for f in files:
+            remove(temp + '/' + f)
+        sessions = [s for s in temp_contents if path.isdir(f'{temp}/{s}')]
+        for s in sessions:
             if path.isdir(temp + '/' + s):
                 rmtree(temp + '/' + s)
             if path.isfile(temp + '/' + s):
                 remove(temp + '/' + s)
     return None
 
-def check_edf(edf):
+def _check_edf(edf):
     """Check whether the EDF uploaded is a valid Actiwave Cardio file."""
     f = pyedflib.EdfReader(edf)
     signals = f.getSignalLabels()
@@ -33,7 +38,8 @@ def check_edf(edf):
 
 def _get_configs():
     cfg_dir = './configs'
-    cfgs = [f for f in listdir(cfg_dir) if not f.startswith('.')]
+    cfgs = [f for f in listdir(cfg_dir) if
+            not f.startswith('.') and f != '00.txt']
     if len(cfgs) > 0:
         return cfgs
     else:
