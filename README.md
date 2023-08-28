@@ -33,7 +33,7 @@ Currently, HeartView works with data collected from the Actiwave Cardio, Empatic
 ## Installation
 ```
 cd <directory>  # replace <directory> with your directory
-git clone https://github.com/nmy2103/heartview.git
+git clone https://github.com/cbslneu/heartview.git
 ```
 
 ## HeartView Dashboard
