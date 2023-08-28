@@ -1,6 +1,7 @@
 from dash import html, dcc
 from heartview import default
 import dash_bootstrap_components as dbc
+import dash_daq as daq
 import dash_uploader as du
 import uuid
 
@@ -9,6 +10,8 @@ layout = html.Div(id = 'main', children = [
     # OFFCANVAS
     dbc.Offcanvas(children = [
         dcc.Store(id = 'memory-load', storage_type = 'memory'),
+        dcc.Store(id = 'config-memory', storage_type = 'memory'),
+        dcc.Store(id = 'config-download-memory', storage_type = 'memory'),
         dcc.Store(id = 'memory-db', storage_type = 'memory'),
         dcc.Store(id = 'progress-clear', storage_type = 'memory'),
         html.Span(className = 'h5',
@@ -28,7 +31,7 @@ layout = html.Div(id = 'main', children = [
             'devices).',
             target = 'load-data-help'),
         du.Upload(id = 'dash-uploader',
-                  text = 'Select File...',
+                  text = 'Select Data File...',
                   filetypes = ['EDF', 'edf', 'zip', 'csv'],
                   upload_id = uuid.uuid4(),
                   text_completed = '',
@@ -37,9 +40,20 @@ layout = html.Div(id = 'main', children = [
                                    'minHeight': '50px',
                                    'borderRadius': '5px'}),
         html.Div(id = 'file-check', children = []),
-        html.H4(children = ['Load a Configuration File']),
-        dcc.Dropdown(id = 'configs-dropdown',
-                     options = default._get_configs()),
+        daq.BooleanSwitch(
+            id = 'toggle-config',
+            color = '#ee8a78',
+            label = 'Load a Configuration File',
+            labelPosition = 'right',
+            on = False
+        ),
+        html.Div(id = 'config-upload-div', hidden = True, children = [
+            du.Upload(id = 'config-uploader',
+                      text = 'Select Configuration File...',
+                      filetypes = ['json', 'JSON'],
+                      upload_id = 'cfg',
+                      text_completed = '',
+                      cancel_button = True)]),
         html.Div(id = 'setup-data', hidden = True, children = [
             html.H4(children = [
                 'Setup Data',
@@ -109,7 +123,7 @@ layout = html.Div(id = 'main', children = [
             html.Button('Stop', n_clicks = 0, id = 'stop-run', hidden = True,
                         disabled = False),
             html.Button('Save', n_clicks = 0, id = 'configure',
-                        disabled = False)
+                        disabled = True)
         ]),
 
         # Configuration File Exporter
@@ -128,12 +142,14 @@ layout = html.Div(id = 'main', children = [
                 html.Div(id = 'config-check', children = [
                     html.I(className = 'fa-solid fa-circle-check',
                        style = {'color': '#63e6be', 'fontSize': '26pt'}),
-                    html.P('Exported to: /configs', style = {'marginTop': '5px'})
+                    html.P('Configuration file saved.',
+                           style = {'marginTop': '5px'})
                 ], hidden = True)
             ]),
             dbc.ModalFooter(children = [
                 html.Div(id = 'config-modal-btns', children = [
                     html.Button('Configure', n_clicks = 0, id = 'config-btn'),
+                    dcc.Download(id = 'config-file-download'),
                     dbc.Button('Cancel', n_clicks = 0, id = 'close-config1')],
                          hidden = False),
                 html.Div(id = 'config-close-btn', children = [
@@ -176,7 +192,7 @@ layout = html.Div(id = 'main', children = [
                 html.Span('Filename:', className = 'data-about'),
                 html.Span('<file>', className = 'data-label', id = 'filename')]),
             html.Div(className = 'data-summary-divs', id = 'summary-table',
-                     children = [default.blank_table()]),
+                     children = [default._blank_table()]),
 
             # Data Summary Exporter
             html.Div(children = [
@@ -203,7 +219,7 @@ layout = html.Div(id = 'main', children = [
                                     html.I(className = 'fa-solid fa-circle-check',
                                            style = {'color': '#63e6be',
                                                     'fontSize': '26pt'}),
-                                    html.P('Exported to: /downloads',
+                                    html.P('Exported to: heartview/downloads',
                                            style = {'marginTop': '5px'})
                                 ], hidden = True)
                             ])
@@ -228,7 +244,7 @@ layout = html.Div(id = 'main', children = [
             html.H2('Expected-to-Missing Beats'),
             html.Div(className = 'figs', children = [
                 dcc.Graph(id = 'peaks',
-                          figure = default.blank_fig('pending'),
+                          figure = default._blank_fig('pending'),
                           style = {'height': '268px'})
             ]),
         ]),
@@ -251,7 +267,7 @@ layout = html.Div(id = 'main', children = [
             html.Div(className = 'figs', children = [
                 dcc.Loading(type = 'circle', color = '#3a4952', children = [
                     dcc.Graph(id = 'raw-data',
-                              figure = default.blank_fig('pending'),
+                              figure = default._blank_fig('pending'),
                               style = {'height': '300px'})
                 ])
             ])

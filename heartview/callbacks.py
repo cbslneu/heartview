@@ -6,7 +6,6 @@ from os import listdir, stat, path
 from math import ceil
 from time import sleep
 import dash_uploader as du
-import json
 import zipfile
 import pandas as pd
 
@@ -14,13 +13,13 @@ def get_callbacks(app):
     """Attach callback functions to the dashboard app."""
 
     # ============================= DATA UPLOAD ===============================
-    du.configure_upload(app, './temp')
+    du.configure_upload(app, './temp', use_upload_id = True)
     @du.callback(
         output = [
             Output('file-check', 'children'),
             Output('run-data', 'disabled'),
             Output('configure', 'disabled'),
-            Output('memory-load', 'data')
+            Output('memory-load', 'data'),
         ],
         id = 'dash-uploader'
     )
@@ -28,7 +27,8 @@ def get_callbacks(app):
         """Save the data type to the local memory depending on the file
         type."""
         temp = './temp'
-        session = [s for s in listdir(temp) if path.isdir(f'{temp}/{s}')][0]
+        session = [s for s in listdir(temp) if
+                   path.isdir(f'{temp}/{s}') and s != 'cfg'][0]
         file = sorted(
             listdir(f'{temp}/{session}'),
             key = lambda t: -stat(f'{temp}/{session}/{t}').st_mtime)[0]
@@ -90,19 +90,29 @@ def get_callbacks(app):
 
         return [file_check, disable_run, disable_configure, data]
 
-    # ==================== ENABLE CONFIGURATION DROPDOWN ======================
+    # ==================== ENABLE CONFIGURATION UPLOAD ========================
+    # === Toggle configuration uploader =======================================
     @app.callback(
-        Output('configs-dropdown', 'disabled'),
-        Input('offcanvas', 'is_open')
+        Output('config-upload-div', 'hidden'),
+        Input('toggle-config', 'on'),
+        prevent_initial_call = True
     )
-    def db_enable_configs(offcanvas_state):
-        """Enable configuration files dropdown."""
-        if offcanvas_state is True:
-            cfgs = default._get_configs()
-            if len(cfgs) > 0:
-                return False
-            else:
-                return True
+    def db_enable_config_upload(toggle_on):
+        """Display configuration file upload."""
+        if toggle_on is True:
+            hidden = False
+        else:
+            hidden = True
+        return hidden
+
+    # === Read JSON configuration file ========================================
+    @du.callback(
+        output = Output('config-memory', 'data'),
+        id = 'config-uploader'
+    )
+    def db_get_config_file(cfg_file):
+        configs = default._load_config(cfg_file[0])
+        return configs
 
     # =================== POPULATE DATA VARIABLE DROPDOWNS ====================
     @app.callback(
@@ -119,9 +129,10 @@ def get_callbacks(app):
          Output('filter-selector', 'value'),
          Output('seg-size', 'value')],
         Input('memory-load', 'data'),
-        Input('configs-dropdown', 'value')
+        Input('config-memory', 'data'),
+        State('toggle-config', 'on')
     )
-    def db_handle_csv_params(data, config_file):
+    def db_handle_csv_params(data, configs, toggle_config_on):
         """Output dropdown values according to uploaded CSV data."""
         loaded = ctx.triggered_id
         if loaded is None:
@@ -129,76 +140,136 @@ def get_callbacks(app):
         else:
             hide_setup = False
             hide_segsize = False
+
             if loaded == 'memory-load':
                 if data['type'] != 'csv':
                     if data['type'] == 'Actiwave':
-                        filters = []
-                        seg_size = 60
-                        fs = 1000
                         hide_data_vars = True
                         hide_filters = False
                         drop1, drop2, drop3, drop4, drop5 = (
                             [] for _ in range(5))
+                        if toggle_config_on:
+                            filters = configs['filters']
+                            seg_size = configs['segment size']
+                            fs = configs['sampling rate']
+                        else:
+                            filters = []
+                            seg_size = 60
+                            fs = 1000
                     else:
-                        filters = []
                         hide_filters = True
                         hide_setup = True
                         hide_data_vars = True
-                        seg_size = 60
-                        fs = 64
+                        filters = []
                         drop1, drop2, drop3, drop4, drop5 = (
                             [] for _ in range(5))
+                        if toggle_config_on:
+                            seg_size = configs['segment size']
+                            fs = configs['sampling rate']
+                        else:
+                            seg_size = 60
+                            fs = 64
                 else:
-                    drop1 = default._get_csv_headers(data['filename'])
-                    drop2 = default._get_csv_headers(data['filename'])
-                    drop3 = default._get_csv_headers(data['filename'])
-                    drop4 = default._get_csv_headers(data['filename'])
-                    drop5 = default._get_csv_headers(data['filename'])
-                    filters = []
-                    seg_size = 60
-                    fs = 1000
-                    hide_data_vars = False
-                    hide_filters = False
-            if loaded == 'configs-dropdown':
-                cfg = open(f'./configs/{config_file}')
-                configs = json.load(cfg)
+                    if toggle_config_on:
+                        pass
+                    else:
+                        drop1 = default._get_csv_headers(data['filename'])
+                        drop2 = default._get_csv_headers(data['filename'])
+                        drop3 = default._get_csv_headers(data['filename'])
+                        drop4 = default._get_csv_headers(data['filename'])
+                        drop5 = default._get_csv_headers(data['filename'])
+                        filters = []
+                        seg_size = 60
+                        fs = 1000
+                        hide_data_vars = False
+                        hide_filters = False
+
+            if loaded == 'config-memory':
+                device = configs['device']
+                if device == 'E4':
+                    hide_filters = True
+                    hide_setup = True
+                    hide_data_vars = True
+                if device == 'Actiwave':
+                    hide_data_vars = True
+
                 filters = configs['filters']
                 fs = configs['sampling rate']
                 hide_data_vars = False
                 hide_filters = False
                 seg_size = configs['segment size']
-                headers = list(configs['headers'].keys())
-                options = []
-                for n in range(len(headers)):
-                    options.append(
-                        {'label': headers[n],
-                         'value': headers[n].lower()})
+                options = list(configs['headers'].values())
                 drop1, drop2, drop3, drop4, drop5 = (options for _ in range(5))
 
-        return [hide_setup, hide_segsize, hide_filters, hide_data_vars, fs,
-                drop1, drop2, drop3, drop4, drop5, filters, seg_size]
+            return [hide_setup, hide_segsize, hide_filters, hide_data_vars, fs,
+                    drop1, drop2, drop3, drop4, drop5, filters, seg_size]
 
     # =================== TOGGLE EXPORT CONFIGURATION MODAL ===================
     @app.callback(
-        Output('config-modal', 'is_open'),
-        [Input('configure', 'n_clicks'),
-         Input('close-config1', 'n_clicks'),
-         Input('close-config2', 'n_clicks'),
-         State('config-modal', 'is_open')]
-    )
-    def toggle_config_modal(n, n1, n2, is_open):
-        """Open and close the Export Configuration modal."""
-        if n or n1 or n2:
-            return not is_open
-        return is_open
-
-    # ====================== CREATE AND SAVE CONFIG FILE ======================
-    @app.callback(
-        [Output('config-description', 'hidden'),
+        [Output('config-download-memory', 'clear_data'),
+         Output('config-modal', 'is_open'),
+         Output('config-description', 'hidden'),
          Output('config-check', 'hidden'),
          Output('config-modal-btns', 'hidden'),
          Output('config-close-btn', 'hidden')],
+        [Input('configure', 'n_clicks'),
+         Input('close-config1', 'n_clicks'),
+         Input('close-config2', 'n_clicks'),
+         Input('config-download-memory', 'data'),
+         State('config-modal', 'is_open')],
+        prevent_initial_call = True
+    )
+    def toggle_config_modal(n, n1, n2, config_data, is_open):
+        """Open and close the Export Configuration modal."""
+
+        hide_config_desc = False  # show export fields
+        hide_config_check = True
+        hide_config_btns = False  # show 'configure' and 'cancel'
+        hide_config_close = True
+
+        if is_open is True:
+            # If 'Cancel' or 'Done' is clicked
+            if n1 or n2:
+                print("closed modal")
+                # Reset the content and close the modal
+                return [True, not is_open,
+                        hide_config_desc, hide_config_check,
+                        hide_config_btns, hide_config_close]
+
+            # If a configuration file was created and exported
+            hide_config_desc = True
+            hide_config_check = False
+            hide_config_btns = True
+            hide_config_close = False
+            if config_data is not None:
+                print(f'There is data: {config_data}')
+                # Keep the modal open and show export confirmation
+                return [True, is_open,
+                        hide_config_desc, hide_config_check,
+                        hide_config_btns, hide_config_close]
+            else:
+                return [False, is_open,
+                        hide_config_desc, hide_config_check,
+                        hide_config_btns, hide_config_close]
+
+        else:
+            # If 'Save' is clicked
+            if n:
+                if config_data is not None:
+                    return [True, not is_open,
+                            hide_config_desc, hide_config_check,
+                            hide_config_btns, hide_config_close]
+                else:
+                    return [False, not is_open,
+                            hide_config_desc, hide_config_check,
+                            hide_config_btns, hide_config_close]
+
+    # ====================== CREATE AND SAVE CONFIG FILE ======================
+    @app.callback(
+        [Output('config-file-download', 'data'),
+         Output('config-download-memory', 'data')],
         [Input('config-btn', 'n_clicks'),
+         State('memory-load', 'data'),
          State('sampling-rate', 'value'),
          State('seg-size', 'value'),
          State('data-type-dropdown-1', 'value'),
@@ -207,29 +278,20 @@ def get_callbacks(app):
          State('data-type-dropdown-4', 'value'),
          State('data-type-dropdown-5', 'value'),
          State('filter-selector', 'value'),
-         State('config-filename', 'value')]
+         State('config-filename', 'value')],
+        prevent_initial_call = True
     )
-    def write_confirm_config(n, fs, seg_size, d1, d2, d3, d4, d5, filters,
-                             filename):
-        """Export the configuration file and confirm the export."""
-        if n == 0:
-            raise PreventUpdate
-        else:
-            headers = {'Timestamp': d1,
-                       'ECG': d2,
-                       'X': d3,
-                       'Y': d4,
-                       'Z': d5}
-            hide_config_desc = True
-            hide_config_check = False
-            hide_config_btns = True
-            hide_config_close = False
-            json_object = default._create_configs(
-                fs, seg_size, filters, headers)
-            default._export_configs(json_object, filename)
+    def write_confirm_config(n, data, fs, seg_size, d1, d2, d3, d4, d5,
+                             filters, filename):
+        """Export the configuration file."""
 
-            return [hide_config_desc, hide_config_check,
-                    hide_config_btns, hide_config_close]
+        if n:
+            device = data['type'] if data['type'] != 'csv' else 'Other'
+            headers = {'Timestamp': d1, 'ECG': d2, 'X': d3, 'Y': d4, 'Z': d5}
+            json_object = default._create_configs(
+                device, fs, seg_size, filters, headers)
+            download = {'content': json_object, 'filename': f'{filename}.json'}
+            return [download, 1]
 
     # ============================ RUN PIPELINE ==============================
     @callback(
@@ -249,7 +311,7 @@ def get_callbacks(app):
         background = True,
         running = [
             (Output('progress-bar', 'style'),
-             {'visibility': 'visible'}, {'visibility': 'visible'}),
+             {'visibility': 'visible'}, {'visibility': 'hidden'}),
             (Output('stop-run', 'hidden'), False, True),
             (Output('run-data', 'disabled'), True, False),
             (Output('configure', 'disabled'), True, False)
@@ -277,6 +339,7 @@ def get_callbacks(app):
 
             # Read uploaded data file
             if data_type == 'Actiwave' or data_type == 'csv':
+                sleep(1)
                 perc = (1 / total_progress) * 100
                 set_progress((perc, f'{perc:.0f}%'))
                 if data_type == 'Actiwave':
@@ -304,6 +367,7 @@ def get_callbacks(app):
                                        d2: 'ECG'})
 
                 # Filter ECG signal
+                sleep(1)
                 perc = (2 / total_progress) * 100
                 set_progress((perc * 100, f'{perc:.0f}%'))
                 if len(filters) <= 1:
@@ -495,7 +559,7 @@ def get_callbacks(app):
                             None, device, file, table, acc_plot]
                 else:
                     return [inactive, inactive, active, None, device, file,
-                            table, default.blank_fig('none')]
+                            table, default._blank_fig('none')]
 
             # IBI Plots
             elif db_input == 'load-ibi':
