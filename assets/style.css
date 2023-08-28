@@ -156,6 +156,36 @@ input[type="checkbox"] {
 .dash-default-spinner > div {
     background-color: #ffa891 !important;
 }
+#toggle-config {
+    padding-top: 15px;
+    padding-bottom: 13px;
+}
+#toggle-config > div {
+    font-weight: 600;
+    display: inline;
+}
+#toggle-config > div > div {
+    float: left;
+}
+#toggle-config > div > div > div {  /* toggle track bar */
+    width: 49px !important;
+}
+#toggle-config > div > label {
+    margin: 3px 0px 0px 5px;
+    display: inline-block;
+    font-size: 11pt;
+    letter-spacing: 0.3pt;
+}
+#config-uploader {
+    line-height: 30px !important;
+    min-height: 30px !important;
+    border-radius: 5px;
+    border-color: #ee8a78;
+    color: #de7765;
+}
+#config-uploader-padding > label {
+    margin: 0px !important;
+}
 #header-filter {  /* ECG filters header */
     padding-top: 15px;
 }
