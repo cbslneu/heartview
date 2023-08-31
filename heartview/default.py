@@ -2,7 +2,6 @@ from os import listdir, path, remove, makedirs
 from pathlib import Path
 from shutil import rmtree
 from zipfile import ZipFile
-from dash import dcc
 import dash_bootstrap_components as dbc
 import pandas as pd
 import numpy as np
