@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import datetime as dt
-import heartpy as hp
 from zipfile import ZipFile, ZipExtFile
 
 def get_fs(file):
@@ -131,11 +130,3 @@ def get_e4_interval_data(df, seg_size):
     interval_data.insert(0, 'Segment', interval_data['Second'].apply(
         lambda x: (x // seg_size) + 1))
     return interval_data
-
-def get_ppg_peaks(ppg_signal, fs):
-    """Get peak locations from an array of PPG data."""
-    ppg = ppg_signal.values.flatten()
-    wd, m = hp.process(hrdata = ppg, sample_rate = fs,
-                       bpmmin = 30, bpmmax = 220)
-    peaks = wd['peaklist']
-    return peaks
