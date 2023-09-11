@@ -7,7 +7,8 @@ import dash_bootstrap_components as dbc
 
 if 'REDIS_URL' in environ:
     from celery import Celery
-    celery_app = Celery(__name__, broker = environ['REDIS_URL'],
+    celery_app = Celery(__name__,
+                        broker = environ['REDIS_URL'],
                         backend = environ['REDIS_URL'])
     background_callback_manager = CeleryManager(celery_app)
 else:

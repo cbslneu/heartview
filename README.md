@@ -31,21 +31,37 @@ Currently, HeartView works with data collected from the Actiwave Cardio, Empatic
 <br>Generate segment-by-segment information about missing and invalid data.
 
 ## Installation
+1. Clone the HeartView GitHub repository into a directory of your choice.
 ```
 cd <directory>  # replace <directory> with your directory
+```
+```
 git clone https://github.com/cbslneu/heartview.git
+```
+2. Set up and activate a virtual environment in the `heartview` project directory.
+```
+python3 -m venv venv
+```
+```
+source venv/bin/activate
+```
+3. Install all project dependencies.
+```
+pip install -r requirements.txt
 ```
 
 ## HeartView Dashboard
 ### Executing
-Open your command line interface and type in:
-```
-cd /<directory>/heartview
-```
+1. Within the activated virtual environment 
+(i.e., `source <directory>/heartview/venv/bin/activate`), run the command:
 ```
 python3 app.py
 ```
-Open your web browser and go to: http://127.0.0.1:8050/
+2. Open your web browser and go to: http://127.0.0.1:8050/
 
 ### Terminating
-Within your command line interface, type `CTRL`+`c`.
+In your command line interface:
+1. Press `CTRL`+`c`.  
+
+Then type:
+2. `deactivate`
