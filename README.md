@@ -62,6 +62,4 @@ python3 app.py
 ### Terminating
 In your command line interface:
 1. Press `CTRL`+`c`.  
-
-Then type:
 2. `deactivate`
