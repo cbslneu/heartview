@@ -38,16 +38,20 @@ cd <directory>  # replace <directory> with your directory
 ```
 git clone https://github.com/cbslneu/heartview.git
 ```
-2. Set up and activate a virtual environment in the `heartview` project directory.
+2. Set up and activate a virtual environment running Python 3.9 in the `heartview` project directory.  
+❗️**Note:** If you do not have `virtualenv` installed, run `pip3 install virtualenv` before proceeding below.
 ```
-python3 -m venv venv
+cd heartview
+```
+```
+virtualenv venv -p python3.9
 ```
 ```
 source venv/bin/activate
 ```
 3. Install all project dependencies.
 ```
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 ## HeartView Dashboard
@@ -60,6 +64,5 @@ python3 app.py
 2. Open your web browser and go to: http://127.0.0.1:8050/
 
 ### Terminating
-In your command line interface:
-1. Press `CTRL`+`c`.  
-2. `deactivate`
+1. Kill the dashboard program: press `CTRL`+`c`.
+2. Exit the virtual environment: `deactivate`.
