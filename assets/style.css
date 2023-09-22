@@ -346,6 +346,11 @@ label {
 }
 
 /* ============================ SUMMARY TABLE ============================= */
+.table {
+    --bs-table-bg: #f0e7ec;
+    --bs-body-color: #313c42;
+}
+
 table, tbody {
     margin-top: 15px;
     border: 0 !important;
