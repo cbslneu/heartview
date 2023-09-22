@@ -38,7 +38,7 @@ cd <directory>  # replace <directory> with your directory
 ```
 git clone https://github.com/cbslneu/heartview.git
 ```
-2. Set up and activate a virtual environment running Python 3.9 in the `heartview` project directory.  
+2. Set up and activate a virtual environment in the `heartview` project directory.  
 ❗️**Note:** If you do not have `virtualenv` installed, run `pip3 install virtualenv` before proceeding below.
 ```
 cd heartview
