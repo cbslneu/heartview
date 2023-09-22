@@ -12,7 +12,7 @@
 
 HeartView is a Python-based **signal quality assessment pipeline and dashboard** that visualizes and summarizes segment-by-segment quantification of missing and invalid beats in wearable electrocardiograph (ECG) and photoplethysmograph (PPG) data obtained in research contexts.  
 
-In contrast to other existing tools, HeartView provides a graphical user interface intended to increase efficiency and accessibility for a wider range of researchers who may not otherwise be able to conduct rigorous quality assessment on their data. We aim to help researchers make more informed decisions about later data cleaning and processing procedures and the reliabiltiy of their data when wearable biosensor systems are used.  
+In contrast to other existing tools, HeartView provides a graphical user interface intended to increase efficiency and accessibility for a wider range of researchers who may not otherwise be able to conduct rigorous quality assessment on their data. As such, HeartView is meant as a diagnostic tool for pre- and post-artifact correction of cardiovascular data. We aim to help researchers make more informed decisions about later data cleaning and processing procedures and the reliabiltiy of their data when wearable biosensor systems are used.  
 
 Currently, HeartView works with data collected from the Actiwave Cardio, Empatica E4, and other ECG devices outputting data in comma-separated value (CSV) format.
 
