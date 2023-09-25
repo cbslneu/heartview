@@ -30,6 +30,6 @@ setuptools.setup(
     packages = setuptools.find_packages(),
     install_requires = requirements,
     url = 'https://github.com/cbslneu/heartview',
-    python_requires = '>=3.9'
+    python_requires = '>=3.8.6'
 )
 
