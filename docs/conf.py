@@ -30,8 +30,15 @@ pygments_style = 'friendly'
 
 html_theme = 'agogo'
 html_static_path = ['_static']
-# html_theme_options = {
-# }
 html_logo = '../assets/heartview-logo.png'
 html_favicon = '../assets/favicon.ico'
 html_css_files = ['css/custom.css']
+
+# -- Options for LaTeX output ------------------------------------------------
+authors = 'Natasha Yamane, Varun Mishra, and Matthew S. Goodwin'
+toctree_only = True
+latex_documents = [
+    ('heartview_doc', 'heartview.tex', 'HeartView Documentation',
+     authors.replace(', ', '\\and ').replace(' and ', '\\and and '),
+     'manual', toctree_only)
+]
