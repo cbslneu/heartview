@@ -1,6 +1,6 @@
 from os import environ
 from dash import Dash, DiskcacheManager, CeleryManager
-from heartview.default import _clear_temp
+from heartview.heartview import _clear_temp
 from heartview.layout import layout
 from heartview.callbacks import get_callbacks
 import dash_bootstrap_components as dbc
