@@ -165,7 +165,7 @@ layout = html.Div(id = 'main', children = [
     # NAVIGATION BAR
     html.Div(className = 'banner', children = [
        dbc.Row(children = [
-           dbc.Col(html.Img(src = 'assets/heartview-logo.png',
+           dbc.Col(html.Img(src = 'assets/dark-heartview-logo.png',
                             className = 'logo')),
            dbc.Col(html.Div(html.A('Documentation', href = '#')),
                    width = 3),
