@@ -5,7 +5,18 @@ import numpy as np
 import datetime as dt
 
 def get_fs(edf):
-    """Get ECG sampling rate from an Actiwave Cardio device."""
+    """Get ECG sampling rate from an Actiwave Cardio device.
+
+    Parameters
+    ----------
+    edf : str
+        The path of the Actiwave Cardio EDF file.
+
+    Returns
+    -------
+    fs : int, float
+        The sampling rate of the Actiwave Cardio recording.
+    """
     f = pyedflib.EdfReader(edf)
     signal_labels = f.getSignalLabels()
     for chn in range(len(signal_labels)):
@@ -16,13 +27,12 @@ def get_fs(edf):
     return fs
 
 def read_actiwave(edf):
-    """
-    Read ECG and acceleration data from an Actiwave Cardio device.
+    """Read ECG and acceleration data from an Actiwave Cardio device.
 
     Parameters
     ----------
     edf : str
-        The path to the EDF file.
+        The path of the Actiwave Cardio EDF file.
 
     Returns
     -------
@@ -31,8 +41,8 @@ def read_actiwave(edf):
     acc : pd.DataFrame
         The acceleration data containing 'Timestamp', 'X', 'Y', and 'Z'
         columns.
-
     """
+
     f = pyedflib.EdfReader(edf)
     start = dt.datetime.timestamp(f.getStartdatetime())
     end = start + f.getFileDuration()
@@ -89,8 +99,14 @@ def baseline_muscle_filter(data, lowcut, highcut, fs, order = 4):
         The sampling rate of the signal recording.
     order : int
         The filter order, i.e., the number of samples required to
-        produce the desired filtered output; by default, 4.
+        produce the desired filtered output; by default, 4.'
+
+    Returns
+    -------
+    filtered : array_like
+        An array containing the filtered signal data.
     """
+
     if fs <= 90:
         nyq = 0.91 * fs
     else:
@@ -99,6 +115,7 @@ def baseline_muscle_filter(data, lowcut, highcut, fs, order = 4):
     low = lowcut / nyq
     b, a = butter(order, [low, high], btype = 'bandpass')
     filtered = filtfilt(b, a, data)
+
     return filtered
 
 # POWERLINE INTERFERENCE NOTCH FILTER AT 60 Hz
@@ -112,19 +129,22 @@ def powerline_int_filter(data, fs, q, freq = 60):
     fs : int, float
         The sampling rate of the signal recording.
     q : float
-        The quality factor, i.e., how narrow or wide the stopband is for
-        a notch filter. A higher quality factor indicates a narrower
-        bandpass.
+        The quality factor, i.e., how narrow or wide the stopband is
+        for a notch filter. A higher quality factor indicates a
+        narrower bandpass.
     freq : int, float
-        The frequency to filter out (e.g., 50 or 60 Hz); by default, 60 Hz.
+        The frequency to filter out (e.g., 50 or 60 Hz); by default,
+        60 Hz.
 
     Returns
     -------
     filtered : array_like
         An array containing the filtered signal data.
     """
+
     b, a = iirnotch(freq, q, fs)
     filtered = filtfilt(b, a, data)
+
     return filtered
 
 # SHANNON ENERGY R PEAK DETECTION FUNCTION
@@ -147,6 +167,7 @@ def detect_rpeaks(df, signal, fs):
     id_maxes : np.array
         Array containing the index locations of all detected peaks.
     """
+
     array = np.array(df[signal])
     # Eq. 1 - Differentiate the filtered signal
     dn = (np.append(array[1:], 0) - array)
@@ -216,7 +237,6 @@ def detect_rpeaks(df, signal, fs):
             id_maxes = np.append(id_maxes, peak_loc)
 
     # df.loc[id_maxes, 'Peak'] = 1
-
     return id_maxes
 
 # IBI EXTRACTION
@@ -237,6 +257,7 @@ def compute_ibis(data, ts_col, peaks_ix):
     ibi : pd.DataFrame
         A data frame containing timestamps and IBI values.
     """
+
     df = data.copy()
     df.index = df.index.astype(int)
 
@@ -323,4 +344,5 @@ def get_seconds(df, peaks_col, fs, seg_size):
     interval_data.insert(
         interval_data.shape[1], 'Invalid', interval_data['Mean HR'].apply(
             lambda x: 1 if x < 30 or x > 220 else 0))
+
     return interval_data

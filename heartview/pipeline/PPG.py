@@ -4,13 +4,38 @@ import datetime as dt
 from zipfile import ZipFile, ZipExtFile
 
 def get_fs(file):
-    """Get the sampling rate from an Empatica E4 file."""
+    """Get the sampling rate from an Empatica E4 file.
+
+    Parameters
+    ----------
+    file : str
+        The path of the Empatica E4 file.
+
+    Returns
+    -------
+    fs : int, float
+        The sampling rate of the Empatica E4 recording.
+    """
+
     contents = pd.read_csv(file, header = None, nrows = 2, usecols = [0])
     fs = contents.iloc[1].item()
+
     return fs
 
 def get_start_time(file):
-    """Get the Unix-formatted start time of an Empatica E4 recording."""
+    """Get the Unix-formatted start time of an Empatica E4 recording.
+
+    Parameters
+    ----------
+    file : str
+        The path of the Empatica E4 file.
+
+    Returns
+    -------
+    start : int
+        The Unix timestamp of the recording start time.
+    """
+
     contents = pd.read_csv(file, header = None, nrows = 2, usecols = [0])
     if type(file) is ZipExtFile:
         if 'IBI' in file.name:
@@ -22,10 +47,24 @@ def get_start_time(file):
             start = contents.loc[0, 0]
         else:
             start = contents.iloc[0].item()
+
     return start
 
 def preprocess_e4(e4_zip):
-    """Pre-process Empatica E4 data."""
+    """Pre-process Empatica E4 data.
+
+    Parameters
+    ----------
+    e4_zip : str
+        The path of the Empatica E4 archive file ending in .zip.
+
+    Returns
+    -------
+    e4_data : dict
+        A dictionary containing all pre-processed BVP, HR, IBI, and
+        ACC data, as well as the sampling rate and start time of the
+        recording.
+    """
 
     with ZipFile(e4_zip) as z:
         bvp = pd.read_csv(z.open('BVP.csv'), header = 1, names = ['BVP'])
@@ -84,7 +123,23 @@ def preprocess_e4(e4_zip):
     return e4_data
 
 def get_e4_peaks(ibi, fs, start_time):
-    """Get peak locations from Empatica E4 IBI file."""
+    """Get HR values and peak locations from Empatica E4 IBI data.
+
+    Parameters
+    ----------
+    ibi : pandas.DataFrame
+        The DataFrame containing the pre-processed IBI data.
+    fs : int, float
+        The sampling rate of the Empatica E4 recording.
+    start_time : int
+        The Unix timestamp of the recording start time.
+
+    Returns
+    -------
+    df : pandas.DataFrame
+        A DataFrame containing peak occurrence and IBI and HR values
+        at each timepoint.
+    """
 
     ibi['IBI'] = ibi['IBI'] * 1000
     ibi['HR'] = 60000 / ibi['IBI']
@@ -107,7 +162,22 @@ def get_e4_peaks(ibi, fs, start_time):
     return df
 
 def get_e4_interval_data(df, seg_size):
-    """Get second-by-second HR values from Empatica E4 IBI values."""
+    """Get second-by-second HR values from Empatica E4 IBI data.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The DataFrame output from `get_e4_peaks`.
+    seg_size : int
+        The window size of each segment.
+
+    Returns
+    -------
+    interval_data : pandas.DataFrame
+        A DataFrame containing second-by-second HR and IBI values and
+        peak counts.
+    """
+
     interval_data = pd.DataFrame()
     for s in df['Second'].unique().tolist():
         subset = df.loc[df['Second'].between(s, s + 1)]
@@ -129,4 +199,5 @@ def get_e4_interval_data(df, seg_size):
         )], ignore_index = True)
     interval_data.insert(0, 'Segment', interval_data['Second'].apply(
         lambda x: (x // seg_size) + 1))
+
     return interval_data
