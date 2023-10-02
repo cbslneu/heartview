@@ -38,7 +38,7 @@ html_css_files = ['css/custom.css']
 authors = 'Natasha Yamane, Varun Mishra, and Matthew S. Goodwin'
 toctree_only = True
 latex_documents = [
-    ('heartview_doc', 'heartview.tex', 'HeartView Documentation',
+    ('index', 'heartview.tex', 'HeartView Documentation',
      authors.replace(', ', '\\and ').replace(' and ', '\\and and '),
      'manual', toctree_only)
 ]
