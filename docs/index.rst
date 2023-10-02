@@ -26,11 +26,3 @@
    :caption: HeartView Dashboard
 
    dashboard
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

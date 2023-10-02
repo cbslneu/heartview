@@ -28,13 +28,14 @@ pygments_style = 'friendly'
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'furo'
+html_title = 'Documentation'
 html_static_path = ['_static']
 html_theme_options = {
-    'logo_only': True,
-    'display_version': False,
-    'style_nav_header_background': '#313c42',
+    'source_repository': 'https://github.com/cbslneu/heartview/',
+    'source_branch': 'main',
+    'source_directory': 'docs/',
+    'light_logo': 'light-heartview-logo.png',
+    'dark_logo': 'dark-heartview-logo.png',
 }
-html_logo = '../assets/heartview-logo.png'
 html_favicon = '../assets/favicon.ico'
-html_css_files = ['css/custom.css']

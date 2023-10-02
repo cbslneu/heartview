@@ -1,3 +1,5 @@
+|
+
 .. image:: https://badgen.net/badge/python/3.9+/cyan
 .. image:: https://badgen.net/badge/license/GPL-3.0/orange
 .. image:: https://badgen.net/badge/contributions/welcome/green
@@ -45,7 +47,7 @@ The HeartView source code is available from |GitHub|:
 
 ::
 
-   git clone https://github.com/cbslneu/heartview.git
+   $ git clone https://github.com/cbslneu/heartview.git
 
 See :doc:`installation` for further info.
 
