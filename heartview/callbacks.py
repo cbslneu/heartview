@@ -1,7 +1,7 @@
 from dash import html, Input, Output, State, ctx, callback
 from dash.exceptions import PreventUpdate
 from heartview.pipeline import ECG, PPG, SQA, ACC
-from heartview import default
+from heartview import heartview
 from os import listdir, stat, path
 from math import ceil
 from time import sleep
@@ -35,7 +35,7 @@ def get_callbacks(app):
         filename = f'{temp}/{session}/{file}'
 
         if filenames[0].endswith(('edf', 'EDF')):
-            if default._check_edf(filenames[0]) == 'ECG':
+            if heartview._check_edf(filenames[0]) == 'ECG':
                 file_check = [
                     html.I(className = 'fa-solid fa-circle-check',
                            style = {'color': '#63e6be', 'marginRight': '5px'}),
@@ -111,7 +111,7 @@ def get_callbacks(app):
         id = 'config-uploader'
     )
     def db_get_config_file(cfg_file):
-        configs = default._load_config(cfg_file[0])
+        configs = heartview._load_config(cfg_file[0])
         return configs
 
     # =================== POPULATE DATA VARIABLE DROPDOWNS ====================
@@ -173,11 +173,11 @@ def get_callbacks(app):
                     if toggle_config_on:
                         pass
                     else:
-                        drop1 = default._get_csv_headers(data['filename'])
-                        drop2 = default._get_csv_headers(data['filename'])
-                        drop3 = default._get_csv_headers(data['filename'])
-                        drop4 = default._get_csv_headers(data['filename'])
-                        drop5 = default._get_csv_headers(data['filename'])
+                        drop1 = heartview._get_csv_headers(data['filename'])
+                        drop2 = heartview._get_csv_headers(data['filename'])
+                        drop3 = heartview._get_csv_headers(data['filename'])
+                        drop4 = heartview._get_csv_headers(data['filename'])
+                        drop5 = heartview._get_csv_headers(data['filename'])
                         filters = []
                         seg_size = 60
                         fs = 1000
@@ -288,7 +288,7 @@ def get_callbacks(app):
         if n:
             device = data['type'] if data['type'] != 'csv' else 'Other'
             headers = {'Timestamp': d1, 'ECG': d2, 'X': d3, 'Y': d4, 'Z': d5}
-            json_object = default._create_configs(
+            json_object = heartview._create_configs(
                 device, fs, seg_size, filters, headers)
             download = {'content': json_object, 'filename': f'{filename}.json'}
             return [download, 1]
@@ -544,22 +544,22 @@ def get_callbacks(app):
                         seg_num = slider[0]
                         seg_n = (slider[1] - slider[0]) * (seg_size / 60)
                         if seg_num == slider_max:
-                            acc_plot = default.plot_signal(
+                            acc_plot = heartview.plot_signal(
                                 acc, 'Timestamp', 'Magnitude', fs,
                                 seg_size, seg_num, 1, 'acc')
                         else:
-                            acc_plot = default.plot_signal(
+                            acc_plot = heartview.plot_signal(
                                 acc, 'Timestamp', 'Magnitude', fs,
                                 seg_size, seg_num, seg_n, 'acc')
                     else:
-                        acc_plot = default.plot_signal(
+                        acc_plot = heartview.plot_signal(
                             acc, 'Timestamp', 'Magnitude', fs,
                             seg_size, round(n_seg * 0.5), 1, 'acc')
                     return [inactive, inactive, active,
                             None, device, file, table, acc_plot]
                 else:
                     return [inactive, inactive, active, None, device, file,
-                            table, default._blank_fig('none')]
+                            table, heartview._blank_fig('none')]
 
             # IBI Plots
             elif db_input == 'load-ibi':
@@ -569,16 +569,16 @@ def get_callbacks(app):
                     seg_num = slider[0]
                     seg_n = (slider[1] - slider[0]) * (seg_size / 60)
                     if seg_num == slider_max:
-                        ibi_plot = default.plot_signal(
+                        ibi_plot = heartview.plot_signal(
                             ibi, 'Timestamp', 'IBI', 1,
                             seg_size, seg_num, 1, 'ibi')
                     else:
-                        ibi_plot = default.plot_signal(
+                        ibi_plot = heartview.plot_signal(
                             ibi, 'Timestamp', 'IBI', 1,
                             seg_size, seg_num, seg_n, 'ibi'
                     )
                 else:
-                    ibi_plot = default.plot_signal(
+                    ibi_plot = heartview.plot_signal(
                         ibi, 'Timestamp', 'IBI', 1,
                         seg_size, round(n_seg * 0.5), 1, 'ibi')
 
@@ -594,32 +594,32 @@ def get_callbacks(app):
                     if data['type'] == 'E4':
                         bvp = pd.read_csv(f'./temp/{file}_BVP.csv')
                         if seg_num == slider_max:
-                            raw_plot = default.plot_signal(
+                            raw_plot = heartview.plot_signal(
                                 bvp, 'Timestamp', 'BVP', fs,
                                 seg_size, seg_num, 1, 'bvp', 'Peak')
                         else:
-                            raw_plot = default.plot_signal(
+                            raw_plot = heartview.plot_signal(
                                 bvp, 'Timestamp', 'BVP', fs,
                                 seg_size, seg_num, seg_n, 'bvp', 'Peak')
                     else:
                         ecg = pd.read_csv(f'./temp/{file}_ECG.csv')
                         if seg_num == slider_max:
-                            raw_plot = default.plot_signal(
+                            raw_plot = heartview.plot_signal(
                                 ecg, 'Timestamp', 'ECG', fs,
                                 seg_size, seg_num, 1, 'ecg', 'Peak')
                         else:
-                            raw_plot = default.plot_signal(
+                            raw_plot = heartview.plot_signal(
                                 ecg, 'Timestamp', 'ECG', fs,
                                 seg_size, seg_num, seg_n, 'ecg', 'Peak')
                 else:
                     if data['type'] == 'E4':
                         bvp = pd.read_csv(f'./temp/{file}_BVP.csv')
-                        raw_plot = default.plot_signal(
+                        raw_plot = heartview.plot_signal(
                             bvp, 'Timestamp', 'BVP', fs,
                             seg_size, round(n_seg * 0.5), 1, 'bvp', 'Peak')
                     else:
                         ecg = pd.read_csv(f'./temp/{file}_ECG.csv')
-                        raw_plot = default.plot_signal(
+                        raw_plot = heartview.plot_signal(
                             ecg, 'Timestamp', 'ECG', fs,
                             seg_size, round(n_seg * 0.5), 1, 'ecg', 'Peak'
                         )
@@ -658,6 +658,6 @@ def get_callbacks(app):
         else:
             file = data['filename']
             data_type = data['type']
-            default._export_sqa(file, data_type, file_type.lower())
+            heartview._export_sqa(file, data_type, file_type.lower())
             sleep(1.0)
             return [True, False, True, False]

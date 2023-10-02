@@ -1,5 +1,5 @@
 from dash import html, dcc
-from heartview import default
+from heartview import heartview
 import dash_bootstrap_components as dbc
 import dash_daq as daq
 import dash_uploader as du
@@ -192,7 +192,7 @@ layout = html.Div(id = 'main', children = [
                 html.Span('Filename:', className = 'data-about'),
                 html.Span('<file>', className = 'data-label', id = 'filename')]),
             html.Div(className = 'data-summary-divs', id = 'summary-table',
-                     children = [default._blank_table()]),
+                     children = [heartview._blank_table()]),
 
             # Data Summary Exporter
             html.Div(children = [
@@ -244,7 +244,7 @@ layout = html.Div(id = 'main', children = [
             html.H2('Expected-to-Missing Beats'),
             html.Div(className = 'figs', children = [
                 dcc.Graph(id = 'peaks',
-                          figure = default._blank_fig('pending'),
+                          figure = heartview._blank_fig('pending'),
                           style = {'height': '268px'})
             ]),
         ]),
@@ -267,7 +267,7 @@ layout = html.Div(id = 'main', children = [
             html.Div(className = 'figs', children = [
                 dcc.Loading(type = 'circle', color = '#3a4952', children = [
                     dcc.Graph(id = 'raw-data',
-                              figure = default._blank_fig('pending'),
+                              figure = heartview._blank_fig('pending'),
                               style = {'height': '300px'})
                 ])
             ])
