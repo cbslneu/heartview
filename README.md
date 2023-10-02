@@ -44,7 +44,7 @@ git clone https://github.com/cbslneu/heartview.git
 cd heartview
 ```
 ```
-virtualenv venv -p python3.9
+virtualenv venv -p python3
 ```
 ```
 source venv/bin/activate
