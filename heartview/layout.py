@@ -167,9 +167,15 @@ layout = html.Div(id = 'main', children = [
        dbc.Row(children = [
            dbc.Col(html.Img(src = 'assets/dark-heartview-logo.png',
                             className = 'logo')),
-           dbc.Col(html.Div(html.A('Documentation', href = '#')),
+           dbc.Col(html.Div(html.A(
+               'Documentation',
+               href = 'https://heartview.readthedocs.io/en/latest/',
+               target = '_blank')),
                    width = 3),
-           dbc.Col(html.Div(html.A('Contribute', href = '#')),
+           dbc.Col(html.Div(html.A(
+               'Contribute',
+               href = 'https://heartview.readthedocs.io/en/latest/contribute.html',
+               target = '_blank')),
                    width = 3)
        ], justify = 'between')
     ]),
