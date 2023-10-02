@@ -6,6 +6,10 @@
 
 .. include:: intro.rst
 
+======================
+Documentation Overview
+======================
+
 .. toctree::
    :maxdepth: 2
    :caption: About HeartView
