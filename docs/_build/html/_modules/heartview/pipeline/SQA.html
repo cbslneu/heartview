@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>heartview.pipeline.SQA &mdash; HeartView 1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #313c42" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/heartview-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">About HeartView</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contribute</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">HeartView Pipeline</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">HeartView Dashboard</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Using the Dashboard</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #313c42" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">HeartView</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">heartview.pipeline.SQA</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for heartview.pipeline.SQA</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">plotly.graph_objects</span> <span class="k">as</span> <span class="nn">go</span>
+<span class="kn">import</span> <span class="nn">dash_bootstrap_components</span> <span class="k">as</span> <span class="nn">dbc</span>
+
+<div class="viewcode-block" id="evaluate_peaks">
+<a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.evaluate_peaks">[docs]</a>
+<span class="k">def</span> <span class="nf">evaluate_peaks</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the number of detected and expected number of peaks per segment.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pandas.DataFrame</span>
+<span class="sd">        The input data frame containing the second-by-second heart</span>
+<span class="sd">        rates, interbeat intervals, and peak counts.</span>
+<span class="sd">    seg_size : int</span>
+<span class="sd">        The segment size of each segment.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    peaks_by_seg : pandas.DataFrame</span>
+<span class="sd">        A DataFrame with the number of detected and the expected number</span>
+<span class="sd">        of peaks per segment.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">peaks_by_seg</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Segment&#39;</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span>
+                                           <span class="s1">&#39;Detected&#39;</span><span class="p">,</span> <span class="s1">&#39;Expected&#39;</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">seg</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">seg_size</span><span class="p">),</span> <span class="n">start</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">subset</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">n</span><span class="p">:</span> <span class="n">n</span> <span class="o">+</span> <span class="n">seg_size</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">detected</span> <span class="o">=</span> <span class="n">subset</span><span class="p">[</span><span class="s1">&#39;# R Peaks&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">expected</span> <span class="o">=</span> <span class="n">subset</span><span class="p">[</span><span class="s1">&#39;Mean HR&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">median</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="n">seg_size</span> <span class="o">/</span> <span class="mi">60</span><span class="p">)</span>
+        <span class="n">peaks_by_seg</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">peaks_by_seg</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">([{</span>
+            <span class="s1">&#39;Segment&#39;</span><span class="p">:</span> <span class="n">seg</span><span class="p">,</span>
+            <span class="s1">&#39;Timestamp&#39;</span><span class="p">:</span> <span class="n">subset</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;Detected&#39;</span><span class="p">:</span> <span class="n">detected</span><span class="p">,</span>
+            <span class="s1">&#39;Expected&#39;</span><span class="p">:</span> <span class="n">expected</span>
+        <span class="p">}])],</span> <span class="n">ignore_index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">peaks_by_seg</span></div>
+
+
+<div class="viewcode-block" id="compute_metrics">
+<a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.compute_metrics">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_metrics</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute SQA metrics by segment from the `peaks_by_seg` output.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pandas.DataFrame</span>
+<span class="sd">        The DataFrame containing the number of detected and the expected</span>
+<span class="sd">        number of peaks per segment.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    metrics : pandas.DataFrame</span>
+<span class="sd">        A DataFrame with computed SQA metrics per segment.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">metrics</span><span class="p">[[</span><span class="s1">&#39;Invalid&#39;</span><span class="p">,</span> <span class="s1">&#39;Missing&#39;</span><span class="p">,</span> <span class="s1">&#39;% Missing&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">metrics</span><span class="p">)):</span>
+        <span class="n">det</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="s1">&#39;Detected&#39;</span><span class="p">]</span>
+        <span class="n">exp</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="s1">&#39;Expected&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Label invalid segments</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">det</span> <span class="o">&lt;</span> <span class="mi">30</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">det</span> <span class="o">&gt;</span> <span class="mi">220</span><span class="p">):</span>
+            <span class="n">metrics</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="s1">&#39;Invalid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c1"># Compute missing peaks</span>
+        <span class="k">if</span> <span class="n">det</span> <span class="o">&lt;</span> <span class="n">exp</span><span class="p">:</span>
+            <span class="n">metrics</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="s1">&#39;Missing&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">det</span> <span class="o">-</span> <span class="n">exp</span><span class="p">)</span>
+            <span class="n">metrics</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="s1">&#39;% Missing&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">det</span> <span class="o">-</span> <span class="n">exp</span><span class="p">)</span> <span class="o">/</span> <span class="n">exp</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span>
+
+    <span class="k">return</span> <span class="n">metrics</span></div>
+
+
+<div class="viewcode-block" id="plot_expected2missing">
+<a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.plot_expected2missing">[docs]</a>
+<span class="k">def</span> <span class="nf">plot_expected2missing</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plot the expected-to-missing beats chart.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pandas.DataFrame</span>
+<span class="sd">        The DataFrame containing SQA metrics per segment.</span>
+<span class="sd">    title : str</span>
+<span class="sd">        The title of the chart; by default, None.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    fig : plotly.graph_objects.Figure</span>
+<span class="sd">        The resulting figure of expected-to-missing beats per segment.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">valid</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">Invalid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">go</span><span class="o">.</span><span class="n">Bar</span><span class="p">(</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Expected Peaks&#39;</span><span class="p">,</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">valid</span><span class="p">,</span> <span class="s1">&#39;Segment&#39;</span><span class="p">],</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">valid</span><span class="p">,</span> <span class="s1">&#39;Expected&#39;</span><span class="p">],</span>
+            <span class="n">marker</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#f2ce4b&#39;</span><span class="p">),</span>
+            <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;Segment %</span><span class="si">{x}</span><span class="s1">:&lt;/b&gt; %</span><span class="si">{y:.0f}</span><span class="s1"> &#39;</span>
+                            <span class="s1">&#39;expected beats&lt;extra&gt;&lt;/extra&gt;&#39;</span>
+        <span class="p">),</span>
+        <span class="n">go</span><span class="o">.</span><span class="n">Bar</span><span class="p">(</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Missing Peaks&#39;</span><span class="p">,</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">valid</span><span class="p">,</span> <span class="s1">&#39;Segment&#39;</span><span class="p">],</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">valid</span><span class="p">,</span> <span class="s1">&#39;Missing&#39;</span><span class="p">],</span>
+            <span class="n">opacity</span> <span class="o">=</span> <span class="mf">0.7</span><span class="p">,</span>
+            <span class="n">marker</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#fa2a0a&#39;</span><span class="p">),</span>
+            <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;Segment %</span><span class="si">{x}</span><span class="s1">:&lt;/b&gt; %</span><span class="si">{y:.0f}</span><span class="s1"> &#39;</span>
+                            <span class="s1">&#39;missing beats&lt;extra&gt;&lt;/extra&gt;&#39;</span>
+        <span class="p">)</span>
+    <span class="p">])</span>
+
+    <span class="n">invalid</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">Invalid</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_traces</span><span class="p">(</span>
+        <span class="n">go</span><span class="o">.</span><span class="n">Bar</span><span class="p">(</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">invalid</span><span class="p">,</span> <span class="s1">&#39;Segment&#39;</span><span class="p">],</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">invalid</span><span class="p">,</span> <span class="s1">&#39;Detected&#39;</span><span class="p">],</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Invalid Segment&#39;</span><span class="p">,</span>
+            <span class="n">width</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span>
+            <span class="n">marker_color</span> <span class="o">=</span> <span class="s1">&#39;#e8e8e8&#39;</span><span class="p">,</span>
+            <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;Segment %</span><span class="si">{x}</span><span class="s1">:&lt;/b&gt; %</span><span class="si">{y:.0f}</span><span class="s1"> &#39;</span>
+                            <span class="s1">&#39;detected beats&lt;extra&gt;&lt;/extra&gt;&#39;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+        <span class="n">xaxis_title</span> <span class="o">=</span> <span class="s1">&#39;Segment Number&#39;</span><span class="p">,</span>
+        <span class="n">yaxis_title</span> <span class="o">=</span> <span class="s1">&#39;Number of Beats&#39;</span><span class="p">,</span>
+        <span class="n">xaxis</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">tickmode</span> <span class="o">=</span> <span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="n">dtick</span> <span class="o">=</span> <span class="mi">5</span><span class="p">),</span>
+        <span class="n">margin</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">t</span> <span class="o">=</span> <span class="mi">80</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="mi">20</span><span class="p">),</span>
+        <span class="n">barmode</span> <span class="o">=</span> <span class="s1">&#39;overlay&#39;</span><span class="p">,</span>
+        <span class="n">template</span> <span class="o">=</span> <span class="s1">&#39;plotly_white&#39;</span><span class="p">,</span>
+        <span class="n">legend</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">orientation</span> <span class="o">=</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span>
+            <span class="n">yanchor</span> <span class="o">=</span> <span class="s1">&#39;bottom&#39;</span><span class="p">,</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+            <span class="n">xanchor</span> <span class="o">=</span> <span class="s1">&#39;right&#39;</span><span class="p">,</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="n">title</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+<div class="viewcode-block" id="display_summary_table">
+<a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.display_summary_table">[docs]</a>
+<span class="k">def</span> <span class="nf">display_summary_table</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Display the SQA summary table.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pandas.DataFrame</span>
+<span class="sd">        The DataFrame containing the SQA metrics per segment.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    table : dash_bootstrap_components.Table</span>
+<span class="sd">        Summary table for SQA metrics.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">missing_n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Missing&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="n">invalid_n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Invalid&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">avg_missing</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0:.2f}</span><span class="s1">%&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;% Missing&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+
+    <span class="n">summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+        <span class="s1">&#39;Signal Quality Metrics&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Segments with Missing Beats&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;Segments with Invalid Beats&#39;</span><span class="p">,</span>
+                                   <span class="s1">&#39;Average % Missing Beats/Segment&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">missing_n</span><span class="p">,</span> <span class="n">invalid_n</span><span class="p">,</span> <span class="n">avg_missing</span><span class="p">]</span>
+    <span class="p">})</span>
+
+    <span class="n">summary</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;Signal Quality Metrics&#39;</span><span class="p">,</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">table</span> <span class="o">=</span> <span class="n">dbc</span><span class="o">.</span><span class="n">Table</span><span class="o">.</span><span class="n">from_dataframe</span><span class="p">(</span>
+        <span class="n">summary</span><span class="p">,</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">className</span> <span class="o">=</span> <span class="s1">&#39;segmentTable&#39;</span><span class="p">,</span>
+        <span class="n">striped</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">hover</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">bordered</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">table</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Natasha Yamane, Varun Mishra, and Matthew S. Goodwin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

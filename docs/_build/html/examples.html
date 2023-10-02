@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Examples &mdash; HeartView 1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Using the Dashboard" href="dashboard.html" />
+    <link rel="prev" title="API Reference" href="api.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #313c42" >
+
+          
+          
+          <a href="index.html">
+            
+              <img src="_static/heartview-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">About HeartView</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contribute</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">HeartView Pipeline</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#reading-and-pre-processing-data">Reading and Pre-Processing Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#beat-detection">Beat Detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#signal-quality-assessment">Signal Quality Assessment</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">HeartView Dashboard</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dashboard.html">Using the Dashboard</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #313c42" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">HeartView</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Examples</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/examples.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h1>
+<p>Below are examples of how you can use functions from the HeartView pipeline on
+your data. Alternatively, see our <a href="https://github.com/cbslneu/heartview/tree/main/examples" target="_blank">Jupyter notebooks</a> for full a full
+walk-through for each type of data.</p>
+<section id="reading-and-pre-processing-data">
+<h2>Reading and Pre-Processing Data<a class="headerlink" href="#reading-and-pre-processing-data" title="Link to this heading"></a></h2>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Actiwave Cardio</div></p>
+<p>Extract and pre-process data from an Actiwave Cardio device.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heartview.pipeline</span> <span class="kn">import</span> <span class="n">ECG</span>
+
+<span class="n">edf</span> <span class="o">=</span> <span class="s1">&#39;sample_actiwave_data.edf&#39;</span>
+<span class="n">ecg</span><span class="p">,</span> <span class="n">acc</span> <span class="o">=</span> <span class="n">ECG</span><span class="o">.</span><span class="n">read_actiwave</span><span class="p">(</span><span class="n">edf</span><span class="p">)</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">ecg</span><span class="o">.</span><span class="n">head</span><span class="p">(),</span> <span class="n">acc</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>Output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>                   <span class="n">Timestamp</span>        <span class="n">mV</span>
+<span class="mi">0</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">19</span> <span class="mi">10</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mf">00.000000</span> <span class="o">-</span><span class="mf">0.053957</span>
+<span class="mi">1</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">19</span> <span class="mi">10</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mf">00.000977</span> <span class="o">-</span><span class="mf">0.058344</span>
+<span class="mi">2</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">19</span> <span class="mi">10</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mf">00.001953</span> <span class="o">-</span><span class="mf">0.046353</span>
+<span class="mi">3</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">19</span> <span class="mi">10</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mf">00.002930</span> <span class="o">-</span><span class="mf">0.036410</span>
+<span class="mi">4</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">19</span> <span class="mi">10</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mf">00.003906</span> <span class="o">-</span><span class="mf">0.036994</span>
+
+                   <span class="n">Timestamp</span>         <span class="n">X</span>         <span class="n">Y</span>          <span class="n">Z</span>  <span class="n">Magnitude</span>
+<span class="mi">0</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">19</span> <span class="mi">10</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mf">00.000000</span> <span class="o">-</span><span class="mf">0.460020</span> <span class="o">-</span><span class="mf">0.876585</span>  <span class="mf">10.064994</span>  <span class="mf">10.113562</span>
+<span class="mi">1</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">19</span> <span class="mi">10</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mf">00.031250</span> <span class="o">-</span><span class="mf">0.358126</span> <span class="o">-</span><span class="mf">0.774691</span>  <span class="mf">10.064994</span>  <span class="mf">10.101114</span>
+<span class="mi">2</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">19</span> <span class="mi">10</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mf">00.062500</span> <span class="o">-</span><span class="mf">0.358126</span> <span class="o">-</span><span class="mf">0.876585</span>  <span class="mf">10.064994</span>  <span class="mf">10.109439</span>
+<span class="mi">3</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">19</span> <span class="mi">10</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mf">00.093750</span> <span class="o">-</span><span class="mf">0.358126</span> <span class="o">-</span><span class="mf">0.876585</span>  <span class="mf">10.064994</span>  <span class="mf">10.109439</span>
+<span class="mi">4</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">19</span> <span class="mi">10</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mf">00.125000</span> <span class="o">-</span><span class="mf">0.358126</span> <span class="o">-</span><span class="mf">0.876585</span>  <span class="mf">10.064994</span>  <span class="mf">10.109439</span>
+</pre></div>
+</div>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Empatica E4</div></p>
+<p>Extract and pre-process data from an Empatica E4 device. All pre-processed
+data are stored in a Python dictionary.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heartview.pipeline</span> <span class="kn">import</span> <span class="n">PPG</span>
+
+<span class="n">e4_zip</span> <span class="o">=</span> <span class="s1">&#39;sample_e4_data.zip&#39;</span>
+<span class="n">e4_data</span> <span class="o">=</span> <span class="n">PPG</span><span class="o">.</span><span class="n">preprocess_e4</span><span class="p">(</span><span class="n">e4_zip</span><span class="p">)</span>
+
+<span class="n">e4_data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Under construction</span>
+</pre></div>
+</div>
+</section>
+<section id="beat-detection">
+<h2>Beat Detection<a class="headerlink" href="#beat-detection" title="Link to this heading"></a></h2>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Actiwave Cardio and Other ECG Sources</div></p>
+<p>Detect R peaks from ECG data collected with the Actiwave Cardio and other
+sources. Note that ECG data from other sources will have to be read into a
+Pandas data frame prior to this step.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heartview.pipeline</span> <span class="kn">import</span> <span class="n">ECG</span>
+
+<span class="c1"># `ecg` = ECG DataFrame output from `ECG.read_actiwave()`</span>
+<span class="c1"># `&#39;mV&#39;` = name of column containing ECG values</span>
+<span class="n">ecg_fs</span> <span class="o">=</span> <span class="mi">1024</span>
+<span class="n">peak_loc</span> <span class="o">=</span> <span class="n">ECG</span><span class="o">.</span><span class="n">detect_rpeaks</span><span class="p">(</span><span class="n">ecg</span><span class="p">,</span> <span class="s1">&#39;mV&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="p">)</span>
+
+<span class="c1"># Save R peak occurrences</span>
+<span class="n">ecg</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">peak_loc</span><span class="p">,</span> <span class="s1">&#39;Peak&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Empatica E4</div></p>
+<p>Extract heartbeats from IBI data from the Empatica E4.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heartview.pipeline</span> <span class="kn">import</span> <span class="n">PPG</span>
+
+<span class="c1"># `e4_data` = output from `PPG.preprocess_e4()`</span>
+<span class="n">ibi</span> <span class="o">=</span> <span class="n">e4_data</span><span class="p">[</span><span class="s1">&#39;ibi&#39;</span><span class="p">]</span>
+<span class="n">e4_fs</span> <span class="o">=</span> <span class="n">e4_data</span><span class="p">[</span><span class="s1">&#39;fs&#39;</span><span class="p">]</span>
+<span class="n">start_time</span> <span class="o">=</span> <span class="n">e4_data</span><span class="p">[</span><span class="s1">&#39;start time&#39;</span><span class="p">]</span>
+
+<span class="n">e4_peaks</span> <span class="o">=</span> <span class="n">PPG</span><span class="o">.</span><span class="n">get_e4_peaks</span><span class="p">(</span><span class="n">ibi</span><span class="p">,</span> <span class="n">e4_fs</span><span class="p">,</span> <span class="n">start_time</span><span class="p">)</span>
+<span class="n">e4_peaks</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Under construction</span>
+</pre></div>
+</div>
+</section>
+<section id="signal-quality-assessment">
+<h2>Signal Quality Assessment<a class="headerlink" href="#signal-quality-assessment" title="Link to this heading"></a></h2>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Actiwave Cardio and Other ECG Sources</div></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heartview.pipeline</span> <span class="kn">import</span> <span class="n">ECG</span><span class="p">,</span> <span class="n">SQA</span>
+
+<span class="c1"># Get second-by-second data</span>
+<span class="n">ecg_fs</span> <span class="o">=</span> <span class="mi">1024</span>
+<span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span>  <span class="c1"># seconds</span>
+<span class="n">interval_data</span> <span class="o">=</span> <span class="n">ECG</span><span class="o">.</span><span class="n">get_seconds</span><span class="p">(</span><span class="n">ecg</span><span class="p">,</span> <span class="s1">&#39;Peak&#39;</span><span class="p">,</span> <span class="n">ecg_fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">)</span>
+
+<span class="c1"># Get the expected and detected numbers of peaks by segment</span>
+<span class="n">peaks_by_seg</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">evaluate_peaks</span><span class="p">(</span><span class="n">interval_data</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">)</span>
+
+<span class="n">peaks_by_seg</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Under construction</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="api.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="dashboard.html" class="btn btn-neutral float-right" title="Using the Dashboard" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Natasha Yamane, Varun Mishra, and Matthew S. Goodwin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

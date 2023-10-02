@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>heartview.heartview &mdash; HeartView 1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #313c42" >
+
+          
+          
+          <a href="../../index.html">
+            
+              <img src="../../_static/heartview-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">About HeartView</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contribute.html">Contribute</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">HeartView Pipeline</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">HeartView Dashboard</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../dashboard.html">Using the Dashboard</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #313c42" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">HeartView</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">heartview.heartview</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for heartview.heartview</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">listdir</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">remove</span><span class="p">,</span> <span class="n">makedirs</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">shutil</span> <span class="kn">import</span> <span class="n">rmtree</span>
+<span class="kn">from</span> <span class="nn">zipfile</span> <span class="kn">import</span> <span class="n">ZipFile</span>
+<span class="kn">import</span> <span class="nn">dash_bootstrap_components</span> <span class="k">as</span> <span class="nn">dbc</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pyedflib</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">plotly.graph_objects</span> <span class="k">as</span> <span class="nn">go</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="k">def</span> <span class="nf">_clear_temp</span><span class="p">():</span>
+    <span class="n">temp</span> <span class="o">=</span> <span class="s1">&#39;./temp&#39;</span>
+    <span class="n">temp_contents</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span> <span class="k">if</span>
+                     <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">f</span> <span class="o">!=</span> <span class="s1">&#39;00.txt&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">temp_contents</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">temp_contents</span> <span class="k">if</span>
+                 <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">f</span> <span class="o">!=</span> <span class="s1">&#39;00.txt&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+            <span class="n">remove</span><span class="p">(</span><span class="n">temp</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">f</span><span class="p">)</span>
+        <span class="n">sessions</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">temp_contents</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">sessions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">temp</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">s</span><span class="p">):</span>
+                <span class="n">rmtree</span><span class="p">(</span><span class="n">temp</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">s</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">temp</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">s</span><span class="p">):</span>
+                <span class="n">remove</span><span class="p">(</span><span class="n">temp</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">s</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+<span class="k">def</span> <span class="nf">_check_edf</span><span class="p">(</span><span class="n">edf</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether the EDF uploaded is a valid Actiwave Cardio file.&quot;&quot;&quot;</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">pyedflib</span><span class="o">.</span><span class="n">EdfReader</span><span class="p">(</span><span class="n">edf</span><span class="p">)</span>
+    <span class="n">signals</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">getSignalLabels</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="s1">&#39;ECG0&#39;</span> <span class="ow">in</span> <span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">signals</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;ECG&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;invalid&#39;</span>
+
+<span class="k">def</span> <span class="nf">_get_configs</span><span class="p">():</span>
+    <span class="n">cfg_dir</span> <span class="o">=</span> <span class="s1">&#39;./configs&#39;</span>
+    <span class="n">cfgs</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="n">cfg_dir</span><span class="p">)</span> <span class="k">if</span>
+            <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">f</span> <span class="o">!=</span> <span class="s1">&#39;00.txt&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cfgs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">cfgs</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+<span class="k">def</span> <span class="nf">_create_configs</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">,</span> <span class="n">filters</span><span class="p">:</span> <span class="nb">list</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span> <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a JSON-formatted configuration file of user</span>
+<span class="sd">    SQA parameters.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fs : int</span>
+<span class="sd">        The sampling rate of the recording.</span>
+<span class="sd">    seg_size : int</span>
+<span class="sd">        The window size of each segment, in seconds (e.g., 60).</span>
+<span class="sd">    filters : list, None</span>
+<span class="sd">        A list of ECG filters (i.e., &#39;powerline-interference&#39;</span>
+<span class="sd">        and/or &#39;baseline-wander&#39;)</span>
+<span class="sd">    headers : dict</span>
+<span class="sd">        A dictionary mapping data variables to headers in the</span>
+<span class="sd">        uploaded CSV file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Save user configuration</span>
+    <span class="n">configs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;device&quot;</span><span class="p">:</span> <span class="n">device</span><span class="p">,</span>
+               <span class="s2">&quot;sampling rate&quot;</span><span class="p">:</span> <span class="n">fs</span><span class="p">,</span>
+               <span class="s2">&quot;segment size&quot;</span><span class="p">:</span> <span class="n">seg_size</span><span class="p">,</span>
+               <span class="s2">&quot;filters&quot;</span><span class="p">:</span> <span class="n">filters</span><span class="p">,</span>
+               <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="n">headers</span><span class="p">}</span>
+
+    <span class="c1"># Serialize JSON</span>
+    <span class="n">json_object</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">configs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">json_object</span>
+
+<span class="k">def</span> <span class="nf">_load_config</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a JSON configuration file into a dictionary.&quot;&quot;&quot;</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">configs</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">configs</span>
+
+<span class="k">def</span> <span class="nf">_export_sqa</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">data_type</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Export the SQA summary data in Zip or Excel format.&quot;&quot;&quot;</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;./temp/sqa_metrics.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;./temp/peaks_by_segment.csv&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s1">&#39;E4&#39;</span><span class="p">:</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_BVP.csv&#39;</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_ACC.csv&#39;</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_IBI.csv&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s1">&#39;Actiwave&#39;</span><span class="p">:</span>
+            <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_ECG.csv&#39;</span><span class="p">)</span>
+            <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_ACC.csv&#39;</span><span class="p">)</span>
+            <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_IBI.csv&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_ECG.csv&#39;</span><span class="p">)</span>
+            <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_IBI.csv&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_ACC.csv&#39;</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="s1">&#39;./temp&#39;</span><span class="p">):</span>
+                <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_ACC.csv&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;./downloads/&#39;</span><span class="p">):</span>
+        <span class="n">makedirs</span><span class="p">(</span><span class="s1">&#39;./downloads&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;zip&#39;</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">ZipFile</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./downloads/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_sqa_summary.zip&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">archive</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">csv</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+                <span class="n">archive</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">csv</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;excel&#39;</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">pd</span><span class="o">.</span><span class="n">ExcelWriter</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./downloads/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_sqa_summary.xlsx&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">xlsx</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">csv</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">csv</span><span class="p">)</span>
+                <span class="n">fname</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">csv</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span>
+                <span class="n">df</span><span class="o">.</span><span class="n">to_excel</span><span class="p">(</span><span class="n">xlsx</span><span class="p">,</span> <span class="n">sheet_name</span> <span class="o">=</span> <span class="n">fname</span><span class="p">,</span> <span class="n">index</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+<span class="k">def</span> <span class="nf">_get_csv_headers</span><span class="p">(</span><span class="n">csv</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the headers of a user-uploaded CSV file in a list.&quot;&quot;&quot;</span>
+    <span class="n">initial</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">csv</span><span class="p">,</span> <span class="n">nrows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="n">initial</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">headers</span>
+
+<div class="viewcode-block" id="segment_data">
+<a class="viewcode-back" href="../../api.html#heartview.heartview.segment_data">[docs]</a>
+<span class="k">def</span> <span class="nf">segment_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Segment data into specific window sizes.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : pd.DataFrame</span>
+<span class="sd">        The data frame containing the data to be segmented.</span>
+<span class="sd">    fs : int</span>
+<span class="sd">        The sampling rate.</span>
+<span class="sd">    seg_size : int</span>
+<span class="sd">        The window size, in seconds, into which the data should be</span>
+<span class="sd">        segmented.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        The original data frame with data segmented with labels in a</span>
+<span class="sd">        &#39;Segment&#39; column.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Segment&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">segment</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">seg_size</span> <span class="o">*</span> <span class="n">fs</span><span class="p">)):</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">:(</span><span class="n">n</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">seg_size</span> <span class="o">*</span> <span class="n">fs</span><span class="p">)),</span> <span class="s1">&#39;Segment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">segment</span>
+        <span class="n">segment</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">df</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_blank_fig</span><span class="p">(</span><span class="n">context</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Display the default blank figure.&quot;&quot;&quot;</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">y</span> <span class="o">=</span> <span class="p">[]))</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">template</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                      <span class="n">paper_bgcolor</span> <span class="o">=</span> <span class="s1">&#39;rgba(0, 0, 0, 0)&#39;</span><span class="p">,</span>
+                      <span class="n">plot_bgcolor</span> <span class="o">=</span> <span class="s1">&#39;rgba(0, 0, 0, 0)&#39;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">showgrid</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                     <span class="n">showticklabels</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                     <span class="n">zeroline</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">showgrid</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                     <span class="n">showticklabels</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                     <span class="n">zeroline</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">context</span> <span class="o">==</span> <span class="s1">&#39;pending&#39;</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">(</span><span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&lt;i&gt;Input participant data to view...&lt;/i&gt;&#39;</span><span class="p">,</span>
+                           <span class="n">xref</span> <span class="o">=</span> <span class="s1">&#39;paper&#39;</span><span class="p">,</span> <span class="n">yref</span> <span class="o">=</span> <span class="s1">&#39;paper&#39;</span><span class="p">,</span>
+                           <span class="n">font</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">family</span> <span class="o">=</span> <span class="s1">&#39;Poppins&#39;</span><span class="p">,</span>
+                                       <span class="n">size</span> <span class="o">=</span> <span class="mi">14</span><span class="p">,</span>
+                                       <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#3a4952&#39;</span><span class="p">),</span>
+                           <span class="n">x</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">showarrow</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">context</span> <span class="o">==</span> <span class="s1">&#39;none&#39;</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">(</span><span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&lt;i&gt;No data to view.&lt;/i&gt;&#39;</span><span class="p">,</span>
+                           <span class="n">xref</span> <span class="o">=</span> <span class="s1">&#39;paper&#39;</span><span class="p">,</span> <span class="n">yref</span> <span class="o">=</span> <span class="s1">&#39;paper&#39;</span><span class="p">,</span>
+                           <span class="n">font</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">family</span> <span class="o">=</span> <span class="s1">&#39;Poppins&#39;</span><span class="p">,</span>
+                                       <span class="n">size</span> <span class="o">=</span> <span class="mi">14</span><span class="p">,</span>
+                                       <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#3a4952&#39;</span><span class="p">),</span>
+                           <span class="n">x</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">showarrow</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fig</span>
+
+<span class="k">def</span> <span class="nf">_blank_table</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Display the default blank table.&quot;&quot;&quot;</span>
+    <span class="n">summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+        <span class="s1">&#39;Signal Quality Metrics&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Segments with Missing Beats&#39;</span><span class="p">,</span>
+                       <span class="s1">&#39;Segments with Invalid Beats&#39;</span><span class="p">,</span>
+                       <span class="s1">&#39;Average Missing Beats/Segment&#39;</span><span class="p">,</span>
+                       <span class="s1">&#39;File Duration&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;N/A&#39;</span><span class="p">,</span> <span class="s1">&#39;N/A&#39;</span><span class="p">,</span> <span class="s1">&#39;N/A&#39;</span><span class="p">,</span> <span class="s1">&#39;N/A&#39;</span><span class="p">]})</span>
+    <span class="n">summary</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;Signal Quality Metrics&#39;</span><span class="p">,</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dbc</span><span class="o">.</span><span class="n">Table</span><span class="o">.</span><span class="n">from_dataframe</span><span class="p">(</span>
+        <span class="n">summary</span><span class="p">,</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">className</span> <span class="o">=</span> <span class="s1">&#39;segmentTable&#39;</span><span class="p">,</span>
+        <span class="n">striped</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">hover</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">bordered</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="plot_signal">
+<a class="viewcode-back" href="../../api.html#heartview.heartview.plot_signal">[docs]</a>
+<span class="k">def</span> <span class="nf">plot_signal</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span> <span class="n">segment</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_segments</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">signal_type</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">peaks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize a signal.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pandas.DataFrame</span>
+<span class="sd">        The data frame containing the signal data.</span>
+<span class="sd">    x : str</span>
+<span class="sd">        The column containing the x-axis value (e.g., `&#39;Time&#39;`).</span>
+<span class="sd">    y : str, list</span>
+<span class="sd">        The column(s) of the signal data (y-axis values).</span>
+<span class="sd">    fs : int, float</span>
+<span class="sd">        The sampling rate.</span>
+<span class="sd">    seg_size : int</span>
+<span class="sd">        The size of the segment, in seconds; by default, 60.</span>
+<span class="sd">    segment : int, float, None</span>
+<span class="sd">        The segment number; by default, 1. For example, segment `1`</span>
+<span class="sd">        denotes the first segment of the recording. This argument can also</span>
+<span class="sd">        be set to `None` if `df` contains a &#39;Segment&#39; column.</span>
+<span class="sd">    n_segments : int, float</span>
+<span class="sd">        The number of segments to be visualized; by default, 1.</span>
+<span class="sd">    signal_type : str</span>
+<span class="sd">        The type of signal being plotted (i.e., &#39;ecg&#39;, &#39;bvp&#39;, &#39;acc&#39;,</span>
+<span class="sd">        &#39;ibi&#39;); by default, None.</span>
+<span class="sd">    peaks : str</span>
+<span class="sd">        The column containing peak occurrences, i.e., a sequence of</span>
+<span class="sd">        `0` and/or `1` denoting False or True occurrences of peaks.</span>
+<span class="sd">        By default, peaks will be plotted on the first trace.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    fig : matplotlib.axes.AxesSubplot</span>
+<span class="sd">        The signal visualization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">segment</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> \
+            <span class="s1">&#39;segment&#39;</span> <span class="ow">in</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]:</span>
+        <span class="n">seg</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">df</span><span class="o">.</span><span class="n">Segment</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">Segment</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">)]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">segment</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">seg_size</span> <span class="o">*</span> <span class="n">fs</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(((</span><span class="n">segment</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">n_segments</span><span class="p">)</span> <span class="o">*</span> <span class="n">seg_size</span> <span class="o">*</span> <span class="n">fs</span><span class="p">)</span>
+        <span class="n">seg</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+
+    <span class="c1"># Set plotting parameters</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;font.size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">14</span>
+    <span class="n">palette1</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;blue&#39;</span><span class="p">:</span> <span class="s1">&#39;#4c73c2&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;red&#39;</span><span class="p">:</span> <span class="s1">&#39;#eb4034&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;green&#39;</span><span class="p">:</span> <span class="s1">&#39;#63b068&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;grey&#39;</span><span class="p">:</span> <span class="s1">&#39;#bdbdbd&#39;</span><span class="p">}</span>
+    <span class="n">palette2</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;#ec2049&#39;</span><span class="p">,</span> <span class="s1">&#39;#176196&#39;</span><span class="p">,</span> <span class="s1">&#39;#f7db4f&#39;</span><span class="p">,</span> <span class="s1">&#39;#63b068&#39;</span><span class="p">]</span>
+
+    <span class="c1"># Set up the figure</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">()</span>
+
+    <span class="c1"># Plot a single signal</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">seg</span><span class="p">[</span><span class="n">x</span><span class="p">],</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">seg</span><span class="p">[</span><span class="n">y</span><span class="p">],</span>
+            <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;lines&#39;</span><span class="p">,</span>
+            <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;%</span><span class="si">{x}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;&lt;br&gt;%</span><span class="si">{y:.2f}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;&lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">,</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
+
+        <span class="c1"># Add peaks</span>
+        <span class="k">if</span> <span class="n">peaks</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">seg</span><span class="p">[</span><span class="n">x</span><span class="p">],</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">seg</span><span class="p">[</span><span class="n">peaks</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">seg</span><span class="p">[</span><span class="n">y</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+                <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;markers&#39;</span><span class="p">,</span>
+                <span class="n">marker</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;gold&#39;</span><span class="p">,</span> <span class="n">line_width</span> <span class="o">=</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;Peak&lt;/b&gt;: %</span><span class="si">{y}</span><span class="s1"> &lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">,</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Peaks&#39;</span><span class="p">))</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">yaxis_title</span> <span class="o">=</span> <span class="n">y</span><span class="p">)</span>
+
+    <span class="c1"># Plot multiple signals</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">yval</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)):</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">seg</span><span class="p">[</span><span class="n">x</span><span class="p">],</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">seg</span><span class="p">[</span><span class="n">y</span><span class="p">[</span><span class="n">yval</span><span class="p">]],</span>
+                <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;lines&#39;</span><span class="p">,</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="n">palette2</span><span class="p">[</span><span class="n">yval</span><span class="p">]),</span>
+                <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;%</span><span class="si">{x}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;&lt;br&gt;%</span><span class="si">{y:.2f}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;&lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">,</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">y</span><span class="p">[</span><span class="n">yval</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
+
+        <span class="c1"># Add peaks</span>
+        <span class="k">if</span> <span class="n">peaks</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">seg</span><span class="p">[</span><span class="n">x</span><span class="p">],</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">seg</span><span class="p">[</span><span class="n">peaks</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">seg</span><span class="p">[</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+                <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;markers&#39;</span><span class="p">,</span>
+                <span class="n">marker</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;gold&#39;</span><span class="p">,</span> <span class="n">line_width</span> <span class="o">=</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;Peak&lt;/b&gt;: %</span><span class="si">{y}</span><span class="s1"> &lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">,</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Peaks&#39;</span><span class="p">))</span>
+
+    <span class="c1"># Format the plot</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+        <span class="n">xaxis_title</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span>
+        <span class="n">template</span> <span class="o">=</span> <span class="s1">&#39;simple_white&#39;</span><span class="p">,</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="mi">300</span><span class="p">,</span>
+        <span class="n">margin</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">l</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">pad</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="c1"># Label axes and set trace colors according to signal type</span>
+    <span class="k">if</span> <span class="n">signal_type</span> <span class="o">==</span> <span class="s1">&#39;ecg&#39;</span> <span class="ow">or</span> <span class="n">signal_type</span> <span class="o">==</span> <span class="s1">&#39;bvp&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fig</span><span class="o">.</span><span class="n">data</span><span class="p">)):</span>
+                <span class="n">fig</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">d</span><span class="p">]</span><span class="o">.</span><span class="n">line</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">palette2</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">yaxis_title</span> <span class="o">=</span> <span class="n">signal_type</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">fig</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span>
+                <span class="n">line_color</span> <span class="o">=</span> <span class="n">palette1</span><span class="p">[</span><span class="s1">&#39;blue&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">yaxis_title</span> <span class="o">=</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">signal_type</span> <span class="o">==</span> <span class="s1">&#39;acc&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fig</span><span class="o">.</span><span class="n">data</span><span class="p">)):</span>
+                <span class="n">fig</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">d</span><span class="p">]</span><span class="o">.</span><span class="n">line</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">palette2</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">yaxis_title</span> <span class="o">=</span> <span class="s1">&#39;m/s&lt;sup&gt;2&lt;/sup&gt;&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">fig</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span>
+                <span class="n">line_color</span> <span class="o">=</span> <span class="n">palette1</span><span class="p">[</span><span class="s1">&#39;green&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+                <span class="n">yaxis_title</span> <span class="o">=</span> <span class="s1">&#39;m/s&lt;sup&gt;2&lt;/sup&gt;&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">signal_type</span> <span class="o">==</span> <span class="s1">&#39;ibi&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fig</span><span class="o">.</span><span class="n">data</span><span class="p">)):</span>
+                <span class="n">fig</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">d</span><span class="p">]</span><span class="o">.</span><span class="n">line</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">palette2</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">yaxis_title</span> <span class="o">=</span> <span class="s1">&#39;ms&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">fig</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span>
+                <span class="n">line_color</span> <span class="o">=</span> <span class="n">palette1</span><span class="p">[</span><span class="s1">&#39;red&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">yaxis_title</span> <span class="o">=</span> <span class="s1">&#39;ms&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fig</span></div>
+
+
+<div class="viewcode-block" id="plot_ibi_from_ecg">
+<a class="viewcode-back" href="../../api.html#heartview.heartview.plot_ibi_from_ecg">[docs]</a>
+<span class="k">def</span> <span class="nf">plot_ibi_from_ecg</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">segment</span><span class="p">,</span> <span class="n">n_segments</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize an IBI series generated from ECG data.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        The data frame containing the signal data.</span>
+<span class="sd">    x : str</span>
+<span class="sd">        The column containing the x-axis value (e.g., `&#39;Time&#39;`).</span>
+<span class="sd">    y : str</span>
+<span class="sd">        The column containing the IBI series (e.g., `&#39;IBI&#39;`).</span>
+<span class="sd">    segment : int, float</span>
+<span class="sd">        The segment number. For example, segment `1` denotes the first</span>
+<span class="sd">        segment of the recording.</span>
+<span class="sd">    n_segments : int, float</span>
+<span class="sd">        The number of segments to be visualized; by default, 1.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    fig : matplotlib.axes.AxesSubplot</span>
+<span class="sd">        The IBI series plot.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">segment</span><span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">segment</span> <span class="o">+</span> <span class="n">n_segments</span><span class="p">)</span>
+    <span class="n">seg</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Segment&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">inclusive</span> <span class="o">=</span> <span class="s1">&#39;both&#39;</span><span class="p">)]</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;font.size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">14</span>
+
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">()</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">seg</span><span class="p">[</span><span class="n">x</span><span class="p">],</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">seg</span><span class="p">[</span><span class="n">y</span><span class="p">],</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;lines&#39;</span><span class="p">,</span>
+        <span class="n">marker</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#eb4034&#39;</span><span class="p">),</span>
+        <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;%</span><span class="si">{x}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;&lt;br&gt;%</span><span class="si">{y:.2f}</span><span class="s1"> ms&#39;</span> <span class="o">+</span> <span class="s1">&#39;&lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">,</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
+
+    <span class="n">ymin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">seg</span><span class="p">[</span><span class="n">y</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span> <span class="o">*</span> <span class="mf">0.95</span>
+    <span class="n">ymax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">seg</span><span class="p">[</span><span class="n">y</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span> <span class="o">*</span> <span class="mf">1.05</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+        <span class="n">yaxis_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">ymin</span><span class="p">,</span> <span class="n">ymax</span><span class="p">),</span>
+        <span class="n">yaxis_title</span> <span class="o">=</span> <span class="s1">&#39;IBI (ms)&#39;</span><span class="p">,</span>
+        <span class="n">xaxis_title</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span>
+        <span class="n">template</span> <span class="o">=</span> <span class="s1">&#39;simple_white&#39;</span><span class="p">,</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="mi">300</span><span class="p">,</span>
+        <span class="n">margin</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">l</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="n">pad</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span>
+        <span class="n">title_standoff</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Natasha Yamane, Varun Mishra, and Matthew S. Goodwin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

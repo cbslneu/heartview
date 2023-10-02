@@ -1,0 +1,15 @@
+/* Main Page */
+.wy-nav-content-wrap {
+    background: #e1e1e1;
+}
+.wy-nav-content {
+    background: #f6f6f6;
+}
+
+/* Navigation Bar */
+.wy-nav-side {
+    background: #313c42;
+}
+.wy-menu-vertical p.caption {
+    color: #ee8a78;
+}

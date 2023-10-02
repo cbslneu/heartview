@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>heartview.pipeline.ECG &mdash; HeartView 1.0 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/custom.css" type="text/css" />
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=f2a433a1"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #313c42" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/heartview-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">About HeartView</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contribute</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">HeartView Pipeline</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">HeartView Dashboard</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Using the Dashboard</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #313c42" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">HeartView</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">heartview.pipeline.ECG</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for heartview.pipeline.ECG</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="kn">import</span> <span class="n">hilbert</span><span class="p">,</span> <span class="n">filtfilt</span><span class="p">,</span> <span class="n">butter</span><span class="p">,</span> <span class="n">iirnotch</span>
+<span class="kn">import</span> <span class="nn">pyedflib</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">datetime</span> <span class="k">as</span> <span class="nn">dt</span>
+
+<div class="viewcode-block" id="get_fs">
+<a class="viewcode-back" href="../../../api.html#heartview.pipeline.ECG.get_fs">[docs]</a>
+<span class="k">def</span> <span class="nf">get_fs</span><span class="p">(</span><span class="n">edf</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get ECG sampling rate from an Actiwave Cardio device.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    edf : str</span>
+<span class="sd">        The path of the Actiwave Cardio EDF file.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    fs : int, float</span>
+<span class="sd">        The sampling rate of the Actiwave Cardio recording.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">pyedflib</span><span class="o">.</span><span class="n">EdfReader</span><span class="p">(</span><span class="n">edf</span><span class="p">)</span>
+    <span class="n">signal_labels</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">getSignalLabels</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">chn</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">signal_labels</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="s1">&#39;ECG&#39;</span> <span class="ow">in</span> <span class="n">signal_labels</span><span class="p">[</span><span class="n">chn</span><span class="p">]:</span>
+            <span class="n">ecg_chn</span> <span class="o">=</span> <span class="n">chn</span>
+    <span class="n">fs</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">getSampleFrequency</span><span class="p">(</span><span class="n">ecg_chn</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">fs</span></div>
+
+
+<div class="viewcode-block" id="read_actiwave">
+<a class="viewcode-back" href="../../../api.html#heartview.pipeline.ECG.read_actiwave">[docs]</a>
+<span class="k">def</span> <span class="nf">read_actiwave</span><span class="p">(</span><span class="n">edf</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read ECG and acceleration data from an Actiwave Cardio device.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    edf : str</span>
+<span class="sd">        The path of the Actiwave Cardio EDF file.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ecg : pd.DataFrame</span>
+<span class="sd">        The ECG data containing &#39;Timestamp&#39; and &#39;mV&#39; columns.</span>
+<span class="sd">    acc : pd.DataFrame</span>
+<span class="sd">        The acceleration data containing &#39;Timestamp&#39;, &#39;X&#39;, &#39;Y&#39;, and &#39;Z&#39;</span>
+<span class="sd">        columns.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">f</span> <span class="o">=</span> <span class="n">pyedflib</span><span class="o">.</span><span class="n">EdfReader</span><span class="p">(</span><span class="n">edf</span><span class="p">)</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">getStartdatetime</span><span class="p">())</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">f</span><span class="o">.</span><span class="n">getFileDuration</span><span class="p">()</span>
+    <span class="n">ecg</span><span class="p">,</span> <span class="n">acc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(),</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+    <span class="n">signal_labels</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">getSignalLabels</span><span class="p">()</span>
+    <span class="n">ecg_chn</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">signal_labels</span><span class="p">))</span>
+               <span class="k">if</span> <span class="s1">&#39;ECG&#39;</span> <span class="ow">in</span> <span class="n">signal_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+    <span class="n">acc_chn</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">signal_labels</span><span class="p">))</span>
+               <span class="k">if</span> <span class="s1">&#39;X&#39;</span> <span class="ow">in</span> <span class="n">signal_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+               <span class="ow">or</span> <span class="s1">&#39;Y&#39;</span> <span class="ow">in</span> <span class="n">signal_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+               <span class="ow">or</span> <span class="s1">&#39;Z&#39;</span> <span class="ow">in</span> <span class="n">signal_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+    <span class="n">acc_sig</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">],</span> <span class="n">acc_chn</span><span class="p">))</span>
+
+    <span class="n">ecg_fs</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">getSampleFrequency</span><span class="p">(</span><span class="n">ecg_chn</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">acc_fs</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">getSampleFrequency</span><span class="p">(</span><span class="n">acc_chn</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># Get ECG data</span>
+    <span class="n">ecg</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">ecg_fs</span><span class="p">))</span>
+    <span class="n">ecg</span><span class="p">[</span><span class="s1">&#39;mV&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">readSignal</span><span class="p">(</span><span class="n">ecg_chn</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">ecg</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ecg</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+
+    <span class="c1"># Get acceleration data</span>
+    <span class="n">acc</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span> <span class="n">acc_fs</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">acc_sig</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">acc</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">readSignal</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+    <span class="n">acc</span><span class="p">[</span><span class="s1">&#39;Magnitude&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">acc</span><span class="p">[[</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">acc</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">acc</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">ecg</span><span class="p">,</span> <span class="n">acc</span></div>
+
+
+<span class="c1"># RUNNING MEAN FILTER</span>
+<span class="k">def</span> <span class="nf">_running_mean</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
+    <span class="n">cumsum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">cumsum</span><span class="p">[</span><span class="n">N</span><span class="p">:]</span> <span class="o">-</span> <span class="n">cumsum</span><span class="p">[:</span><span class="o">-</span><span class="n">N</span><span class="p">])</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+
+<span class="c1"># BASELINE AND MUSCLE NOISE FILTER</span>
+<div class="viewcode-block" id="baseline_muscle_filter">
+<a class="viewcode-back" href="../../../api.html#heartview.pipeline.ECG.baseline_muscle_filter">[docs]</a>
+<span class="k">def</span> <span class="nf">baseline_muscle_filter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">lowcut</span><span class="p">,</span> <span class="n">highcut</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">order</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter out baseline wander and muscle noise.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : array_like</span>
+<span class="sd">        An array containing the noisy signal data.</span>
+<span class="sd">    lowcut : int, float</span>
+<span class="sd">        The lower cut-off frequency.</span>
+<span class="sd">    highcut : int, float</span>
+<span class="sd">        The higher cut-off frequency.</span>
+<span class="sd">    fs : int, float</span>
+<span class="sd">        The sampling rate of the signal recording.</span>
+<span class="sd">    order : int</span>
+<span class="sd">        The filter order, i.e., the number of samples required to</span>
+<span class="sd">        produce the desired filtered output; by default, 4.&#39;</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    filtered : array_like</span>
+<span class="sd">        An array containing the filtered signal data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">fs</span> <span class="o">&lt;=</span> <span class="mi">90</span><span class="p">:</span>
+        <span class="n">nyq</span> <span class="o">=</span> <span class="mf">0.91</span> <span class="o">*</span> <span class="n">fs</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">nyq</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">fs</span>
+    <span class="n">high</span> <span class="o">=</span> <span class="n">highcut</span> <span class="o">/</span> <span class="n">nyq</span>
+    <span class="n">low</span> <span class="o">=</span> <span class="n">lowcut</span> <span class="o">/</span> <span class="n">nyq</span>
+    <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">butter</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="p">[</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">],</span> <span class="n">btype</span> <span class="o">=</span> <span class="s1">&#39;bandpass&#39;</span><span class="p">)</span>
+    <span class="n">filtered</span> <span class="o">=</span> <span class="n">filtfilt</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">filtered</span></div>
+
+
+<span class="c1"># POWERLINE INTERFERENCE NOTCH FILTER AT 60 Hz</span>
+<div class="viewcode-block" id="powerline_int_filter">
+<a class="viewcode-back" href="../../../api.html#heartview.pipeline.ECG.powerline_int_filter">[docs]</a>
+<span class="k">def</span> <span class="nf">powerline_int_filter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">freq</span> <span class="o">=</span> <span class="mi">60</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter out powerline interference at a specified frequency.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : array_like</span>
+<span class="sd">        An array containing the noisy signal data.</span>
+<span class="sd">    fs : int, float</span>
+<span class="sd">        The sampling rate of the signal recording.</span>
+<span class="sd">    q : float</span>
+<span class="sd">        The quality factor, i.e., how narrow or wide the stopband is</span>
+<span class="sd">        for a notch filter. A higher quality factor indicates a</span>
+<span class="sd">        narrower bandpass.</span>
+<span class="sd">    freq : int, float</span>
+<span class="sd">        The frequency to filter out (e.g., 50 or 60 Hz); by default,</span>
+<span class="sd">        60 Hz.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    filtered : array_like</span>
+<span class="sd">        An array containing the filtered signal data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">iirnotch</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">fs</span><span class="p">)</span>
+    <span class="n">filtered</span> <span class="o">=</span> <span class="n">filtfilt</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">filtered</span></div>
+
+
+<span class="c1"># SHANNON ENERGY R PEAK DETECTION FUNCTION</span>
+<span class="c1"># Credit: https://github.com/nsunami/Shannon-Energy-R-Peak-Detection</span>
+<div class="viewcode-block" id="detect_rpeaks">
+<a class="viewcode-back" href="../../../api.html#heartview.pipeline.ECG.detect_rpeaks">[docs]</a>
+<span class="k">def</span> <span class="nf">detect_rpeaks</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">signal</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detect locations of R peaks with Shannon energy &amp; smooth</span>
+<span class="sd">    envelope extraction.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        The data frame containing the pre-processed ECG data.</span>
+<span class="sd">    signal : str</span>
+<span class="sd">        The name of the column containing the filtered ECG data.</span>
+<span class="sd">    fs : int, float</span>
+<span class="sd">        The sampling rate of the signal recording.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    id_maxes : np.array</span>
+<span class="sd">        Array containing the index locations of all detected peaks.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">signal</span><span class="p">])</span>
+    <span class="c1"># Eq. 1 - Differentiate the filtered signal</span>
+    <span class="n">dn</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">array</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">array</span><span class="p">)</span>
+
+    <span class="c1"># Eq. 2 - Normalize the differentiated signal</span>
+    <span class="n">dtn</span> <span class="o">=</span> <span class="n">dn</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">dn</span><span class="p">)))</span>
+
+    <span class="c1"># Eq. 3 - Compute absolute value</span>
+    <span class="n">an</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">dtn</span><span class="p">)</span>
+
+    <span class="c1"># Eq. 4 - Compute energy value</span>
+    <span class="n">en</span> <span class="o">=</span> <span class="n">an</span> <span class="o">**</span> <span class="mi">2</span>
+
+    <span class="c1"># Eq. 5 - Compute Shannon entropy value</span>
+    <span class="n">sen</span> <span class="o">=</span> <span class="o">-</span><span class="nb">abs</span><span class="p">(</span><span class="n">dtn</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">dtn</span><span class="p">))</span>
+
+    <span class="c1"># Eq. 6 - Compute Shannon energy value</span>
+    <span class="n">sn</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">dtn</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">dtn</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Zero-phase filtering, Running mean</span>
+    <span class="c1"># https://dsp.stackexchange.com/a/27317</span>
+    <span class="c1"># 360 samples/s : 55 samples (length)</span>
+    <span class="c1"># 500 samples/s : 76 samples</span>
+    <span class="c1"># Normal QRS duration is .12 sec. 500 * .12 = 60</span>
+    <span class="n">window_len</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fs</span> <span class="o">/</span> <span class="p">(</span><span class="mi">360</span> <span class="o">/</span> <span class="mi">55</span><span class="p">))</span>
+    <span class="c1"># window_len = 79</span>
+
+    <span class="c1"># Moving average of the filtered signal</span>
+    <span class="n">sn_f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">_running_mean</span><span class="p">(</span><span class="n">sn</span><span class="p">,</span> <span class="n">window_len</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">window_len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># Hilbert Transformation</span>
+    <span class="n">zn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">hilbert</span><span class="p">(</span><span class="n">sn_f</span><span class="p">))</span>
+
+    <span class="c1"># Moving Average of the Hilbert Transformed Signal</span>
+    <span class="c1"># 2.5 sec from Manikanda (900 samples)</span>
+    <span class="c1"># 2.5 sec in 500 Hz == 1250 samples</span>
+    <span class="n">ma_len</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fs</span> <span class="o">*</span> <span class="mf">2.5</span><span class="p">)</span>
+    <span class="n">zn_ma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">_running_mean</span><span class="p">(</span><span class="n">zn</span><span class="p">,</span> <span class="n">ma_len</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">ma_len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># Get the difference between the Hilbert signal and the MA filtered signal</span>
+    <span class="n">zn_ma_s</span> <span class="o">=</span> <span class="n">zn</span> <span class="o">-</span> <span class="n">zn_ma</span>
+
+    <span class="c1"># Look for zero crossings: https://stackoverflow.com/a/28766902/6205282</span>
+    <span class="c1"># Original paper: +/- 25 frames from the ref point (360Hz)</span>
+    <span class="c1"># if 500Hz---35 frames. With some trials, it seems that ~60 is good.</span>
+
+    <span class="c1"># Find locations of zero-crossings (from negative to positive)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">zn_ma_s</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+    <span class="c1"># Prepare a container for windows</span>
+    <span class="n">idx_search</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">id_maxes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="nb">int</span><span class="p">)</span>
+    <span class="n">search_window_half</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">fs</span> <span class="o">*</span> <span class="mf">.12</span><span class="p">)</span>  <span class="c1"># &lt;------------ Parameter</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">:</span>
+        <span class="n">lows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="n">search_window_half</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">highs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="n">search_window_half</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">highs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="p">):</span>
+            <span class="n">highs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">highs</span><span class="p">,</span>
+                              <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">highs</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="p">))[</span><span class="mi">0</span><span class="p">],</span>
+                                        <span class="nb">len</span><span class="p">(</span><span class="n">highs</span><span class="p">)))</span>
+        <span class="n">ecg_window</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">lows</span><span class="p">,</span> <span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">highs</span><span class="p">))</span>
+        <span class="n">idx_search</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ecg_window</span><span class="p">)</span>
+        <span class="n">ecg_window_wave</span> <span class="o">=</span> <span class="n">array</span><span class="p">[</span><span class="n">ecg_window</span><span class="p">]</span>
+        <span class="n">peak_loc</span> <span class="o">=</span> <span class="n">ecg_window</span><span class="p">[</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ecg_window_wave</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">ecg_window_wave</span><span class="p">))[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="n">peak_loc</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">id_maxes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">id_maxes</span><span class="p">,</span> <span class="n">peak_loc</span><span class="p">)</span>
+
+    <span class="c1"># df.loc[id_maxes, &#39;Peak&#39;] = 1</span>
+    <span class="k">return</span> <span class="n">id_maxes</span></div>
+
+
+<span class="c1"># IBI EXTRACTION</span>
+<div class="viewcode-block" id="compute_ibis">
+<a class="viewcode-back" href="../../../api.html#heartview.pipeline.ECG.compute_ibis">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_ibis</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ts_col</span><span class="p">,</span> <span class="n">peaks_ix</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute interbeat intervals from peak locations in ECG data.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : pd.DataFrame</span>
+<span class="sd">        The data frame containing the ECG data and a timestamp column.</span>
+<span class="sd">    ts_col : str</span>
+<span class="sd">        The name of the column containing timestamp values.</span>
+<span class="sd">    peaks_ix : array_like</span>
+<span class="sd">        An array of indices corresponding to peak occurrences.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ibi : pd.DataFrame</span>
+<span class="sd">        A data frame containing timestamps and IBI values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="c1"># Get timestamps array</span>
+    <span class="n">peaks_ts</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">peaks_ix</span><span class="p">,</span> <span class="n">ts_col</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">peaks_ts</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">peaks_ts</span><span class="p">)</span>
+
+    <span class="c1"># Get IBIs in milliseconds</span>
+    <span class="n">ibis</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">peaks_ts</span><span class="p">)):</span>
+        <span class="n">ibis</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">peaks_ts</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">-</span> <span class="n">peaks_ts</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">ibis</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">ibi</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="n">ts_col</span><span class="p">:</span> <span class="n">peaks_ts</span><span class="p">,</span> <span class="s1">&#39;IBI&#39;</span><span class="p">:</span> <span class="n">ibis</span><span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">ibi</span></div>
+
+
+<span class="c1"># SECOND-BY-SECOND PRE-PROCESSING</span>
+<div class="viewcode-block" id="get_seconds">
+<a class="viewcode-back" href="../../../api.html#heartview.pipeline.ECG.get_seconds">[docs]</a>
+<span class="k">def</span> <span class="nf">get_seconds</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">peaks_col</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get second-by-second HR, IBI, and peak counts from ECG data.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        The data frame containing the ECG data and a timestamp column.</span>
+<span class="sd">    peaks_col : str</span>
+<span class="sd">        The name of the column containing peak instances.</span>
+<span class="sd">    fs : int</span>
+<span class="sd">        The sampling rate.</span>
+<span class="sd">    seg_size : int</span>
+<span class="sd">        The window size of each segment.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    interval_data : pd.DataFrame</span>
+<span class="sd">        A data frame containing IBI values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Add &#39;segment&#39; and &#39;second&#39; columns</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Second&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span> <span class="o">//</span> <span class="n">fs</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Segment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Second&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span> <span class="o">//</span> <span class="n">seg_size</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Create interval data</span>
+    <span class="n">interval_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Second&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
+
+        <span class="c1"># Count peaks in each second</span>
+        <span class="n">n_peaks</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Second&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">s</span><span class="p">,</span> <span class="n">peaks_col</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+        <span class="c1"># Get timestamp of each second</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Second&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">s</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Look at current second and one second ahead</span>
+        <span class="n">subset</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Second&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">s</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+
+        <span class="c1"># Get the indices of the peaks in the subset</span>
+        <span class="n">peak_indices</span> <span class="o">=</span> <span class="n">subset</span><span class="p">[</span><span class="n">subset</span><span class="p">[</span><span class="n">peaks_col</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="c1"># Get the IBIs and HRs</span>
+        <span class="n">ibis</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">heartrates</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ix</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">peak_indices</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">ibi</span> <span class="o">=</span> <span class="p">((</span><span class="n">peak_indices</span><span class="p">[</span><span class="n">ix</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">peak_indices</span><span class="p">[</span><span class="n">ix</span><span class="p">])</span> <span class="o">/</span> <span class="n">fs</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+            <span class="n">hr</span> <span class="o">=</span> <span class="mi">60000</span> <span class="o">/</span> <span class="n">ibi</span>
+            <span class="n">r_hr</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">hr</span>
+            <span class="n">ibis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ibi</span><span class="p">)</span>
+            <span class="n">heartrates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r_hr</span><span class="p">)</span>
+
+        <span class="c1"># Add mean HR and IBI values (HR is calculated with harmonic mean)</span>
+        <span class="n">mean_ibi</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">ibis</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="s1">&#39;float64&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">mean_hr</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">heartrates</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="s1">&#39;float64&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+
+        <span class="n">interval_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span>
+            <span class="n">interval_data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">([{</span>
+                <span class="s1">&#39;Second&#39;</span><span class="p">:</span> <span class="n">s</span><span class="p">,</span>
+                <span class="s1">&#39;Timestamp&#39;</span><span class="p">:</span> <span class="n">ts</span><span class="p">,</span>
+                <span class="s1">&#39;Mean HR&#39;</span><span class="p">:</span> <span class="n">mean_hr</span><span class="p">,</span>
+                <span class="s1">&#39;Mean IBI&#39;</span><span class="p">:</span> <span class="n">mean_ibi</span><span class="p">,</span>
+                <span class="s1">&#39;# R Peaks&#39;</span><span class="p">:</span> <span class="n">n_peaks</span><span class="p">}])],</span>
+            <span class="n">ignore_index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">interval_data</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Segment&#39;</span><span class="p">,</span> <span class="n">interval_data</span><span class="p">[</span><span class="s1">&#39;Second&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span> <span class="o">//</span> <span class="n">seg_size</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">interval_data</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span>
+        <span class="n">interval_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;Invalid&#39;</span><span class="p">,</span> <span class="n">interval_data</span><span class="p">[</span><span class="s1">&#39;Mean HR&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mi">30</span> <span class="ow">or</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">220</span> <span class="k">else</span> <span class="mi">0</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">interval_data</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Natasha Yamane, Varun Mishra, and Matthew S. Goodwin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
