@@ -1,12 +1,10 @@
-|
-
 .. image:: https://badgen.net/badge/python/3.9+/cyan
 .. image:: https://badgen.net/badge/license/GPL-3.0/orange
 .. image:: https://badgen.net/badge/contributions/welcome/green
 
-=======================
-HeartView Documentation
-=======================
+====================
+Welcome to HeartView
+====================
 
 HeartView is a Python-based **signal quality assessment pipeline and
 dashboard** that visualizes and summarizes segment-by-segment quantification of
