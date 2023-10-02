@@ -8,6 +8,7 @@ version: 2
 # Set the version of Python
 build:
   tools:
+    os: ubuntu-22.04
     python: "3.9"
 
 
