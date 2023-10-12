@@ -604,13 +604,23 @@ def get_callbacks(app):
                     else:
                         ecg = pd.read_csv(f'./temp/{file}_ECG.csv')
                         if seg_num == slider_max:
-                            raw_plot = heartview.plot_signal(
-                                ecg, 'Timestamp', 'ECG', fs,
-                                seg_size, seg_num, 1, 'ecg', 'Peak')
+                            if 'Filtered' in ecg.columns.tolist():
+                                raw_plot = heartview.plot_signal(
+                                    ecg, 'Timestamp', ['ECG', 'Filtered'], fs,
+                                    seg_size, seg_num, 1, 'ecg', 'Peak')
+                            else:
+                                raw_plot = heartview.plot_signal(
+                                    ecg, 'Timestamp', 'ECG', fs,
+                                    seg_size, seg_num, 1, 'ecg', 'Peak')
                         else:
-                            raw_plot = heartview.plot_signal(
-                                ecg, 'Timestamp', 'ECG', fs,
-                                seg_size, seg_num, seg_n, 'ecg', 'Peak')
+                            if 'Filtered' in ecg.columns.tolist():
+                                raw_plot = heartview.plot_signal(
+                                    ecg, 'Timestamp', ['ECG', 'Filtered'], fs,
+                                    seg_size, seg_num, seg_n, 'ecg', 'Peak')
+                            else:
+                                raw_plot = heartview.plot_signal(
+                                    ecg, 'Timestamp', 'ECG', fs,
+                                    seg_size, seg_num, seg_n, 'ecg', 'Peak')
                 else:
                     if data['type'] == 'E4':
                         bvp = pd.read_csv(f'./temp/{file}_BVP.csv')
