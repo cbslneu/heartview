@@ -94,7 +94,7 @@ data are stored in a Python dictionary.</p>
 </pre></div>
 </div>
 <p>Output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Under construction</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dict_keys</span><span class="p">([</span><span class="s1">&#39;bvp&#39;</span><span class="p">,</span> <span class="s1">&#39;hr&#39;</span><span class="p">,</span> <span class="s1">&#39;ibi&#39;</span><span class="p">,</span> <span class="s1">&#39;acc&#39;</span><span class="p">,</span> <span class="s1">&#39;fs&#39;</span><span class="p">,</span> <span class="s1">&#39;start time&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
 </section>
@@ -113,6 +113,22 @@ Pandas data frame prior to this step.</p>
 
 <span class="c1"># Save R peak occurrences</span>
 <span class="n">ecg</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">peak_loc</span><span class="p">,</span> <span class="s1">&#39;Peak&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;Peak&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>      <span class="n">Segment</span>                        <span class="n">Timestamp</span>             <span class="n">mV</span>       <span class="n">Powerline</span>       <span class="n">Filtered</span>        <span class="n">Peak</span>
+<span class="mi">0</span>           <span class="mi">1</span>       <span class="mi">2023</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">03</span> <span class="mi">17</span><span class="p">:</span><span class="mi">28</span><span class="p">:</span><span class="mf">43.000000</span>      <span class="o">-</span><span class="mf">0.045764</span>       <span class="o">-</span><span class="mf">0.043125</span>       <span class="mf">0.018008</span>         <span class="n">NaN</span>
+<span class="mi">1</span>           <span class="mi">1</span>       <span class="mi">2023</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">03</span> <span class="mi">17</span><span class="p">:</span><span class="mi">28</span><span class="p">:</span><span class="mf">43.000977</span>      <span class="o">-</span><span class="mf">0.050443</span>       <span class="o">-</span><span class="mf">0.048157</span>       <span class="mf">0.021933</span>         <span class="n">NaN</span>
+<span class="mi">2</span>           <span class="mi">1</span>       <span class="mi">2023</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">03</span> <span class="mi">17</span><span class="p">:</span><span class="mi">28</span><span class="p">:</span><span class="mf">43.001953</span>      <span class="o">-</span><span class="mf">0.039037</span>       <span class="o">-</span><span class="mf">0.037414</span>       <span class="mf">0.025466</span>         <span class="n">NaN</span>
+<span class="mi">3</span>           <span class="mi">1</span>       <span class="mi">2023</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">03</span> <span class="mi">17</span><span class="p">:</span><span class="mi">28</span><span class="p">:</span><span class="mf">43.002930</span>      <span class="o">-</span><span class="mf">0.029386</span>       <span class="o">-</span><span class="mf">0.028653</span>       <span class="mf">0.028245</span>         <span class="n">NaN</span>
+<span class="mi">4</span>           <span class="mi">1</span>       <span class="mi">2023</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">03</span> <span class="mi">17</span><span class="p">:</span><span class="mi">28</span><span class="p">:</span><span class="mf">43.003906</span>      <span class="o">-</span><span class="mf">0.021782</span>       <span class="o">-</span><span class="mf">0.022051</span>       <span class="mf">0.029948</span>         <span class="n">NaN</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1213.0</span>
 </pre></div>
 </div>
 <p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Empatica E4</div></p>
@@ -128,8 +144,19 @@ Pandas data frame prior to this step.</p>
 <span class="n">e4_peaks</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 </pre></div>
 </div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">e4_peaks</span><span class="p">[</span><span class="s1">&#39;Peak&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+</pre></div>
+</div>
 <p>Output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Under construction</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>            <span class="n">Unix</span>                     <span class="n">Timestamp</span>      <span class="n">Second</span>  <span class="n">Peak</span>    <span class="n">IBI</span>      <span class="n">HR</span>
+<span class="mi">0</span>   <span class="mf">1.495437e+09</span>    <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">15</span><span class="p">:</span><span class="mf">25.000000</span>         <span class="mf">1.0</span>   <span class="n">NaN</span>    <span class="n">NaN</span>     <span class="n">NaN</span>
+<span class="mi">1</span>   <span class="mf">1.495437e+09</span>    <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">15</span><span class="p">:</span><span class="mf">25.015625</span>         <span class="mf">1.0</span>   <span class="n">NaN</span>    <span class="n">NaN</span>     <span class="n">NaN</span>
+<span class="mi">2</span>   <span class="mf">1.495437e+09</span>    <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">15</span><span class="p">:</span><span class="mf">25.031250</span>         <span class="mf">1.0</span>   <span class="n">NaN</span>    <span class="n">NaN</span>     <span class="n">NaN</span>
+<span class="mi">3</span>   <span class="mf">1.495437e+09</span>    <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">15</span><span class="p">:</span><span class="mf">25.046875</span>         <span class="mf">1.0</span>   <span class="n">NaN</span>    <span class="n">NaN</span>     <span class="n">NaN</span>
+<span class="mi">4</span>   <span class="mf">1.495437e+09</span>    <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">15</span><span class="p">:</span><span class="mf">25.062500</span>         <span class="mf">1.0</span>   <span class="n">NaN</span>    <span class="n">NaN</span>     <span class="n">NaN</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">3457.0</span>
 </pre></div>
 </div>
 </section>
@@ -146,13 +173,87 @@ Pandas data frame prior to this step.</p>
 <span class="c1"># Get the expected and detected numbers of peaks by segment</span>
 <span class="n">peaks_by_seg</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">evaluate_peaks</span><span class="p">(</span><span class="n">interval_data</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">)</span>
 
-<span class="n">peaks_by_seg</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="c1"># Compute the signal quality assessment metrics by segment</span>
+<span class="n">sqa</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">compute_metrics</span><span class="p">(</span><span class="n">peaks_by_seg</span><span class="p">)</span>
+<span class="n">sqa</span>
 </pre></div>
 </div>
 <p>Output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Under construction</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">Segment</span>               <span class="n">Timestamp</span>   <span class="n">Detected</span>           <span class="n">Expected</span>   <span class="n">Invalid</span>       <span class="n">Missing</span>   <span class="o">%</span> <span class="n">Missing</span>
+<span class="mi">0</span>         <span class="mi">1</span>     <span class="mi">2023</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">03</span> <span class="mi">17</span><span class="p">:</span><span class="mi">28</span><span class="p">:</span><span class="mi">43</span>      <span class="mf">253.0</span>         <span class="mf">288.000000</span>         <span class="mi">1</span>     <span class="mf">35.000000</span>   <span class="mf">12.152778</span>
+<span class="mi">1</span>         <span class="mi">2</span>     <span class="mi">2023</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">03</span> <span class="mi">17</span><span class="p">:</span><span class="mi">29</span><span class="p">:</span><span class="mi">43</span>      <span class="mf">242.0</span>         <span class="mf">265.295711</span>         <span class="mi">1</span>     <span class="mf">23.295711</span>    <span class="mf">8.781036</span>
+<span class="mi">2</span>         <span class="mi">3</span>     <span class="mi">2023</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">03</span> <span class="mi">17</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mi">43</span>      <span class="mf">272.0</span>         <span class="mf">282.299692</span>         <span class="mi">1</span>     <span class="mf">10.299692</span>    <span class="mf">3.648496</span>
+<span class="mi">3</span>         <span class="mi">4</span>     <span class="mi">2023</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">03</span> <span class="mi">17</span><span class="p">:</span><span class="mi">31</span><span class="p">:</span><span class="mi">43</span>      <span class="mf">257.0</span>         <span class="mf">266.420859</span>         <span class="mi">1</span>      <span class="mf">9.420859</span>    <span class="mf">3.536082</span>
+<span class="mi">4</span>         <span class="mi">5</span>     <span class="mi">2023</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">03</span> <span class="mi">17</span><span class="p">:</span><span class="mi">32</span><span class="p">:</span><span class="mi">43</span>      <span class="mf">189.0</span>         <span class="mf">286.911274</span>         <span class="mi">0</span>     <span class="mf">97.911274</span>   <span class="mf">34.125977</span>
 </pre></div>
 </div>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Empatica E4</div></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heartview.pipeline</span> <span class="kn">import</span> <span class="n">PPG</span><span class="p">,</span> <span class="n">SQA</span>
+
+<span class="c1"># Get second-by-second data</span>
+<span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span>
+<span class="n">interval_data</span> <span class="o">=</span> <span class="n">PPG</span><span class="o">.</span><span class="n">get_e4_interval_data</span><span class="p">(</span><span class="n">e4_peaks</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">)</span>
+
+<span class="c1"># Get the expected and detected numbers of peaks by segment</span>
+<span class="n">peaks_by_seg</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">evaluate_peaks</span><span class="p">(</span><span class="n">interval_data</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">)</span>
+
+<span class="c1"># Compute the signal quality assessment metrics by segment</span>
+<span class="n">sqa</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">compute_metrics</span><span class="p">(</span><span class="n">peaks_by_seg</span><span class="p">)</span>
+<span class="n">sqa</span>
+</pre></div>
+</div>
+<p>Output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">Segment</span>               <span class="n">Timestamp</span>   <span class="n">Detected</span>          <span class="n">Expected</span>    <span class="n">Invalid</span>     <span class="n">Missing</span>       <span class="o">%</span> <span class="n">Missing</span>
+<span class="mi">0</span>         <span class="mi">1</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">15</span><span class="p">:</span><span class="mi">25</span>       <span class="mf">24.0</span>         <span class="mf">76.679121</span>          <span class="mi">1</span>   <span class="mf">52.679121</span>       <span class="mf">68.700737</span>
+<span class="mi">1</span>         <span class="mi">2</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">16</span><span class="p">:</span><span class="mi">25</span>        <span class="mf">0.0</span>               <span class="n">NaN</span>          <span class="mi">1</span>    <span class="mf">0.000000</span>        <span class="mf">0.000000</span>
+<span class="mi">2</span>         <span class="mi">3</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">17</span><span class="p">:</span><span class="mi">25</span>       <span class="mf">22.0</span>         <span class="mf">83.200181</span>          <span class="mi">1</span>   <span class="mf">61.200181</span>       <span class="mf">73.557750</span>
+<span class="mi">3</span>         <span class="mi">4</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">18</span><span class="p">:</span><span class="mi">25</span>      <span class="mf">117.0</span>         <span class="mf">77.311916</span>          <span class="mi">0</span>    <span class="mf">0.000000</span>        <span class="mf">0.000000</span>
+<span class="mi">4</span>         <span class="mi">5</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">19</span><span class="p">:</span><span class="mi">25</span>       <span class="mf">95.0</span>         <span class="mf">75.786027</span>          <span class="mi">0</span>    <span class="mf">0.000000</span>        <span class="mf">0.000000</span>
+<span class="o">...</span> <span class="o">...</span>     <span class="o">...</span>     <span class="o">...</span>     <span class="o">...</span>     <span class="o">...</span>     <span class="o">...</span>     <span class="o">...</span>
+<span class="mi">126</span>     <span class="mi">127</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">05</span><span class="p">:</span><span class="mi">21</span><span class="p">:</span><span class="mi">25</span>       <span class="mf">16.0</span>         <span class="mf">63.997065</span>          <span class="mi">1</span> <span class="mf">47.997065</span>         <span class="mf">74.998853</span>
+<span class="mi">127</span>     <span class="mi">128</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">05</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">25</span>        <span class="mf">0.0</span>               <span class="n">NaN</span>          <span class="mi">1</span> <span class="mf">0.000000</span>           <span class="mf">0.000000</span>
+<span class="mi">128</span>     <span class="mi">129</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">05</span><span class="p">:</span><span class="mi">23</span><span class="p">:</span><span class="mi">25</span>       <span class="mf">75.0</span>         <span class="mf">60.709631</span>          <span class="mi">0</span> <span class="mf">0.000000</span>           <span class="mf">0.000000</span>
+<span class="mi">129</span>     <span class="mi">130</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">05</span><span class="p">:</span><span class="mi">24</span><span class="p">:</span><span class="mi">25</span>       <span class="mf">83.0</span>         <span class="mf">61.932671</span>          <span class="mi">0</span> <span class="mf">0.000000</span>           <span class="mf">0.000000</span>
+<span class="mi">130</span>     <span class="mi">131</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">05</span><span class="p">:</span><span class="mi">25</span><span class="p">:</span><span class="mi">25</span>       <span class="mf">62.0</span>         <span class="mf">63.997065</span>          <span class="mi">0</span> <span class="mf">1.997065</span>           <span class="mf">3.120557</span>
+</pre></div>
+</div>
+</section>
+<section id="visualize-raw-data">
+<h2>Visualize Raw Data<a class="headerlink" href="#visualize-raw-data" title="Permalink to this heading">¶</a></h2>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Actiwave Cardio and Other ECG Sources</div></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">heartview</span><span class="o">.</span><span class="n">plot_signal</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;mV&#39;</span><span class="p">,</span> <span class="s1">&#39;Filtered&#39;</span><span class="p">],</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">,</span> <span class="n">segment</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">signal_type</span> <span class="o">=</span> <span class="s1">&#39;ecg&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># work in progress</span>
+</pre></div>
+</div>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Empatica E4</div></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">fs</span> <span class="o">=</span> <span class="mi">64</span>
+<span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span>
+<span class="n">bvp</span> <span class="o">=</span> <span class="n">heartview</span><span class="o">.</span><span class="n">segment_data</span><span class="p">(</span><span class="n">e4_data</span><span class="p">[</span><span class="s1">&#39;bvp&#39;</span><span class="p">],</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">)</span>
+<span class="n">heartview</span><span class="o">.</span><span class="n">plot_signal</span><span class="p">(</span><span class="n">bvp</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;BVP&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">,</span> <span class="n">segment</span> <span class="o">=</span> <span class="mi">96</span><span class="p">,</span> <span class="n">signal_type</span> <span class="o">=</span> <span class="s1">&#39;bvp&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Output:</p>
+<a class="reference internal image-reference" href="_images/e4_bvpplot.png"><img alt="_images/e4_bvpplot.png" class="align-center" src="_images/e4_bvpplot.png" style="width: 812.0px; height: 300.0px;" /></a>
+</section>
+<section id="visualize-the-expected-missing-numbers-of-beats-per-segment">
+<h2>Visualize the expected-missing numbers of beats per segment.<a class="headerlink" href="#visualize-the-expected-missing-numbers-of-beats-per-segment" title="Permalink to this heading">¶</a></h2>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Actiwave Cardio and Other ECG Sources</div></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SQA</span><span class="o">.</span><span class="n">plot_expected2missing</span><span class="p">(</span><span class="n">sqa</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Sample ECG&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># work in progress</span>
+</pre></div>
+</div>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Empatica E4</div></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SQA</span><span class="o">.</span><span class="n">plot_expected2missing</span><span class="p">(</span><span class="n">sqa</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Sample PPG&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Output:</p>
+<a class="reference internal image-reference" href="_images/e4_missingplot.png"><img alt="_images/e4_missingplot.png" class="align-center" src="_images/e4_missingplot.png" style="width: 812.0px; height: 450.0px;" /></a>
 </section>
 </section>
 
@@ -178,6 +279,8 @@ Pandas data frame prior to this step.</p>
 <li class="toctree-l2"><a class="reference internal" href="#reading-and-pre-processing-data">Reading and Pre-Processing Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#beat-detection">Beat Detection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#signal-quality-assessment">Signal Quality Assessment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#visualize-raw-data">Visualize Raw Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#visualize-the-expected-missing-numbers-of-beats-per-segment">Visualize the expected-missing numbers of beats per segment.</a></li>
 </ul>
 </li>
 </ul>

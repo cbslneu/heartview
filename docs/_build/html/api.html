@@ -308,6 +308,31 @@ recording.</p>
 <section id="module-heartview.pipeline.ACC">
 <span id="acc"></span><h3>ACC<a class="headerlink" href="#module-heartview.pipeline.ACC" title="Permalink to this heading">¶</a></h3>
 <dl class="py function">
+<dt class="sig sig-object py" id="heartview.pipeline.ACC.compute_auc">
+<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ACC.</span></span><span class="sig-name descname"><span class="pre">compute_auc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ACC.html#compute_auc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ACC.compute_auc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the area-under-the-curve of acceleration magnitude
+across a given window size using Riemann sums.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – The data frame containing the signal data and a column with
+timestamps in datetime format.</p></li>
+<li><p><strong>signal</strong> (<em>str</em>) – The name of the column containing the acceleration magnitude.</p></li>
+<li><p><strong>fs</strong> (<em>int</em><em>, </em><em>float</em>) – The sampling rate.</p></li>
+<li><p><strong>window</strong> (<em>int</em>) – The window size (in seconds) by which the areas are computed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>auc</strong> – A data frame containing the area under the signal for each
+window and its corresponding timestamp.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="heartview.pipeline.ACC.compute_magnitude">
 <span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ACC.</span></span><span class="sig-name descname"><span class="pre">compute_magnitude</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ACC.html#compute_magnitude"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ACC.compute_magnitude" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the magnitude of a 3-axis accelerometer signal.</p>
@@ -323,7 +348,29 @@ recording.</p>
 <dd class="field-even"><p><strong>magnitude</strong> – A series of acceleration magnitude values.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.Series</p>
+<dd class="field-odd"><p>pandas.Series</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="heartview.pipeline.ACC.convert_acc">
+<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ACC.</span></span><span class="sig-name descname"><span class="pre">convert_acc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ACC.html#convert_acc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ACC.convert_acc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert an acceleration signal from G-force to units of m/s^2.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>signal</strong> (<em>array_like</em>) – An array containing the acceleration signal.</p></li>
+<li><p><strong>sens</strong> (<em>int</em>) – The G-force sensitivity level of the accelerometer
+(e.g., <cite>2</cite> for ± 2g).</p></li>
+<li><p><strong>fs</strong> (<em>int</em>) – The sampling rate of the accelerometer recording.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ms2</strong> – An array containing the converted acceleration signal.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array_like</p>
 </dd>
 </dl>
 </dd></dl>
