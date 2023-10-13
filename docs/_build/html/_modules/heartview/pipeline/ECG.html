@@ -50,7 +50,7 @@
 <span class="kn">import</span> <span class="nn">datetime</span> <span class="k">as</span> <span class="nn">dt</span>
 
 <div class="viewcode-block" id="get_fs"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.ECG.get_fs">[docs]</a><span class="k">def</span> <span class="nf">get_fs</span><span class="p">(</span><span class="n">edf</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Get ECG sampling rate from an Actiwave Cardio device.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get ECG sampling rate from an Actiwave Cardio device.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -72,7 +72,7 @@
     <span class="k">return</span> <span class="n">fs</span></div>
 
 <div class="viewcode-block" id="read_actiwave"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.ECG.read_actiwave">[docs]</a><span class="k">def</span> <span class="nf">read_actiwave</span><span class="p">(</span><span class="n">edf</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Read ECG and acceleration data from an Actiwave Cardio device.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read ECG and acceleration data from an Actiwave Cardio device.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -130,7 +130,7 @@
 
 <span class="c1"># BASELINE AND MUSCLE NOISE FILTER</span>
 <div class="viewcode-block" id="baseline_muscle_filter"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.ECG.baseline_muscle_filter">[docs]</a><span class="k">def</span> <span class="nf">baseline_muscle_filter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">lowcut</span><span class="p">,</span> <span class="n">highcut</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">order</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Filter out baseline wander and muscle noise.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter out baseline wander and muscle noise.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -165,7 +165,7 @@
 
 <span class="c1"># POWERLINE INTERFERENCE NOTCH FILTER AT 60 Hz</span>
 <div class="viewcode-block" id="powerline_int_filter"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.ECG.powerline_int_filter">[docs]</a><span class="k">def</span> <span class="nf">powerline_int_filter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">freq</span> <span class="o">=</span> <span class="mi">60</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Filter out powerline interference at a specified frequency.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter out powerline interference at a specified frequency.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -195,7 +195,7 @@
 <span class="c1"># SHANNON ENERGY R PEAK DETECTION FUNCTION</span>
 <span class="c1"># Credit: https://github.com/nsunami/Shannon-Energy-R-Peak-Detection</span>
 <div class="viewcode-block" id="detect_rpeaks"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.ECG.detect_rpeaks">[docs]</a><span class="k">def</span> <span class="nf">detect_rpeaks</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">signal</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Detect locations of R peaks with Shannon energy &amp; smooth</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detect locations of R peaks with Shannon energy &amp; smooth</span>
 <span class="sd">    envelope extraction.</span>
 
 <span class="sd">    Parameters</span>
@@ -286,7 +286,7 @@
 
 <span class="c1"># IBI EXTRACTION</span>
 <div class="viewcode-block" id="compute_ibis"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.ECG.compute_ibis">[docs]</a><span class="k">def</span> <span class="nf">compute_ibis</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ts_col</span><span class="p">,</span> <span class="n">peaks_ix</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Compute interbeat intervals from peak locations in ECG data.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute interbeat intervals from peak locations in ECG data.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -321,7 +321,7 @@
 
 <span class="c1"># SECOND-BY-SECOND PRE-PROCESSING</span>
 <div class="viewcode-block" id="get_seconds"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.ECG.get_seconds">[docs]</a><span class="k">def</span> <span class="nf">get_seconds</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">peaks_col</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Get second-by-second HR, IBI, and peak counts from ECG data.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get second-by-second HR, IBI, and peak counts from ECG data.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -414,7 +414,11 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">HeartView Dashboard</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Using the Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Launching the App</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html#terminating-the-app">Terminating the App</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html#using-the-dashboard">Using the Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html#creating-configuration-files">Creating Configuration Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html#loading-configuration-files">Loading Configuration Files</a></li>
 </ul>
 
           <div role="search">

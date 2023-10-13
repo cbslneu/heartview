@@ -21,6 +21,11 @@ div.header div.rel a:visited {
     color: #ffbbae;
 }
 
+div.sidebar {
+    position: sticky;
+    top: 0;
+}
+
 div.sidebar li.toctree-l1.current a, aside.sidebar li.toctree-l1.current a {
     border-right: 5px solid #ee8a78;
 }
@@ -46,11 +51,12 @@ h1, h2, h3, h4 {
 
 div.document h1 {
     font-size: 28px;
+    padding-top: 0.5em;
 }
 
 div.document h2 {
     border-bottom: 1px solid #ee8a78;
-    padding-top: 0.5em;
+    padding-top: 0.25em;
 }
 
 div.document ul {

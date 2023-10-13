@@ -73,7 +73,7 @@
     <span class="k">return</span> <span class="kc">None</span>
 
 <span class="k">def</span> <span class="nf">_check_edf</span><span class="p">(</span><span class="n">edf</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Check whether the EDF uploaded is a valid Actiwave Cardio file.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether the EDF uploaded is a valid Actiwave Cardio file.&quot;&quot;&quot;</span>
     <span class="n">f</span> <span class="o">=</span> <span class="n">pyedflib</span><span class="o">.</span><span class="n">EdfReader</span><span class="p">(</span><span class="n">edf</span><span class="p">)</span>
     <span class="n">signals</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">getSignalLabels</span><span class="p">()</span>
     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="s1">&#39;ECG0&#39;</span> <span class="ow">in</span> <span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">signals</span><span class="p">):</span>
@@ -91,7 +91,7 @@
         <span class="k">return</span> <span class="p">[]</span>
 
 <span class="k">def</span> <span class="nf">_create_configs</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">,</span> <span class="n">filters</span><span class="p">:</span> <span class="nb">list</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span> <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Create a JSON-formatted configuration file of user</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a JSON-formatted configuration file of user</span>
 <span class="sd">    SQA parameters.</span>
 
 <span class="sd">    Parameters</span>
@@ -121,13 +121,13 @@
     <span class="k">return</span> <span class="n">json_object</span>
 
 <span class="k">def</span> <span class="nf">_load_config</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Load a JSON configuration file into a dictionary.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a JSON configuration file into a dictionary.&quot;&quot;&quot;</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
     <span class="n">configs</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">configs</span>
 
 <span class="k">def</span> <span class="nf">_export_sqa</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">data_type</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Export the SQA summary data in Zip or Excel format.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Export the SQA summary data in Zip or Excel format.&quot;&quot;&quot;</span>
     <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;./temp/sqa_metrics.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;./temp/peaks_by_segment.csv&#39;</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s1">&#39;E4&#39;</span><span class="p">:</span>
         <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_BVP.csv&#39;</span><span class="p">)</span>
@@ -160,13 +160,13 @@
     <span class="k">return</span> <span class="kc">None</span>
 
 <span class="k">def</span> <span class="nf">_get_csv_headers</span><span class="p">(</span><span class="n">csv</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Get the headers of a user-uploaded CSV file in a list.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the headers of a user-uploaded CSV file in a list.&quot;&quot;&quot;</span>
     <span class="n">initial</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">csv</span><span class="p">,</span> <span class="n">nrows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">headers</span> <span class="o">=</span> <span class="n">initial</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">headers</span>
 
 <div class="viewcode-block" id="segment_data"><a class="viewcode-back" href="../../api.html#heartview.heartview.segment_data">[docs]</a><span class="k">def</span> <span class="nf">segment_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Segment data into specific window sizes.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Segment data into specific window sizes.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -195,7 +195,7 @@
 
 
 <span class="k">def</span> <span class="nf">_blank_fig</span><span class="p">(</span><span class="n">context</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Display the default blank figure.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Display the default blank figure.&quot;&quot;&quot;</span>
     <span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">y</span> <span class="o">=</span> <span class="p">[]))</span>
     <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">template</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                       <span class="n">paper_bgcolor</span> <span class="o">=</span> <span class="s1">&#39;rgba(0, 0, 0, 0)&#39;</span><span class="p">,</span>
@@ -223,7 +223,7 @@
     <span class="k">return</span> <span class="n">fig</span>
 
 <span class="k">def</span> <span class="nf">_blank_table</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;Display the default blank table.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Display the default blank table.&quot;&quot;&quot;</span>
     <span class="n">summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
         <span class="s1">&#39;Signal Quality Metrics&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Segments with Missing Beats&#39;</span><span class="p">,</span>
                        <span class="s1">&#39;Segments with Invalid Beats&#39;</span><span class="p">,</span>
@@ -242,7 +242,7 @@
 
 <div class="viewcode-block" id="plot_signal"><a class="viewcode-back" href="../../api.html#heartview.heartview.plot_signal">[docs]</a><span class="k">def</span> <span class="nf">plot_signal</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span> <span class="n">segment</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_segments</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
                 <span class="n">signal_type</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">peaks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Visualize a signal.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize a signal.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -373,7 +373,7 @@
         <span class="k">return</span> <span class="n">fig</span></div>
 
 <div class="viewcode-block" id="plot_ibi_from_ecg"><a class="viewcode-back" href="../../api.html#heartview.heartview.plot_ibi_from_ecg">[docs]</a><span class="k">def</span> <span class="nf">plot_ibi_from_ecg</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">segment</span><span class="p">,</span> <span class="n">n_segments</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Visualize an IBI series generated from ECG data.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize an IBI series generated from ECG data.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -444,7 +444,11 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">HeartView Dashboard</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../dashboard.html">Using the Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dashboard.html">Launching the App</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dashboard.html#terminating-the-app">Terminating the App</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dashboard.html#using-the-dashboard">Using the Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dashboard.html#creating-configuration-files">Creating Configuration Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dashboard.html#loading-configuration-files">Loading Configuration Files</a></li>
 </ul>
 
           <div role="search">

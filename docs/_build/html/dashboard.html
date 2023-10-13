@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Using the Dashboard &#8212; HeartView 1.0 documentation</title>
+    <title>Launching the App &#8212; HeartView 1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/agogo.css" />
     <link rel="stylesheet" type="text/css" href="_static/css/custom.css" />
@@ -46,10 +46,15 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="using-the-dashboard">
-<h1>Using the Dashboard<a class="headerlink" href="#using-the-dashboard" title="Permalink to this heading">¶</a></h1>
-<section id="start-the-app">
-<h2>Start the App<a class="headerlink" href="#start-the-app" title="Permalink to this heading">¶</a></h2>
+  <style type="text/css">
+    .bolditalic {
+        font-weight: bold;
+        font-style: italic;
+    }
+</style><p>The HeartView dashboard was developed in Python and with the Dash framework,
+which consists of a Flask server that communicates with front-end React components.</p>
+<section id="launching-the-app">
+<h1>Launching the App<a class="headerlink" href="#launching-the-app" title="Permalink to this heading">¶</a></h1>
 <ol class="arabic simple">
 <li><p>Within the activated virtual environment:</p></li>
 </ol>
@@ -60,13 +65,90 @@
 <li><p>Open your web browser and go to: <a class="reference external" href="https://127.0.0.1:8050">https://127.0.0.1:8050</a></p></li>
 </ol>
 </section>
-<section id="terminate-the-app">
-<h2>Terminate the App<a class="headerlink" href="#terminate-the-app" title="Permalink to this heading">¶</a></h2>
+<section id="terminating-the-app">
+<h1>Terminating the App<a class="headerlink" href="#terminating-the-app" title="Permalink to this heading">¶</a></h1>
 <ol class="arabic simple">
 <li><p>In your Terminal, press <code class="docutils literal notranslate"><span class="pre">CTRL</span></code> + <code class="docutils literal notranslate"><span class="pre">c</span></code>.</p></li>
 <li><p>Exit the virtual environment by typing <code class="docutils literal notranslate"><span class="pre">deactivate</span></code>.</p></li>
 </ol>
 </section>
+<section id="using-the-dashboard">
+<h1>Using the Dashboard<a class="headerlink" href="#using-the-dashboard" title="Permalink to this heading">¶</a></h1>
+<section id="uploading-and-setting-up-your-data">
+<h2>Uploading and Setting Up Your Data<a class="headerlink" href="#uploading-and-setting-up-your-data" title="Permalink to this heading">¶</a></h2>
+<p>Once the dashboard application has been launched in your web browser, select
+your data file. HeartView will accept raw European Data Formatted (.edf) files
+from the Actiwave Cardio, archive (.zip) files from the Empatica E4, and
+comma-separated values (.csv) files from other ECG sources.</p>
+<p>In the example below, a CSV file containing raw data from another ECG source is
+uploaded to the dashboard.</p>
+<a class="reference internal image-reference" href="_images/dashboard-upload-1.png"><img alt="_images/dashboard-upload-1.png" class="align-center" src="_images/dashboard-upload-1.png" style="width: 600px;" /></a>
+<div class="line-block">
+<div class="line">Set the sampling rate and map the headers in your CSV file to their respective timestamp and ECG variables.</div>
+</div>
+<a class="reference internal image-reference" href="_images/dashboard-upload-2.png"><img alt="_images/dashboard-upload-2.png" class="align-center" src="_images/dashboard-upload-2.png" style="width: 600px;" /></a>
+<div class="line-block">
+<div class="line">Set the window size (60 seconds, by default), select the ECG filters to apply to your data, and click the “Run” button.</div>
+</div>
+<a class="reference internal image-reference" href="_images/dashboard-upload-3.png"><img alt="_images/dashboard-upload-3.png" class="align-center" src="_images/dashboard-upload-3.png" style="width: 600px;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="viewing-signal-quality-metrics">
+<h2>Viewing Signal Quality Metrics<a class="headerlink" href="#viewing-signal-quality-metrics" title="Permalink to this heading">¶</a></h2>
+<p>HeartView’s main dashboard shows three panels.</p>
+<a class="reference internal image-reference" href="_images/dashboard-main.png"><img alt="_images/dashboard-main.png" class="align-center" src="_images/dashboard-main.png" style="width: 600px;" /></a>
+<div class="line-block">
+<div class="line"><span class="bolditalic">Data Summary</span> displays information about the loaded data file and signal quality metrics, including the number and proportion of invalid segments, as well as segment-by-segment counts and proportions of missing beats.</div>
+</div>
+<div class="line-block">
+<div class="line"><span class="bolditalic">Expected-to-Missing-Beats</span> shows an interactive bar chart of the numbers of expected and missing beats and whether they are invalid per segment.</div>
+</div>
+<div class="line-block">
+<div class="line">The lower panel shows the <strong>ECG</strong>, <strong>interbeat interval (IBI)</strong>, and <strong>acceleration</strong> signals pre-processed from the data file.</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="exporting-the-data-summary">
+<h2>Exporting the Data Summary<a class="headerlink" href="#exporting-the-data-summary" title="Permalink to this heading">¶</a></h2>
+<p>The <strong>Export Summary</strong> button in the <span class="bolditalic">Data Summary</span> panel allows you
+to download your data summary as a Zip archive file or an Excel workbook.</p>
+<a class="reference internal image-reference" href="_images/dashboard-export-1.png"><img alt="_images/dashboard-export-1.png" class="align-center" src="_images/dashboard-export-1.png" style="width: 600px;" /></a>
+<div class="line-block">
+<div class="line">The resulting file is saved in the <cite>downloads/</cite> folder in your HeartView project directory.</div>
+</div>
+<a class="reference internal image-reference" href="_images/dashboard-export-2.png"><img alt="_images/dashboard-export-2.png" class="align-center" src="_images/dashboard-export-2.png" style="width: 600px;" /></a>
+<div class="line-block">
+<div class="line">Download an example Excel workbook with the SQA summary <a class="reference download internal" download="" href="_downloads/bf8fab17e718fa94bdb1f6d53b703d25/sample_ecg_sqa_summary.xlsx"><code class="xref download docutils literal notranslate"><span class="pre">here</span></code></a>.</div>
+</div>
+</section>
+</section>
+<section id="creating-configuration-files">
+<h1>Creating Configuration Files<a class="headerlink" href="#creating-configuration-files" title="Permalink to this heading">¶</a></h1>
+<p>The HeartView dashboard allows you to save your data pre-processing parameters
+according to your file type in configuration files that can be loaded again in
+the future for more convenient pre-processing.</p>
+<div class="line-block">
+<div class="line">After setting your data pre-processing parameters in the welcome panel, click the <strong>Save</strong> button to create a JSON configuration file for your parameters.</div>
+</div>
+<a class="reference internal image-reference" href="_images/dashboard-config-export.png"><img alt="_images/dashboard-config-export.png" class="align-center" src="_images/dashboard-config-export.png" style="width: 600px;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="loading-configuration-files">
+<h1>Loading Configuration Files<a class="headerlink" href="#loading-configuration-files" title="Permalink to this heading">¶</a></h1>
+<p>Toggle the <strong>Load a Configuration File</strong> switch to display the configuration
+file upload field. Click on <em>Select Configuration File…</em> to load your JSON
+configuration file.</p>
+<a class="reference internal image-reference" href="_images/dashboard-config-load-1.png"><img alt="_images/dashboard-config-load-1.png" class="align-center" src="_images/dashboard-config-load-1.png" style="width: 600px;" /></a>
+<div class="line-block">
+<div class="line"><span style="font-size: 12pt; font-weight: bold; color: #ed2d33">Important:</span> You must re-map any headers saved in your JSON configuration file to the dashboard variables.</div>
+</div>
+<a class="reference internal image-reference" href="_images/dashboard-config-load-2.png"><img alt="_images/dashboard-config-load-2.png" class="align-center" src="_images/dashboard-config-load-2.png" style="width: 400px;" /></a>
 </section>
 
 
@@ -91,11 +173,16 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">HeartView Dashboard</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Using the Dashboard</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#start-the-app">Start the App</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#terminate-the-app">Terminate the App</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Launching the App</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#terminating-the-app">Terminating the App</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#using-the-dashboard">Using the Dashboard</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#uploading-and-setting-up-your-data">Uploading and Setting Up Your Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#viewing-signal-quality-metrics">Viewing Signal Quality Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#exporting-the-data-summary">Exporting the Data Summary</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="#creating-configuration-files">Creating Configuration Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#loading-configuration-files">Loading Configuration Files</a></li>
 </ul>
 
           <div role="search">

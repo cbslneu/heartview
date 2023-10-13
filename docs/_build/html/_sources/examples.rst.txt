@@ -58,7 +58,7 @@ Output:
 
 ::
 
-    dict_keys(['bvp', 'hr', 'ibi', 'acc', 'fs', 'start time'])
+    # Under construction
 
 
 Beat Detection
@@ -81,27 +81,6 @@ Pandas data frame prior to this step.
 
     # Save R peak occurrences
     ecg.loc[peak_loc, 'Peak'] = 1
-    data.head()
-
-::
-
-    data['Peak'].sum()
-
-Output:
-
-::
-    
-          Segment	                 Timestamp	       mV	Powerline	Filtered	Peak
-    0	        1	2023-10-03 17:28:43.000000	-0.045764	-0.043125	0.018008	 NaN
-    1	        1	2023-10-03 17:28:43.000977	-0.050443	-0.048157	0.021933	 NaN
-    2	        1	2023-10-03 17:28:43.001953	-0.039037	-0.037414	0.025466	 NaN
-    3	        1	2023-10-03 17:28:43.002930	-0.029386	-0.028653	0.028245	 NaN
-    4	        1	2023-10-03 17:28:43.003906	-0.021782	-0.022051	0.029948	 NaN
-
-
-::
-
-    1213.0
 
 |Empatica E4|
 
@@ -119,24 +98,11 @@ Extract heartbeats from IBI data from the Empatica E4.
     e4_peaks = PPG.get_e4_peaks(ibi, e4_fs, start_time)
     e4_peaks.head()
 
-::
-
-    e4_peaks['Peak'].sum()
-
 Output:
 
 ::
 
-                Unix	                 Timestamp	Second	Peak	IBI	 HR
-    0	1.495437e+09	2017-05-22 03:15:25.000000	   1.0	 NaN	NaN	NaN
-    1	1.495437e+09	2017-05-22 03:15:25.015625	   1.0	 NaN	NaN	NaN
-    2	1.495437e+09	2017-05-22 03:15:25.031250	   1.0	 NaN	NaN	NaN
-    3	1.495437e+09	2017-05-22 03:15:25.046875	   1.0	 NaN	NaN	NaN
-    4	1.495437e+09	2017-05-22 03:15:25.062500	   1.0	 NaN	NaN	NaN
-
-::
-
-    3457.0
+    # Under construction
 
 
 Signal Quality Assessment
@@ -156,113 +122,14 @@ Signal Quality Assessment
     # Get the expected and detected numbers of peaks by segment
     peaks_by_seg = SQA.evaluate_peaks(interval_data, seg_size)
 
-    # Compute the signal quality assessment metrics by segment
-    sqa = SQA.compute_metrics(peaks_by_seg)
-    sqa
+    peaks_by_seg.head()
 
 Output:
 
 ::
 
-        Segment	              Timestamp	  Detected	     Expected	Invalid	      Missing	% Missing
-    0	      1	    2023-10-03 17:28:43	     253.0	   288.000000	      1	    35.000000	12.152778
-    1	      2	    2023-10-03 17:29:43	     242.0	   265.295711	      1	    23.295711	 8.781036
-    2	      3	    2023-10-03 17:30:43	     272.0	   282.299692	      1	    10.299692	 3.648496
-    3	      4	    2023-10-03 17:31:43	     257.0	   266.420859	      1	     9.420859	 3.536082
-    4	      5	    2023-10-03 17:32:43	     189.0	   286.911274	      0	    97.911274	34.125977
+    # Under construction
 
-|Empatica E4|
-
-::
-
-    from heartview.pipeline import PPG, SQA
-
-    # Get second-by-second data
-    seg_size = 60
-    interval_data = PPG.get_e4_interval_data(e4_peaks, seg_size)
-    
-    # Get the expected and detected numbers of peaks by segment
-    peaks_by_seg = SQA.evaluate_peaks(interval_data, seg_size)
-
-    # Compute the signal quality assessment metrics by segment
-    sqa = SQA.compute_metrics(peaks_by_seg)
-    sqa
-
-Output:
-::
-
-        Segment	              Timestamp	  Detected	    Expected	Invalid	    Missing	  % Missing
-    0	      1	    2017-05-22 03:15:25	      24.0	   76.679121	      1	  52.679121	  68.700737
-    1	      2	    2017-05-22 03:16:25	       0.0	         NaN	      1	   0.000000	   0.000000
-    2	      3	    2017-05-22 03:17:25	      22.0	   83.200181	      1	  61.200181	  73.557750
-    3	      4	    2017-05-22 03:18:25	     117.0	   77.311916	      0	   0.000000	   0.000000
-    4	      5	    2017-05-22 03:19:25	      95.0	   75.786027	      0	   0.000000	   0.000000
-    ...	...	...	...	...	...	...	...
-    126	    127	    2017-05-22 05:21:25	      16.0	   63.997065	      1	47.997065	  74.998853
-    127	    128	    2017-05-22 05:22:25	       0.0	         NaN	      1	0.000000	   0.000000
-    128	    129	    2017-05-22 05:23:25	      75.0	   60.709631	      0	0.000000	   0.000000
-    129	    130	    2017-05-22 05:24:25	      83.0	   61.932671	      0	0.000000	   0.000000
-    130	    131	    2017-05-22 05:25:25	      62.0	   63.997065	      0	1.997065	   3.120557
-
-
-Visualize Raw Data
--------------------------
-
-|ECG|
-
-::
-
-    heartview.plot_signal(data, 'Timestamp', ['mV', 'Filtered'], fs, seg_size, segment = 1, signal_type = 'ecg')
-
-Output:
-
-::
-
-    # work in progress
-
-
-|Empatica E4|
-
-::
-
-    fs = 64
-    seg_size = 60
-    bvp = heartview.segment_data(e4_data['bvp'], fs, seg_size)
-    heartview.plot_signal(bvp, 'Timestamp', 'BVP', fs, seg_size, segment = 96, signal_type = 'bvp')
-
-Output:
-
-.. image:: e4_bvpplot.png
-   :scale: 100 %
-   :align: center
-
-
-Visualize the expected-missing numbers of beats per segment.
--------------------------
-|ECG|
-
-::
-
-    SQA.plot_expected2missing(sqa, title = 'Sample ECG')
-
-Output:
-
-::
-    
-    # work in progress
-
-
-|Empatica E4|
-
-::
-
-    SQA.plot_expected2missing(sqa, title = 'Sample PPG')
-
-Output:
-
-.. image:: e4_missingplot.png
-   :scale: 100 %
-   :align: center
 
 .. |Jupyter notebooks| raw:: html
 
