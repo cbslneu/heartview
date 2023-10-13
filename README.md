@@ -1,9 +1,10 @@
 <div align="center"> 
   <img src="https://github.com/nmy2103/heartview/blob/main/assets/heartview-logo.png?raw=true" height="100">
   <br>
-  <img src="https://badgen.net/badge/python/3.9/cyan">
+  <img src="https://badgen.net/badge/python/3.11/blue">
   <img src="https://badgen.net/badge/license/GPL-3.0/orange">
-  <img src="https://badgen.net/badge/contributions/welcome/green">
+  <img src="https://badgen.net/badge/docs/passing/green">
+  <img src="https://badgen.net/badge/contributions/welcome/cyan">
   <br>
   <i>An extensible, open-source, and web-based signal quality assessment pipeline for ambulatory cardiovascular data</i>
   <br>
