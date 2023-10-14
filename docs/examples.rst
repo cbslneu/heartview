@@ -206,12 +206,12 @@ Visualize Raw Data
 
 ::
 
-    heartview.plot_signal(data, 'Timestamp', ['mV', 'Filtered'], fs, seg_size, segment = 1, signal_type = 'ecg')
+    heartview.plot_signal(data, 'Timestamp', ['mV', 'Filtered'], fs, seg_size, segment = 1, signal_type = 'ecg', peaks='Peak')
 
 Output:
 
 .. image:: ecg_rawplot.png
-   :scale: 100 %
+   :scale: 75 %
    :align: center
 
 
@@ -222,12 +222,12 @@ Output:
     fs = 64
     seg_size = 60
     bvp = heartview.segment_data(e4_data['bvp'], fs, seg_size)
-    heartview.plot_signal(bvp, 'Timestamp', 'BVP', fs, seg_size, segment = 96, signal_type = 'bvp')
+    heartview.plot_signal(bvp, 'Timestamp', 'BVP', fs, seg_size, segment = 100, signal_type = 'bvp', peaks='Peak')
 
 Output:
 
 .. image:: e4_bvpplot.png
-   :scale: 100 %
+   :scale: 75 %
    :align: center
 
 
@@ -256,7 +256,7 @@ Output:
 Output:
 
 .. image:: e4_missingplot.png
-   :scale: 100 %
+   :scale: 90 %
    :align: center
 
 .. |Jupyter notebooks| raw:: html

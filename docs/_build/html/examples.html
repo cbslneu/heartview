@@ -216,20 +216,20 @@ Pandas data frame prior to this step.</p>
 <section id="visualize-raw-data">
 <h2>Visualize Raw Data<a class="headerlink" href="#visualize-raw-data" title="Permalink to this heading">¶</a></h2>
 <p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Actiwave Cardio and Other ECG Sources</div></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">heartview</span><span class="o">.</span><span class="n">plot_signal</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;mV&#39;</span><span class="p">,</span> <span class="s1">&#39;Filtered&#39;</span><span class="p">],</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">,</span> <span class="n">segment</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">signal_type</span> <span class="o">=</span> <span class="s1">&#39;ecg&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">heartview</span><span class="o">.</span><span class="n">plot_signal</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;mV&#39;</span><span class="p">,</span> <span class="s1">&#39;Filtered&#39;</span><span class="p">],</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">,</span> <span class="n">segment</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">signal_type</span> <span class="o">=</span> <span class="s1">&#39;ecg&#39;</span><span class="p">,</span> <span class="n">peaks</span><span class="o">=</span><span class="s1">&#39;Peak&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Output:</p>
-<a class="reference internal image-reference" href="_images/ecg_rawplot.png"><img alt="_images/ecg_rawplot.png" class="align-center" src="_images/ecg_rawplot.png" style="width: 752.0px; height: 300.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ecg_rawplot.png"><img alt="_images/ecg_rawplot.png" class="align-center" src="_images/ecg_rawplot.png" style="width: 779.25px; height: 225.0px;" /></a>
 <p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Empatica E4</div></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">fs</span> <span class="o">=</span> <span class="mi">64</span>
 <span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span>
 <span class="n">bvp</span> <span class="o">=</span> <span class="n">heartview</span><span class="o">.</span><span class="n">segment_data</span><span class="p">(</span><span class="n">e4_data</span><span class="p">[</span><span class="s1">&#39;bvp&#39;</span><span class="p">],</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">)</span>
-<span class="n">heartview</span><span class="o">.</span><span class="n">plot_signal</span><span class="p">(</span><span class="n">bvp</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;BVP&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">,</span> <span class="n">segment</span> <span class="o">=</span> <span class="mi">96</span><span class="p">,</span> <span class="n">signal_type</span> <span class="o">=</span> <span class="s1">&#39;bvp&#39;</span><span class="p">)</span>
+<span class="n">heartview</span><span class="o">.</span><span class="n">plot_signal</span><span class="p">(</span><span class="n">bvp</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;BVP&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">,</span> <span class="n">segment</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">signal_type</span> <span class="o">=</span> <span class="s1">&#39;bvp&#39;</span><span class="p">,</span> <span class="n">peaks</span><span class="o">=</span><span class="s1">&#39;Peak&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Output:</p>
-<a class="reference internal image-reference" href="_images/e4_bvpplot.png"><img alt="_images/e4_bvpplot.png" class="align-center" src="_images/e4_bvpplot.png" style="width: 812.0px; height: 300.0px;" /></a>
+<a class="reference internal image-reference" href="_images/e4_bvpplot.png"><img alt="_images/e4_bvpplot.png" class="align-center" src="_images/e4_bvpplot.png" style="width: 779.25px; height: 225.0px;" /></a>
 </section>
 <section id="visualize-the-expected-missing-numbers-of-beats-per-segment">
 <h2>Visualize the expected-missing numbers of beats per segment.<a class="headerlink" href="#visualize-the-expected-missing-numbers-of-beats-per-segment" title="Permalink to this heading">¶</a></h2>
@@ -244,7 +244,7 @@ Pandas data frame prior to this step.</p>
 </pre></div>
 </div>
 <p>Output:</p>
-<a class="reference internal image-reference" href="_images/e4_missingplot.png"><img alt="_images/e4_missingplot.png" class="align-center" src="_images/e4_missingplot.png" style="width: 812.0px; height: 450.0px;" /></a>
+<a class="reference internal image-reference" href="_images/e4_missingplot.png"><img alt="_images/e4_missingplot.png" class="align-center" src="_images/e4_missingplot.png" style="width: 730.8000000000001px; height: 405.0px;" /></a>
 </section>
 </section>
 
