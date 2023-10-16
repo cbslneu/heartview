@@ -57,7 +57,7 @@ Output:
 Beat Detection
 --------------
 
-|ECG|
+|ECG1|
 
 Detect R peaks from ECG data collected with the Actiwave Cardio and other
 sources. Note that ECG data from other sources will have to be read into a
@@ -78,6 +78,7 @@ Pandas data frame prior to this step.
 
 ::
 
+    # Count the number of peaks detected
     data['Peak'].sum()
 
 Output:
@@ -97,7 +98,7 @@ Output:
 
 |Empatica E4|
 
-Extract heartbeats from IBI data from the Empatica E4.
+Extract heartbeats from interbeat interval (IBI) data from the Empatica E4.
 
 ::
 
@@ -108,11 +109,12 @@ Extract heartbeats from IBI data from the Empatica E4.
     e4_fs = e4_data['fs']
     start_time = e4_data['start time']
 
-    e4_peaks = PPG.get_e4_peaks(ibi, e4_fs, start_time)
+    e4_peaks = PPG.get_e4_peaks(ibi = ibi, fs = e4_fs, start_time = start_time)
     e4_peaks.head()
 
 ::
 
+    # Count the number of peaks detected
     e4_peaks['Peak'].sum()
 
 Output:
@@ -134,7 +136,13 @@ Output:
 Signal Quality Assessment
 -------------------------
 
-|ECG|
+Perform the HeartView signal quality assessment procedure on ECG or PPG data.
+We start by computing second-by-second heart rate and IBI data based on the
+locations of detected beats. We then derive the expected and detected numbers
+of beats in each segment and summarize the percentage of missing and invalid
+beats.
+
+|ECG2|
 
 ::
 
@@ -143,13 +151,17 @@ Signal Quality Assessment
     # Get second-by-second data
     ecg_fs = 1024
     seg_size = 60  # seconds
-    interval_data = ECG.get_seconds(ecg, 'Peak', ecg_fs, seg_size)
+    interval_data = ECG.get_seconds(
+        df = ecg,
+        peaks_col = 'Peak',
+        fs = ecg_fs,
+        seg_size = seg_size)
 
     # Get the expected and detected numbers of peaks by segment
-    peaks_by_seg = SQA.evaluate_peaks(interval_data, seg_size)
+    peaks_by_seg = SQA.evaluate_peaks(df = interval_data, seg_size = seg_size)
 
     # Compute the signal quality assessment metrics by segment
-    sqa = SQA.compute_metrics(peaks_by_seg)
+    sqa = SQA.compute_metrics(df = peaks_by_seg)
     sqa
 
 Output:
@@ -173,13 +185,13 @@ Output:
 
     # Get second-by-second data
     seg_size = 60
-    interval_data = PPG.get_e4_interval_data(e4_peaks, seg_size)
+    interval_data = PPG.get_e4_interval_data(df = e4_peaks, seg_size = seg_size)
     
     # Get the expected and detected numbers of peaks by segment
-    peaks_by_seg = SQA.evaluate_peaks(interval_data, seg_size)
+    peaks_by_seg = SQA.evaluate_peaks(df = interval_data, seg_size = seg_size)
 
     # Compute the signal quality assessment metrics by segment
-    sqa = SQA.compute_metrics(peaks_by_seg)
+    sqa = SQA.compute_metrics(df = peaks_by_seg)
     sqa
 
 Output:
@@ -200,13 +212,21 @@ Output:
 
 
 Visualize Raw Data
--------------------------
+------------------
 
-|ECG|
+|ECG1|
 
 ::
 
-    heartview.plot_signal(data, 'Timestamp', ['mV', 'Filtered'], fs, seg_size, segment = 1, signal_type = 'ecg', peaks='Peak')
+    heartview.plot_signal(
+        df = data,
+        x = 'Timestamp',
+        y = ['mV', 'Filtered'],
+        fs = fs,
+        seg_size = seg_size,
+        segment = 1,
+        signal_type = 'ecg',
+        peaks = 'Peak')
 
 Output:
 
@@ -222,7 +242,15 @@ Output:
     fs = 64
     seg_size = 60
     bvp = heartview.segment_data(e4_data['bvp'], fs, seg_size)
-    heartview.plot_signal(bvp, 'Timestamp', 'BVP', fs, seg_size, segment = 100, signal_type = 'bvp', peaks='Peak')
+    heartview.plot_signal(
+        df = bvp,
+        x = 'Timestamp',
+        y = 'BVP',
+        fs = fs,
+        seg_size = seg_size,
+        segment = 100,
+        signal_type = 'bvp',
+        peaks = 'Peak')
 
 Output:
 
@@ -231,14 +259,17 @@ Output:
    :align: center
 
 
-Visualize the expected-missing numbers of beats per segment.
-------------------------------------------------------------
+Visualize Signal Quality Metrics
+--------------------------------
 
-|ECG|
+Signal quality metrics are visualized in overlaying interactive bar charts
+of the counts of expected, missing, and invalid beats per segment.
+
+|ECG2|
 
 ::
 
-    SQA.plot_expected2missing(sqa, title = 'Sample ECG')
+    SQA.plot_expected2missing(data = sqa, title = 'Sample ECG')
 
 Output:
 
@@ -251,7 +282,7 @@ Output:
 
 ::
 
-    SQA.plot_expected2missing(sqa, title = 'Sample PPG')
+    SQA.plot_expected2missing(data = sqa, title = 'Sample PPG')
 
 Output:
 
@@ -267,10 +298,14 @@ Output:
 
     <div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Actiwave Cardio</div>
 
-.. |ECG| raw:: html
+.. |ECG1| raw:: html
 
-    <div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Actiwave Cardio and Other ECG Sources</div>
+    <div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt;">Actiwave Cardio and Other ECG Sources</div>
+
+.. |ECG2| raw:: html
+
+    <div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt; padding-top: 8pt">Actiwave Cardio and Other ECG Sources</div>
 
 .. |Empatica E4| raw:: html
 
-    <div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Empatica E4</div>
+    <div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt; padding-top: 8pt">Empatica E4</div>

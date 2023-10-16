@@ -69,6 +69,7 @@ div.document li.toctree-l1 {
 
 pre {
     padding: 7px;
+    overflow: scroll;
 }
 
 p.caption {

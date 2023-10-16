@@ -75,7 +75,7 @@ walk-through for each type of data.</p>
 <span class="mi">4</span>   <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mf">51.003906</span>      <span class="o">-</span><span class="mf">0.190243</span>
 </pre></div>
 </div>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Empatica E4</div></p>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt; padding-top: 8pt">Empatica E4</div></p>
 <p>Extract and pre-process data from an Empatica E4 device. All pre-processed
 data are stored in a Python dictionary.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heartview.pipeline</span> <span class="kn">import</span> <span class="n">PPG</span>
@@ -93,7 +93,7 @@ data are stored in a Python dictionary.</p>
 </section>
 <section id="beat-detection">
 <h2>Beat Detection<a class="headerlink" href="#beat-detection" title="Permalink to this heading">¶</a></h2>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Actiwave Cardio and Other ECG Sources</div></p>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt;">Actiwave Cardio and Other ECG Sources</div></p>
 <p>Detect R peaks from ECG data collected with the Actiwave Cardio and other
 sources. Note that ECG data from other sources will have to be read into a
 Pandas data frame prior to this step.</p>
@@ -109,7 +109,8 @@ Pandas data frame prior to this step.</p>
 <span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;Peak&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Count the number of peaks detected</span>
+<span class="n">data</span><span class="p">[</span><span class="s1">&#39;Peak&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>Output:</p>
@@ -124,8 +125,8 @@ Pandas data frame prior to this step.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">807.0</span>
 </pre></div>
 </div>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Empatica E4</div></p>
-<p>Extract heartbeats from IBI data from the Empatica E4.</p>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt; padding-top: 8pt">Empatica E4</div></p>
+<p>Extract heartbeats from interbeat interval (IBI) data from the Empatica E4.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heartview.pipeline</span> <span class="kn">import</span> <span class="n">PPG</span>
 
 <span class="c1"># `e4_data` = output from `PPG.preprocess_e4()`</span>
@@ -133,11 +134,12 @@ Pandas data frame prior to this step.</p>
 <span class="n">e4_fs</span> <span class="o">=</span> <span class="n">e4_data</span><span class="p">[</span><span class="s1">&#39;fs&#39;</span><span class="p">]</span>
 <span class="n">start_time</span> <span class="o">=</span> <span class="n">e4_data</span><span class="p">[</span><span class="s1">&#39;start time&#39;</span><span class="p">]</span>
 
-<span class="n">e4_peaks</span> <span class="o">=</span> <span class="n">PPG</span><span class="o">.</span><span class="n">get_e4_peaks</span><span class="p">(</span><span class="n">ibi</span><span class="p">,</span> <span class="n">e4_fs</span><span class="p">,</span> <span class="n">start_time</span><span class="p">)</span>
+<span class="n">e4_peaks</span> <span class="o">=</span> <span class="n">PPG</span><span class="o">.</span><span class="n">get_e4_peaks</span><span class="p">(</span><span class="n">ibi</span> <span class="o">=</span> <span class="n">ibi</span><span class="p">,</span> <span class="n">fs</span> <span class="o">=</span> <span class="n">e4_fs</span><span class="p">,</span> <span class="n">start_time</span> <span class="o">=</span> <span class="n">start_time</span><span class="p">)</span>
 <span class="n">e4_peaks</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">e4_peaks</span><span class="p">[</span><span class="s1">&#39;Peak&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Count the number of peaks detected</span>
+<span class="n">e4_peaks</span><span class="p">[</span><span class="s1">&#39;Peak&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>Output:</p>
@@ -155,19 +157,28 @@ Pandas data frame prior to this step.</p>
 </section>
 <section id="signal-quality-assessment">
 <h2>Signal Quality Assessment<a class="headerlink" href="#signal-quality-assessment" title="Permalink to this heading">¶</a></h2>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Actiwave Cardio and Other ECG Sources</div></p>
+<p>Perform the HeartView signal quality assessment procedure on ECG or PPG data.
+We start by computing second-by-second heart rate and IBI data based on the
+locations of detected beats. We then derive the expected and detected numbers
+of beats in each segment and summarize the percentage of missing and invalid
+beats.</p>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt; padding-top: 8pt">Actiwave Cardio and Other ECG Sources</div></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heartview.pipeline</span> <span class="kn">import</span> <span class="n">ECG</span><span class="p">,</span> <span class="n">SQA</span>
 
 <span class="c1"># Get second-by-second data</span>
 <span class="n">ecg_fs</span> <span class="o">=</span> <span class="mi">1024</span>
 <span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span>  <span class="c1"># seconds</span>
-<span class="n">interval_data</span> <span class="o">=</span> <span class="n">ECG</span><span class="o">.</span><span class="n">get_seconds</span><span class="p">(</span><span class="n">ecg</span><span class="p">,</span> <span class="s1">&#39;Peak&#39;</span><span class="p">,</span> <span class="n">ecg_fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">)</span>
+<span class="n">interval_data</span> <span class="o">=</span> <span class="n">ECG</span><span class="o">.</span><span class="n">get_seconds</span><span class="p">(</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">ecg</span><span class="p">,</span>
+    <span class="n">peaks_col</span> <span class="o">=</span> <span class="s1">&#39;Peak&#39;</span><span class="p">,</span>
+    <span class="n">fs</span> <span class="o">=</span> <span class="n">ecg_fs</span><span class="p">,</span>
+    <span class="n">seg_size</span> <span class="o">=</span> <span class="n">seg_size</span><span class="p">)</span>
 
 <span class="c1"># Get the expected and detected numbers of peaks by segment</span>
-<span class="n">peaks_by_seg</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">evaluate_peaks</span><span class="p">(</span><span class="n">interval_data</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">)</span>
+<span class="n">peaks_by_seg</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">evaluate_peaks</span><span class="p">(</span><span class="n">df</span> <span class="o">=</span> <span class="n">interval_data</span><span class="p">,</span> <span class="n">seg_size</span> <span class="o">=</span> <span class="n">seg_size</span><span class="p">)</span>
 
 <span class="c1"># Compute the signal quality assessment metrics by segment</span>
-<span class="n">sqa</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">compute_metrics</span><span class="p">(</span><span class="n">peaks_by_seg</span><span class="p">)</span>
+<span class="n">sqa</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">compute_metrics</span><span class="p">(</span><span class="n">df</span> <span class="o">=</span> <span class="n">peaks_by_seg</span><span class="p">)</span>
 <span class="n">sqa</span>
 </pre></div>
 </div>
@@ -182,18 +193,18 @@ Pandas data frame prior to this step.</p>
 <span class="mi">6</span>         <span class="mi">7</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">16</span><span class="p">:</span><span class="mf">51.000000</span>          <span class="mf">29.0</span>        <span class="mf">130.445860</span>            <span class="mi">1</span>    <span class="mf">101.445860</span>       <span class="mf">77.76</span>
 </pre></div>
 </div>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Empatica E4</div></p>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt; padding-top: 8pt">Empatica E4</div></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heartview.pipeline</span> <span class="kn">import</span> <span class="n">PPG</span><span class="p">,</span> <span class="n">SQA</span>
 
 <span class="c1"># Get second-by-second data</span>
 <span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span>
-<span class="n">interval_data</span> <span class="o">=</span> <span class="n">PPG</span><span class="o">.</span><span class="n">get_e4_interval_data</span><span class="p">(</span><span class="n">e4_peaks</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">)</span>
+<span class="n">interval_data</span> <span class="o">=</span> <span class="n">PPG</span><span class="o">.</span><span class="n">get_e4_interval_data</span><span class="p">(</span><span class="n">df</span> <span class="o">=</span> <span class="n">e4_peaks</span><span class="p">,</span> <span class="n">seg_size</span> <span class="o">=</span> <span class="n">seg_size</span><span class="p">)</span>
 
 <span class="c1"># Get the expected and detected numbers of peaks by segment</span>
-<span class="n">peaks_by_seg</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">evaluate_peaks</span><span class="p">(</span><span class="n">interval_data</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">)</span>
+<span class="n">peaks_by_seg</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">evaluate_peaks</span><span class="p">(</span><span class="n">df</span> <span class="o">=</span> <span class="n">interval_data</span><span class="p">,</span> <span class="n">seg_size</span> <span class="o">=</span> <span class="n">seg_size</span><span class="p">)</span>
 
 <span class="c1"># Compute the signal quality assessment metrics by segment</span>
-<span class="n">sqa</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">compute_metrics</span><span class="p">(</span><span class="n">peaks_by_seg</span><span class="p">)</span>
+<span class="n">sqa</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">compute_metrics</span><span class="p">(</span><span class="n">df</span> <span class="o">=</span> <span class="n">peaks_by_seg</span><span class="p">)</span>
 <span class="n">sqa</span>
 </pre></div>
 </div>
@@ -215,32 +226,50 @@ Pandas data frame prior to this step.</p>
 </section>
 <section id="visualize-raw-data">
 <h2>Visualize Raw Data<a class="headerlink" href="#visualize-raw-data" title="Permalink to this heading">¶</a></h2>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Actiwave Cardio and Other ECG Sources</div></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">heartview</span><span class="o">.</span><span class="n">plot_signal</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;mV&#39;</span><span class="p">,</span> <span class="s1">&#39;Filtered&#39;</span><span class="p">],</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">,</span> <span class="n">segment</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">signal_type</span> <span class="o">=</span> <span class="s1">&#39;ecg&#39;</span><span class="p">,</span> <span class="n">peaks</span><span class="o">=</span><span class="s1">&#39;Peak&#39;</span><span class="p">)</span>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt;">Actiwave Cardio and Other ECG Sources</div></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">heartview</span><span class="o">.</span><span class="n">plot_signal</span><span class="p">(</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">data</span><span class="p">,</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;mV&#39;</span><span class="p">,</span> <span class="s1">&#39;Filtered&#39;</span><span class="p">],</span>
+    <span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span><span class="p">,</span>
+    <span class="n">seg_size</span> <span class="o">=</span> <span class="n">seg_size</span><span class="p">,</span>
+    <span class="n">segment</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">signal_type</span> <span class="o">=</span> <span class="s1">&#39;ecg&#39;</span><span class="p">,</span>
+    <span class="n">peaks</span> <span class="o">=</span> <span class="s1">&#39;Peak&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Output:</p>
 <a class="reference internal image-reference" href="_images/ecg_rawplot.png"><img alt="_images/ecg_rawplot.png" class="align-center" src="_images/ecg_rawplot.png" style="width: 779.25px; height: 225.0px;" /></a>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Empatica E4</div></p>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt; padding-top: 8pt">Empatica E4</div></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">fs</span> <span class="o">=</span> <span class="mi">64</span>
 <span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span>
 <span class="n">bvp</span> <span class="o">=</span> <span class="n">heartview</span><span class="o">.</span><span class="n">segment_data</span><span class="p">(</span><span class="n">e4_data</span><span class="p">[</span><span class="s1">&#39;bvp&#39;</span><span class="p">],</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">)</span>
-<span class="n">heartview</span><span class="o">.</span><span class="n">plot_signal</span><span class="p">(</span><span class="n">bvp</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;BVP&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">,</span> <span class="n">segment</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">signal_type</span> <span class="o">=</span> <span class="s1">&#39;bvp&#39;</span><span class="p">,</span> <span class="n">peaks</span><span class="o">=</span><span class="s1">&#39;Peak&#39;</span><span class="p">)</span>
+<span class="n">heartview</span><span class="o">.</span><span class="n">plot_signal</span><span class="p">(</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">bvp</span><span class="p">,</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="s1">&#39;BVP&#39;</span><span class="p">,</span>
+    <span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span><span class="p">,</span>
+    <span class="n">seg_size</span> <span class="o">=</span> <span class="n">seg_size</span><span class="p">,</span>
+    <span class="n">segment</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">signal_type</span> <span class="o">=</span> <span class="s1">&#39;bvp&#39;</span><span class="p">,</span>
+    <span class="n">peaks</span> <span class="o">=</span> <span class="s1">&#39;Peak&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Output:</p>
 <a class="reference internal image-reference" href="_images/e4_bvpplot.png"><img alt="_images/e4_bvpplot.png" class="align-center" src="_images/e4_bvpplot.png" style="width: 779.25px; height: 225.0px;" /></a>
 </section>
-<section id="visualize-the-expected-missing-numbers-of-beats-per-segment">
-<h2>Visualize the expected-missing numbers of beats per segment.<a class="headerlink" href="#visualize-the-expected-missing-numbers-of-beats-per-segment" title="Permalink to this heading">¶</a></h2>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Actiwave Cardio and Other ECG Sources</div></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SQA</span><span class="o">.</span><span class="n">plot_expected2missing</span><span class="p">(</span><span class="n">sqa</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Sample ECG&#39;</span><span class="p">)</span>
+<section id="visualize-signal-quality-metrics">
+<h2>Visualize Signal Quality Metrics<a class="headerlink" href="#visualize-signal-quality-metrics" title="Permalink to this heading">¶</a></h2>
+<p>Signal quality metrics are visualized in overlaying interactive bar charts
+of the counts of expected, missing, and invalid beats per segment.</p>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt; padding-top: 8pt">Actiwave Cardio and Other ECG Sources</div></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SQA</span><span class="o">.</span><span class="n">plot_expected2missing</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">sqa</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Sample ECG&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Output:</p>
 <a class="reference internal image-reference" href="_images/ecg_missingplot.png"><img alt="_images/ecg_missingplot.png" class="align-center" src="_images/ecg_missingplot.png" style="width: 752.0px; height: 450.0px;" /></a>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Empatica E4</div></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SQA</span><span class="o">.</span><span class="n">plot_expected2missing</span><span class="p">(</span><span class="n">sqa</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Sample PPG&#39;</span><span class="p">)</span>
+<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt; padding-top: 8pt">Empatica E4</div></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SQA</span><span class="o">.</span><span class="n">plot_expected2missing</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">sqa</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Sample PPG&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Output:</p>
@@ -271,7 +300,7 @@ Pandas data frame prior to this step.</p>
 <li class="toctree-l2"><a class="reference internal" href="#beat-detection">Beat Detection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#signal-quality-assessment">Signal Quality Assessment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#visualize-raw-data">Visualize Raw Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#visualize-the-expected-missing-numbers-of-beats-per-segment">Visualize the expected-missing numbers of beats per segment.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#visualize-signal-quality-metrics">Visualize Signal Quality Metrics</a></li>
 </ul>
 </li>
 </ul>
