@@ -47,8 +47,13 @@ cd heartview
 ```
 virtualenv venv -p python3
 ```
+If you are a Mac/Linux user:
 ```
 source venv/bin/activate
+```
+If you are a Windows user:
+```
+venv\Scripts\activate
 ```
 3. Install all project dependencies.
 ```
