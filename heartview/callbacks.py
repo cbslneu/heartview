@@ -538,20 +538,24 @@ def get_callbacks(app):
             if db_input == 'load-acc':
                 if f'{file}_ACC.csv' in listdir('./temp'):
                     acc = pd.read_csv(f'./temp/{file}_ACC.csv')
+
+                    # User-selected view
                     if slider is not [round(n_seg * 0.5), n_seg - 1] or \
                             selected_seg is not [round(n_seg * 0.5),
                                                  n_seg - 1]:
                         seg_num = slider[0]
-                        seg_n = (slider[1] - slider[0]) * (seg_size / 60)
                         if seg_num == slider_max:
                             acc_plot = heartview.plot_signal(
                                 acc, 'Timestamp', 'Magnitude', fs,
                                 seg_size, seg_num, 1, 'acc')
                         else:
+                            seg_n = slider[1] - slider[0]
                             acc_plot = heartview.plot_signal(
                                 acc, 'Timestamp', 'Magnitude', fs,
                                 seg_size, seg_num, seg_n, 'acc')
                     else:
+
+                        # Default view
                         acc_plot = heartview.plot_signal(
                             acc, 'Timestamp', 'Magnitude', fs,
                             seg_size, round(n_seg * 0.5), 1, 'acc')
@@ -564,20 +568,24 @@ def get_callbacks(app):
             # IBI Plots
             elif db_input == 'load-ibi':
                 ibi = pd.read_csv(f'./temp/{file}_IBI.csv')
+
+                # User-selected view
                 if slider is not [round(n_seg * 0.5), n_seg - 1] or \
                         selected_seg is not [round(n_seg * 0.5), n_seg - 1]:
                     seg_num = slider[0]
-                    seg_n = (slider[1] - slider[0]) * (seg_size / 60)
                     if seg_num == slider_max:
                         ibi_plot = heartview.plot_signal(
                             ibi, 'Timestamp', 'IBI', 1,
                             seg_size, seg_num, 1, 'ibi')
                     else:
+                        seg_n = selected_seg[1] - selected_seg[0]
                         ibi_plot = heartview.plot_signal(
                             ibi, 'Timestamp', 'IBI', 1,
                             seg_size, seg_num, seg_n, 'ibi'
                     )
                 else:
+
+                    # Default view
                     ibi_plot = heartview.plot_signal(
                         ibi, 'Timestamp', 'IBI', 1,
                         seg_size, round(n_seg * 0.5), 1, 'ibi')
@@ -587,10 +595,12 @@ def get_callbacks(app):
 
             # ECG/BVP Plots
             else:
+
+                # User-selected view
                 if slider is not [round(n_seg * 0.5), n_seg - 1] or \
                         selected_seg is not [round(n_seg * 0.5), n_seg - 1]:
                     seg_num = slider[0]
-                    seg_n = (slider[1] - slider[0]) * (seg_size / 60)
+                    seg_n = slider[1] - slider[0]
                     if data['type'] == 'E4':
                         bvp = pd.read_csv(f'./temp/{file}_BVP.csv')
                         if seg_num == slider_max:
@@ -622,6 +632,8 @@ def get_callbacks(app):
                                     ecg, 'Timestamp', 'ECG', fs,
                                     seg_size, seg_num, seg_n, 'ecg', 'Peak')
                 else:
+
+                    # Default view
                     if data['type'] == 'E4':
                         bvp = pd.read_csv(f'./temp/{file}_BVP.csv')
                         raw_plot = heartview.plot_signal(
