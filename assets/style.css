@@ -70,15 +70,25 @@ h6 {
     color: #372e27 !important;
     padding: 30px;
 }
+#qa-section {
+    display: block;
+    align-items: stretch;
+    width: 100%;
+}
+#data-summary-header {
+    display: flex;
+    justify-content: space-between;
+}
 .data-summary {  /* data summary panel */
     background-color: #f0e7ec;
     color: #313c42;
     border-radius: 3px;
-    min-width: 350px;
-    max-width: 350px;
+    min-width: 370px;
+    max-width: 370px;
     word-wrap: break-word;
-    height: auto;
+    height: 100%;
     float: left;
+    padding: 15px;
 }
 .data-summary-divs {
     display: block;
@@ -98,10 +108,48 @@ h6 {
     letter-spacing: 0.3pt;
     font-size: 10pt;
 }
-.qa {  /* expected-to-missing beats container */
+.qa {  /* data quality figure container */
     max-width: 100%;
-    padding-left: 385px;
+    padding-left: 395px;
     height: auto;
+    width: 100%;
+}
+.qa-charts {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.fa-eye {
+    font-size: 20px;
+    margin-right: 8px;
+    color: #313c42;
+}
+.qa-charts-selection {
+    display: flex;
+    align-items: center;
+}
+#segment-dropdown {
+    padding: 0px 5px 0px 5px;
+    width: 70px;
+}
+#segment-dropdown > .is-open {
+    font-weight: 600;
+}
+#qa-charts-dropdown {
+    width: 170px;
+}
+#qa-charts-dropdown .Select-control,
+#segment-dropdown .Select-control {
+    border: 1px solid #de7765 !important;
+    height: 30px !important;
+}
+#qa-charts-dropdown .Select-input,
+#segment-dropdown .Select-input {
+    height: 30px !important;
+}
+#qa-charts-dropdown .Select-value,
+#segment-dropdown .Select-value {
+    line-height: 30px !important;
 }
 .bottom {  /* footer */
     position: fixed !important;
@@ -112,6 +160,9 @@ h6 {
     background-color: #313c42;
     color: #cbcacf;
     padding-top: 1.1rem;
+}
+.modal-backdrop {
+    --bs-backdrop-opacity: 0.6 !important;
 }
 
 /* ========================== OFFCANVAS ELEMENTS ========================== */
@@ -144,38 +195,107 @@ h6 {
     background-color: #bababa;
     pointer-events: none;
 }
+#setup-data p, #setup-data span {
+    font-weight: 600;
+}
+#setup-data h4 {
+    display: flex;
+    align-items: center;
+    margin-top: 0;
+    padding-top: 13px;
+}
+.Select-clear {
+    font-weight: normal !important;
+}
+#data-type-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+#data-types {
+    margin-left: 10px;
+}
+#segment-data span {
+    font-weight: 600;
+    padding-right: 5px;
+}
 input[type="checkbox"] {
     padding-top: 3px;
     margin-right: 8px;
 }
-.dash-default-spinner {
-    margin-top: -25px !important;
-    margin-left: 90px !important;
-    float: right !important;
+#data-variables {
+    margin-top: 8px;
 }
-.dash-default-spinner > div {
-    background-color: #ffa891 !important;
+
+/* toggle switches */
+#toggle-resample {
+    display: inline-block;
+}
+#toggle-resample .igrnnx, #toggle-resample .dlqMgb {
+    width: 18px !important;
+    height: 18px !important;
+}
+#toggle-resample label {
+    margin-top: 2px;
+    margin-left: 5px;
+    padding-right: 10px;
+}
+#filter-data {
+    display: flex;
+}
+#toggle-filter {
+    display: inline-flex;
+    margin-top: 10px;
+}
+#toggle-filter label {
+    margin-top: 1px;
+    margin-left: 5px;
+    font-weight: 600;
+    font-size: 11.5pt;
+    padding-right: 0px;
+}
+#filter-help {
+    margin-left: 5px;
+    font-size: 13pt;
+    margin-top: 13px;
+}
+#segment-data {
+    display: flex;
+    align-items: center;
+}
+#seg-data-help {
+    margin-left: 5px;
+    padding-right: 10px;
+    font-size: 13pt;
+    margin-top: 1px;
+}
+#toggle-filter .igrnnx, #toggle-filter .dlqMgb {
+    width: 17.5px !important;
+    height: 17.5px !important;
+}
+#toggle-filter .dlqMgb, #toggle-config .dlqMgb, #toggle-resample .dlqMgb {
+    transform: translateX(18px);
+}
+.sc-bxivhb {
+    width: 40px !important;    /* toggler size */
+}
+#toggle-config .igrnnx, #toggle-config .dlqMgb {
+    width: 17.5px !important;
+    height: 17.5px !important;
 }
 #toggle-config {
     padding-top: 15px;
     padding-bottom: 13px;
-}
-#toggle-config > div {
-    font-weight: 600;
-    display: inline;
-}
-#toggle-config > div > div {
-    float: left;
-}
-#toggle-config > div > div > div {  /* toggle track bar */
-    width: 49px !important;
+    display: inline-block;
 }
 #toggle-config > div > label {
-    margin: 3px 0px 0px 5px;
+    margin: 1px 0px 0px 5px;
     display: inline-block;
-    font-size: 11pt;
-    letter-spacing: 0.3pt;
+    font-size: 11.5pt;
+    font-weight: 600;
+    letter-spacing: 0.5pt;
 }
+/* configuration file uploader */
 #config-uploader {
     line-height: 30px !important;
     min-height: 30px !important;
@@ -198,7 +318,7 @@ input[type="checkbox"] {
 
 /* ================= DATA UPLOAD & PIPELINE PROGRESS BARS ================= */
 .progress-bar {
-    background-color: #ffa891 !important;
+    background-color: #ee8a78 !important;
 }
 .progress-output {
     font-size: 12px;
@@ -253,9 +373,24 @@ input[type="number"] {
     width: 55px;
     color: #313c42;
 }
-input[type="radio"] {
-    color: #ffa891;
-    margin-right: 8px;
+input[type="number"]:disabled {
+    color: grey;
+}
+.form-check-inline {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 0.7rem;
+}
+.form-check-input[type=radio] {
+    border: 2px solid #ee8a78;
+    background-color: #ffffff
+}
+.form-check-input:checked {
+    background-color: #ffa891;
+    border-color: #ffa891;
+}
+.form-check-label {
+    margin-left: 10px;
 }
 input[type="text"] {
     width: 300px;
@@ -280,9 +415,24 @@ button:hover {
     color: #ffffff;
     cursor: pointer !important;
 }
+#resample {
+    display: inline-flex;
+    align-items: center;
+    float: right;
+    font-weight: 600;
+}
+#resample data {
+    display: flex;
+    align-items: center;
+}
+#resample-data label {
+    margin-top: 0;
+    padding-right: 10px;
+}
 .setup-data-dropdowns {  /* dbc.Row containing dropdowns */
     --bs-gutter-x: 0.5rem !important;
     font-size: 10pt;
+    margin-top: 3px;
 }
 .Select-control {  /* dropdown menus */
     border: 1px dashed #777777 !important;
@@ -299,6 +449,9 @@ button:hover {
 }
 #setup-cardio {  /* dropdown 2*/
     flex: 1 0 8%;
+}
+#run-save-buttons {
+    margin-top: -5px;
 }
 #run-data {  /* run button */
     width: 100px;
@@ -335,14 +488,71 @@ label {
 .fa-pen-to-square:hover {
     color: #ee8a78;
 }
-
+.fa-solid.fa-circle-xmark {
+    color: #cf0e22;
+    margin-right: 5px;
+}
+/* ============================= ERROR POP-UPS ============================ */
+.validation-error-modal i {
+    font-size: 22pt;
+    margin-right: 20px !important;
+}
+#mapping-validator .modal-content {
+    min-width: 575px;
+    background-color: #fee4e1;
+    border-bottom: 5px solid #cf0e22;
+}
+#dtype-validator .modal-content {
+    max-width: 460px;
+    background-color: #fee4e1;
+    border-bottom: 5px solid #cf0e22;
+}
+.validation-error-modal .modal-body{
+    padding-right: 0;
+}
+.validation-content {
+    display: inline-flex;
+    align-items: center;
+}
+.validation-error h5 {
+    margin: 0;
+    letter-spacing: 2px;
+    display: inline;
+}
+.validation-error p {
+    margin-top: 5px;
+    color: #333333;
+}
+.validation-error {
+    display: inline;
+}
+.validation-error-modal button {
+    background: none;
+    width: 20px;
+    height: 30px;
+    padding: 0;
+    position: relative;
+    color: #372e27;
+    margin-left: 75px;
+    margin-top: -35px;
+}
+.validation-error-modal button:hover {
+    background: none !important;
+    color: #ee8a78 !important;
+}
+.validation-error-modal .fa-solid.fa-xmark {
+    font-size: 13pt;
+}
 /* ============================ CHART ELEMENTS ============================ */
 .figs {  /* chart container */
-    padding: 10px;
+    padding: 9px;
     font-size: 14px;
     background-color: #f0e7ec;
     border-radius: 3px;
     height: auto;
+}
+#sqa-plot {
+    height: 286px;
 }
 
 /* ============================ SUMMARY TABLE ============================= */
@@ -350,7 +560,6 @@ label {
     --bs-table-bg: #f0e7ec;
     --bs-body-color: #313c42;
 }
-
 table, tbody {
     margin-top: 15px;
     border: 0 !important;
@@ -361,7 +570,7 @@ tr, td {
     border-style: none;
     padding-left: 5px;
     font-size: 10pt;
-    letter-spacing: 0.5pt;
+    letter-spacing: 0.3pt;
     line-height: 18pt;
 }
 th {
@@ -372,7 +581,10 @@ th {
     border-style: none !important;
 }
 td:first-child {  /* style only first column */
-    width: 285px !important;
+    width: 295px !important;
+}
+td:nth-child(2) { /* style the second column */
+    text-align: right;
 }
 th:first-child {  /* style only first table header */
     text-align: left !important;
@@ -432,47 +644,52 @@ th:first-child {  /* style only first table header */
     margin-left: 10px;
     margin-top: 10px;
 }
+#export-type > label {
+    display: inline-flex;
+    align-items: center;
+}
+#export-type > label > input {
+    margin-right: 8px;
+}
 
 /* =========================== RAW PLOT SECTION =========================== */
 .raw-plots {
-    margin-top: 30px;
+    margin-top: 25px;
     margin-bottom: 50px;
 }
 .graph-settings {
     margin-bottom: 20px;
-    height: 2rem;
+    height: 1.1rem;
 }
 .graph-settings button {
-    width: 65px;
-    height: auto;
-    padding: 5px 8px 5px 8px;
-    position: absolute;
+    background: none;
+    width: 20px;
+    height: 30px;
+    padding: 3px 0px 1px 0px;
+    position: relative;
 }
-#load-ibi {  /* IBI chart button */
-    left: 105px;
+.graph-settings button:hover {
+    background: none !important;
+    color: #ee8a78 !important;
 }
-#load-acc {  /* ACC chart button */
-    left: 179px;
+.graph-settings i {
+    color: #313c42;
+    font-size: 14pt;
 }
-.slider-label {
-    position: absolute;
-    right: 640px;
+.graph-settings i:hover {
+    color: #dc6c59;
 }
-.slider {
-    width: 650px;
-    position: absolute;
-    right: 5px;
+.segment-view {
+    display: inline-flex;
+    align-items: center;
+    float: right;
 }
-.rc-slider-track {
-    background-color: #ffa891;
-}
-.rc-slider-handle, .rc-slider-handle-click-focused,
-.rc-slider-handle-click-focused:focus, .rc-slider-handle:hover {
-    border-color: #ffa891 !important;
-}
-.rc-slider-handle-dragging {
-    border-color: #ffa891 !important;
-    box-shadow: 0 0 0 5px #ffa891 !important;
+.segment-view h5 {
+    margin: 0px;
+    padding-right: 8px;
+    letter-spacing: 2px;
+    color: #313c42;
+    font-size: 13pt;
 }
 .raw-plots .tab {
     padding: 10px !important;
