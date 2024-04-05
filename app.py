@@ -1,8 +1,8 @@
 from os import environ
 from dash import Dash, DiskcacheManager, CeleryManager
-from heartview.heartview import _clear_temp
-from heartview.layout import layout
-from heartview.callbacks import get_callbacks
+from heartview.dashboard.utils import _clear_temp
+from heartview.dashboard.layout import layout
+from heartview.dashboard.callbacks import get_callbacks
 import dash_bootstrap_components as dbc
 
 if 'REDIS_URL' in environ:
