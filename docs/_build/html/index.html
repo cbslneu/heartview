@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Welcome to HeartView &#8212; HeartView 1.0 documentation</title>
+    <title>Welcome to HeartView &#8212; HeartView 2.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/agogo.css" />
     <link rel="stylesheet" type="text/css" href="_static/css/custom.css" />
@@ -26,7 +26,7 @@
             <img class="logo" src="_static/heartview-logo.png" alt="Logo"/>
           </a></p>
         <div class="headertitle"><a
-          href="#">HeartView 1.0 documentation</a></div>
+          href="#">HeartView 2.0 documentation</a></div>
         <div class="rel" role="navigation" aria-label="related navigation">
           <a href="installation.html" title="Installation"
              accesskey="N">next</a> |
@@ -70,7 +70,7 @@ other ECG devices outputting data in comma-separated value (CSV) format.</p>
 <ul class="simple">
 <li><p><strong>File Reader</strong>: Read and transform raw ECG, PPG, and accelerometer data from European Data Format (EDF), archive (ZIP), and CSV files.</p></li>
 <li><p><strong>Configuration File Exporter</strong>: Define and save pipeline parameters in a JSON configuration file that can be loaded for use on the same dataset later.</p></li>
-<li><p><strong>ECG Filters</strong>: Filter out noise from baseline wander, muscle (EMG) activity, and powerline interference from your ECG data.</p></li>
+<li><p><strong>Signal Filters</strong>: Filter out noise from baseline wander, muscle (EMG) activity, and powerline interference from your ECG or PPG data.</p></li>
 <li><p><strong>Beat Detection</strong>: Extract heartbeats from your ECG [<a href="https://doi.org/10.1016/j.bspc.2011.03.004" target="_blank">1</a>] and Empatica E4 data.</p></li>
 <li><p><strong>Visualization Dashboard</strong>: View and interact with our signal quality assessment chart and ECG/PPG, interbeat interval (IBI), and acceleration signal plots by segment.</p></li>
 <li><p><strong>Signal Quality Metrics</strong>: Generate segment-by-segment information about missing and invalid data.</p></li>
@@ -109,18 +109,17 @@ other ECG devices outputting data in comma-separated value (CSV) format.</p>
 <p class="caption" role="heading"><span class="caption-text">HeartView Pipeline</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#pipeline">Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#data-pre-processing">Data Pre-Processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#module-heartview.pipeline.ECG">ECG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#module-heartview.pipeline.PPG">PPG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#module-heartview.pipeline.ACC">ACC</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-heartview.pipeline.SQA">Signal Quality Assessment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#module-heartview.heartview">Other Useful Functions</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#reading-and-pre-processing-data">Reading and Pre-Processing Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#beat-detection">Beat Detection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#signal-quality-assessment">Signal Quality Assessment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#visualize-raw-data">Visualize Raw Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#visualize-signal-quality-metrics">Visualize Signal Quality Metrics</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
 </div>
 <div class="toctree-wrapper compound">
@@ -203,7 +202,7 @@ other ECG devices outputting data in comma-separated value (CSV) format.</p>
         <div class="right">
           
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2023, Natasha Yamane, Varun Mishra, and Matthew S. Goodwin.
+        &#169; Copyright 2024, Natasha Yamane, Varun Mishra, and Matthew S. Goodwin.
       Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
         </div>

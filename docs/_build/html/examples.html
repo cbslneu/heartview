@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Examples &#8212; HeartView 1.0 documentation</title>
+    <title>Examples &#8212; HeartView 2.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/agogo.css" />
     <link rel="stylesheet" type="text/css" href="_static/css/custom.css" />
@@ -27,7 +27,7 @@
             <img class="logo" src="_static/heartview-logo.png" alt="Logo"/>
           </a></p>
         <div class="headertitle"><a
-          href="index.html">HeartView 1.0 documentation</a></div>
+          href="index.html">HeartView 2.0 documentation</a></div>
         <div class="rel" role="navigation" aria-label="related navigation">
           <a href="api.html" title="API Reference"
              accesskey="P">previous</a> |
@@ -51,230 +51,7 @@
             
   <section id="examples">
 <h1>Examples<a class="headerlink" href="#examples" title="Permalink to this heading">¶</a></h1>
-<p>Below are examples of how you can use functions from the HeartView pipeline on
-your data. Alternatively, see our <a href="https://github.com/cbslneu/heartview/tree/main/examples" target="_blank">Jupyter notebooks</a> for full a full
-walk-through for each type of data.</p>
-<section id="reading-and-pre-processing-data">
-<h2>Reading and Pre-Processing Data<a class="headerlink" href="#reading-and-pre-processing-data" title="Permalink to this heading">¶</a></h2>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt">Actiwave Cardio</div></p>
-<p>Extract and pre-process data from an Actiwave Cardio device.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heartview.pipeline</span> <span class="kn">import</span> <span class="n">ECG</span>
-
-<span class="n">edf</span> <span class="o">=</span> <span class="s1">&#39;sample_actiwave_data.edf&#39;</span>
-<span class="n">ecg</span><span class="p">,</span> <span class="n">acc</span> <span class="o">=</span> <span class="n">ECG</span><span class="o">.</span><span class="n">read_actiwave</span><span class="p">(</span><span class="n">edf</span><span class="p">)</span>
-
-<span class="n">display</span><span class="p">(</span><span class="n">ecg</span><span class="o">.</span><span class="n">head</span><span class="p">(),</span> <span class="n">acc</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
-</pre></div>
-</div>
-<p>Output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>                     <span class="n">Timestamp</span>             <span class="n">mV</span>
-<span class="mi">0</span>   <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mf">51.000000</span>      <span class="o">-</span><span class="mf">0.206620</span>
-<span class="mi">1</span>   <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mf">51.000977</span>      <span class="o">-</span><span class="mf">0.197554</span>
-<span class="mi">2</span>   <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mf">51.001953</span>      <span class="o">-</span><span class="mf">0.186148</span>
-<span class="mi">3</span>   <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mf">51.002930</span>      <span class="o">-</span><span class="mf">0.197847</span>
-<span class="mi">4</span>   <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mf">51.003906</span>      <span class="o">-</span><span class="mf">0.190243</span>
-</pre></div>
-</div>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt; padding-top: 8pt">Empatica E4</div></p>
-<p>Extract and pre-process data from an Empatica E4 device. All pre-processed
-data are stored in a Python dictionary.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heartview.pipeline</span> <span class="kn">import</span> <span class="n">PPG</span>
-
-<span class="n">e4_zip</span> <span class="o">=</span> <span class="s1">&#39;sample_e4_data.zip&#39;</span>
-<span class="n">e4_data</span> <span class="o">=</span> <span class="n">PPG</span><span class="o">.</span><span class="n">preprocess_e4</span><span class="p">(</span><span class="n">e4_zip</span><span class="p">)</span>
-
-<span class="n">e4_data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>Output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dict_keys</span><span class="p">([</span><span class="s1">&#39;bvp&#39;</span><span class="p">,</span> <span class="s1">&#39;hr&#39;</span><span class="p">,</span> <span class="s1">&#39;ibi&#39;</span><span class="p">,</span> <span class="s1">&#39;acc&#39;</span><span class="p">,</span> <span class="s1">&#39;fs&#39;</span><span class="p">,</span> <span class="s1">&#39;start time&#39;</span><span class="p">])</span>
-</pre></div>
-</div>
-</section>
-<section id="beat-detection">
-<h2>Beat Detection<a class="headerlink" href="#beat-detection" title="Permalink to this heading">¶</a></h2>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt;">Actiwave Cardio and Other ECG Sources</div></p>
-<p>Detect R peaks from ECG data collected with the Actiwave Cardio and other
-sources. Note that ECG data from other sources will have to be read into a
-Pandas data frame prior to this step.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heartview.pipeline</span> <span class="kn">import</span> <span class="n">ECG</span>
-
-<span class="c1"># `ecg` = ECG DataFrame output from `ECG.read_actiwave()`</span>
-<span class="c1"># `&#39;mV&#39;` = name of column containing ECG values</span>
-<span class="n">ecg_fs</span> <span class="o">=</span> <span class="mi">1024</span>
-<span class="n">peak_loc</span> <span class="o">=</span> <span class="n">ECG</span><span class="o">.</span><span class="n">detect_rpeaks</span><span class="p">(</span><span class="n">ecg</span><span class="p">,</span> <span class="s1">&#39;mV&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="p">)</span>
-
-<span class="c1"># Save R peak occurrences</span>
-<span class="n">ecg</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">peak_loc</span><span class="p">,</span> <span class="s1">&#39;Peak&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Count the number of peaks detected</span>
-<span class="n">data</span><span class="p">[</span><span class="s1">&#39;Peak&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>Output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">Segment</span>                  <span class="n">Timestamp</span>             <span class="n">mV</span>       <span class="n">Powerline</span>       <span class="n">Filtered</span>        <span class="n">Peak</span>
-<span class="mi">0</span>         <span class="mi">1</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mf">51.000000</span>      <span class="o">-</span><span class="mf">0.206620</span>       <span class="o">-</span><span class="mf">0.205123</span>       <span class="o">-</span><span class="mf">0.052997</span>       <span class="n">NaN</span>
-<span class="mi">1</span>         <span class="mi">1</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mf">51.000977</span>      <span class="o">-</span><span class="mf">0.197554</span>       <span class="o">-</span><span class="mf">0.196108</span>       <span class="o">-</span><span class="mf">0.048060</span>       <span class="n">NaN</span>
-<span class="mi">2</span>         <span class="mi">1</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mf">51.001953</span>      <span class="o">-</span><span class="mf">0.186148</span>       <span class="o">-</span><span class="mf">0.184952</span>       <span class="o">-</span><span class="mf">0.043212</span>       <span class="n">NaN</span>
-<span class="mi">3</span>         <span class="mi">1</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mf">51.002930</span>      <span class="o">-</span><span class="mf">0.197847</span>       <span class="o">-</span><span class="mf">0.197073</span>       <span class="o">-</span><span class="mf">0.038543</span>       <span class="n">NaN</span>
-<span class="mi">4</span>         <span class="mi">1</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mf">51.003906</span>      <span class="o">-</span><span class="mf">0.190243</span>       <span class="o">-</span><span class="mf">0.190011</span>       <span class="o">-</span><span class="mf">0.034127</span>       <span class="n">NaN</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">807.0</span>
-</pre></div>
-</div>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt; padding-top: 8pt">Empatica E4</div></p>
-<p>Extract heartbeats from interbeat interval (IBI) data from the Empatica E4.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heartview.pipeline</span> <span class="kn">import</span> <span class="n">PPG</span>
-
-<span class="c1"># `e4_data` = output from `PPG.preprocess_e4()`</span>
-<span class="n">ibi</span> <span class="o">=</span> <span class="n">e4_data</span><span class="p">[</span><span class="s1">&#39;ibi&#39;</span><span class="p">]</span>
-<span class="n">e4_fs</span> <span class="o">=</span> <span class="n">e4_data</span><span class="p">[</span><span class="s1">&#39;fs&#39;</span><span class="p">]</span>
-<span class="n">start_time</span> <span class="o">=</span> <span class="n">e4_data</span><span class="p">[</span><span class="s1">&#39;start time&#39;</span><span class="p">]</span>
-
-<span class="n">e4_peaks</span> <span class="o">=</span> <span class="n">PPG</span><span class="o">.</span><span class="n">get_e4_peaks</span><span class="p">(</span><span class="n">ibi</span> <span class="o">=</span> <span class="n">ibi</span><span class="p">,</span> <span class="n">fs</span> <span class="o">=</span> <span class="n">e4_fs</span><span class="p">,</span> <span class="n">start_time</span> <span class="o">=</span> <span class="n">start_time</span><span class="p">)</span>
-<span class="n">e4_peaks</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Count the number of peaks detected</span>
-<span class="n">e4_peaks</span><span class="p">[</span><span class="s1">&#39;Peak&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>Output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>            <span class="n">Unix</span>                     <span class="n">Timestamp</span>      <span class="n">Second</span>  <span class="n">Peak</span>    <span class="n">IBI</span>      <span class="n">HR</span>
-<span class="mi">0</span>   <span class="mf">1.495437e+09</span>    <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">15</span><span class="p">:</span><span class="mf">25.000000</span>         <span class="mf">1.0</span>   <span class="n">NaN</span>    <span class="n">NaN</span>     <span class="n">NaN</span>
-<span class="mi">1</span>   <span class="mf">1.495437e+09</span>    <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">15</span><span class="p">:</span><span class="mf">25.015625</span>         <span class="mf">1.0</span>   <span class="n">NaN</span>    <span class="n">NaN</span>     <span class="n">NaN</span>
-<span class="mi">2</span>   <span class="mf">1.495437e+09</span>    <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">15</span><span class="p">:</span><span class="mf">25.031250</span>         <span class="mf">1.0</span>   <span class="n">NaN</span>    <span class="n">NaN</span>     <span class="n">NaN</span>
-<span class="mi">3</span>   <span class="mf">1.495437e+09</span>    <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">15</span><span class="p">:</span><span class="mf">25.046875</span>         <span class="mf">1.0</span>   <span class="n">NaN</span>    <span class="n">NaN</span>     <span class="n">NaN</span>
-<span class="mi">4</span>   <span class="mf">1.495437e+09</span>    <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">15</span><span class="p">:</span><span class="mf">25.062500</span>         <span class="mf">1.0</span>   <span class="n">NaN</span>    <span class="n">NaN</span>     <span class="n">NaN</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">3457.0</span>
-</pre></div>
-</div>
-</section>
-<section id="signal-quality-assessment">
-<h2>Signal Quality Assessment<a class="headerlink" href="#signal-quality-assessment" title="Permalink to this heading">¶</a></h2>
-<p>Perform the HeartView signal quality assessment procedure on ECG or PPG data.
-We start by computing second-by-second heart rate and IBI data based on the
-locations of detected beats. We then derive the expected and detected numbers
-of beats in each segment and summarize the percentage of missing and invalid
-beats.</p>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt; padding-top: 8pt">Actiwave Cardio and Other ECG Sources</div></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heartview.pipeline</span> <span class="kn">import</span> <span class="n">ECG</span><span class="p">,</span> <span class="n">SQA</span>
-
-<span class="c1"># Get second-by-second data</span>
-<span class="n">ecg_fs</span> <span class="o">=</span> <span class="mi">1024</span>
-<span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span>  <span class="c1"># seconds</span>
-<span class="n">interval_data</span> <span class="o">=</span> <span class="n">ECG</span><span class="o">.</span><span class="n">get_seconds</span><span class="p">(</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">ecg</span><span class="p">,</span>
-    <span class="n">peaks_col</span> <span class="o">=</span> <span class="s1">&#39;Peak&#39;</span><span class="p">,</span>
-    <span class="n">fs</span> <span class="o">=</span> <span class="n">ecg_fs</span><span class="p">,</span>
-    <span class="n">seg_size</span> <span class="o">=</span> <span class="n">seg_size</span><span class="p">)</span>
-
-<span class="c1"># Get the expected and detected numbers of peaks by segment</span>
-<span class="n">peaks_by_seg</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">evaluate_peaks</span><span class="p">(</span><span class="n">df</span> <span class="o">=</span> <span class="n">interval_data</span><span class="p">,</span> <span class="n">seg_size</span> <span class="o">=</span> <span class="n">seg_size</span><span class="p">)</span>
-
-<span class="c1"># Compute the signal quality assessment metrics by segment</span>
-<span class="n">sqa</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">compute_metrics</span><span class="p">(</span><span class="n">df</span> <span class="o">=</span> <span class="n">peaks_by_seg</span><span class="p">)</span>
-<span class="n">sqa</span>
-</pre></div>
-</div>
-<p>Output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">Segment</span>                  <span class="n">Timestamp</span>      <span class="n">Detected</span>          <span class="n">Expected</span>      <span class="n">Invalid</span>     <span class="n">Missing</span>         <span class="o">%</span> <span class="n">Missing</span>
-<span class="mi">0</span>         <span class="mi">1</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mf">51.000000</span>         <span class="mf">131.0</span>        <span class="mf">133.408152</span>            <span class="mi">0</span>    <span class="mf">2.408152</span>          <span class="mf">1.805101</span>
-<span class="mi">1</span>         <span class="mi">2</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">11</span><span class="p">:</span><span class="mf">51.000000</span>         <span class="mf">128.0</span>        <span class="mf">127.369862</span>            <span class="mi">0</span>    <span class="mf">0.000000</span>          <span class="mf">0.000000</span>
-<span class="mi">2</span>         <span class="mi">3</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">12</span><span class="p">:</span><span class="mf">51.000000</span>         <span class="mf">128.0</span>        <span class="mf">129.086978</span>            <span class="mi">0</span>    <span class="mf">1.086978</span>          <span class="mf">0.842051</span>
-<span class="mi">3</span>         <span class="mi">4</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">13</span><span class="p">:</span><span class="mf">51.000000</span>         <span class="mf">130.0</span>        <span class="mf">128.334239</span>            <span class="mi">0</span>    <span class="mf">0.000000</span>          <span class="mf">0.000000</span>
-<span class="mi">4</span>         <span class="mi">5</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">14</span><span class="p">:</span><span class="mf">51.000000</span>         <span class="mf">124.0</span>        <span class="mf">124.184217</span>            <span class="mi">0</span>    <span class="mf">0.184217</span>          <span class="mf">0.148341</span>
-<span class="mi">5</span>         <span class="mi">6</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">15</span><span class="p">:</span><span class="mf">51.000000</span>         <span class="mf">137.0</span>        <span class="mf">137.181144</span>            <span class="mi">0</span>    <span class="mf">0.181144</span>          <span class="mf">0.132047</span>
-<span class="mi">6</span>         <span class="mi">7</span> <span class="mi">2016</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">14</span> <span class="mi">10</span><span class="p">:</span><span class="mi">16</span><span class="p">:</span><span class="mf">51.000000</span>          <span class="mf">29.0</span>        <span class="mf">130.445860</span>            <span class="mi">1</span>    <span class="mf">101.445860</span>       <span class="mf">77.76</span>
-</pre></div>
-</div>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt; padding-top: 8pt">Empatica E4</div></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">heartview.pipeline</span> <span class="kn">import</span> <span class="n">PPG</span><span class="p">,</span> <span class="n">SQA</span>
-
-<span class="c1"># Get second-by-second data</span>
-<span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span>
-<span class="n">interval_data</span> <span class="o">=</span> <span class="n">PPG</span><span class="o">.</span><span class="n">get_e4_interval_data</span><span class="p">(</span><span class="n">df</span> <span class="o">=</span> <span class="n">e4_peaks</span><span class="p">,</span> <span class="n">seg_size</span> <span class="o">=</span> <span class="n">seg_size</span><span class="p">)</span>
-
-<span class="c1"># Get the expected and detected numbers of peaks by segment</span>
-<span class="n">peaks_by_seg</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">evaluate_peaks</span><span class="p">(</span><span class="n">df</span> <span class="o">=</span> <span class="n">interval_data</span><span class="p">,</span> <span class="n">seg_size</span> <span class="o">=</span> <span class="n">seg_size</span><span class="p">)</span>
-
-<span class="c1"># Compute the signal quality assessment metrics by segment</span>
-<span class="n">sqa</span> <span class="o">=</span> <span class="n">SQA</span><span class="o">.</span><span class="n">compute_metrics</span><span class="p">(</span><span class="n">df</span> <span class="o">=</span> <span class="n">peaks_by_seg</span><span class="p">)</span>
-<span class="n">sqa</span>
-</pre></div>
-</div>
-<p>Output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">Segment</span>               <span class="n">Timestamp</span>   <span class="n">Detected</span>          <span class="n">Expected</span>    <span class="n">Invalid</span>     <span class="n">Missing</span>       <span class="o">%</span> <span class="n">Missing</span>
-<span class="mi">0</span>         <span class="mi">1</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">15</span><span class="p">:</span><span class="mi">25</span>       <span class="mf">24.0</span>         <span class="mf">76.679121</span>          <span class="mi">1</span>   <span class="mf">52.679121</span>       <span class="mf">68.700737</span>
-<span class="mi">1</span>         <span class="mi">2</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">16</span><span class="p">:</span><span class="mi">25</span>        <span class="mf">0.0</span>               <span class="n">NaN</span>          <span class="mi">1</span>    <span class="mf">0.000000</span>        <span class="mf">0.000000</span>
-<span class="mi">2</span>         <span class="mi">3</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">17</span><span class="p">:</span><span class="mi">25</span>       <span class="mf">22.0</span>         <span class="mf">83.200181</span>          <span class="mi">1</span>   <span class="mf">61.200181</span>       <span class="mf">73.557750</span>
-<span class="mi">3</span>         <span class="mi">4</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">18</span><span class="p">:</span><span class="mi">25</span>      <span class="mf">117.0</span>         <span class="mf">77.311916</span>          <span class="mi">0</span>    <span class="mf">0.000000</span>        <span class="mf">0.000000</span>
-<span class="mi">4</span>         <span class="mi">5</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">03</span><span class="p">:</span><span class="mi">19</span><span class="p">:</span><span class="mi">25</span>       <span class="mf">95.0</span>         <span class="mf">75.786027</span>          <span class="mi">0</span>    <span class="mf">0.000000</span>        <span class="mf">0.000000</span>
-<span class="o">...</span> <span class="o">...</span>     <span class="o">...</span>     <span class="o">...</span>     <span class="o">...</span>     <span class="o">...</span>     <span class="o">...</span>     <span class="o">...</span>
-<span class="mi">126</span>     <span class="mi">127</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">05</span><span class="p">:</span><span class="mi">21</span><span class="p">:</span><span class="mi">25</span>       <span class="mf">16.0</span>         <span class="mf">63.997065</span>          <span class="mi">1</span> <span class="mf">47.997065</span>         <span class="mf">74.998853</span>
-<span class="mi">127</span>     <span class="mi">128</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">05</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">25</span>        <span class="mf">0.0</span>               <span class="n">NaN</span>          <span class="mi">1</span> <span class="mf">0.000000</span>           <span class="mf">0.000000</span>
-<span class="mi">128</span>     <span class="mi">129</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">05</span><span class="p">:</span><span class="mi">23</span><span class="p">:</span><span class="mi">25</span>       <span class="mf">75.0</span>         <span class="mf">60.709631</span>          <span class="mi">0</span> <span class="mf">0.000000</span>           <span class="mf">0.000000</span>
-<span class="mi">129</span>     <span class="mi">130</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">05</span><span class="p">:</span><span class="mi">24</span><span class="p">:</span><span class="mi">25</span>       <span class="mf">83.0</span>         <span class="mf">61.932671</span>          <span class="mi">0</span> <span class="mf">0.000000</span>           <span class="mf">0.000000</span>
-<span class="mi">130</span>     <span class="mi">131</span>     <span class="mi">2017</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">22</span> <span class="mi">05</span><span class="p">:</span><span class="mi">25</span><span class="p">:</span><span class="mi">25</span>       <span class="mf">62.0</span>         <span class="mf">63.997065</span>          <span class="mi">0</span> <span class="mf">1.997065</span>           <span class="mf">3.120557</span>
-</pre></div>
-</div>
-</section>
-<section id="visualize-raw-data">
-<h2>Visualize Raw Data<a class="headerlink" href="#visualize-raw-data" title="Permalink to this heading">¶</a></h2>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt;">Actiwave Cardio and Other ECG Sources</div></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">heartview</span><span class="o">.</span><span class="n">plot_signal</span><span class="p">(</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">data</span><span class="p">,</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span>
-    <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;mV&#39;</span><span class="p">,</span> <span class="s1">&#39;Filtered&#39;</span><span class="p">],</span>
-    <span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span><span class="p">,</span>
-    <span class="n">seg_size</span> <span class="o">=</span> <span class="n">seg_size</span><span class="p">,</span>
-    <span class="n">segment</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="n">signal_type</span> <span class="o">=</span> <span class="s1">&#39;ecg&#39;</span><span class="p">,</span>
-    <span class="n">peaks</span> <span class="o">=</span> <span class="s1">&#39;Peak&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Output:</p>
-<a class="reference internal image-reference" href="_images/ecg_rawplot.png"><img alt="_images/ecg_rawplot.png" class="align-center" src="_images/ecg_rawplot.png" style="width: 779.25px; height: 225.0px;" /></a>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt; padding-top: 8pt">Empatica E4</div></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">fs</span> <span class="o">=</span> <span class="mi">64</span>
-<span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span>
-<span class="n">bvp</span> <span class="o">=</span> <span class="n">heartview</span><span class="o">.</span><span class="n">segment_data</span><span class="p">(</span><span class="n">e4_data</span><span class="p">[</span><span class="s1">&#39;bvp&#39;</span><span class="p">],</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">)</span>
-<span class="n">heartview</span><span class="o">.</span><span class="n">plot_signal</span><span class="p">(</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">bvp</span><span class="p">,</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span>
-    <span class="n">y</span> <span class="o">=</span> <span class="s1">&#39;BVP&#39;</span><span class="p">,</span>
-    <span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span><span class="p">,</span>
-    <span class="n">seg_size</span> <span class="o">=</span> <span class="n">seg_size</span><span class="p">,</span>
-    <span class="n">segment</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
-    <span class="n">signal_type</span> <span class="o">=</span> <span class="s1">&#39;bvp&#39;</span><span class="p">,</span>
-    <span class="n">peaks</span> <span class="o">=</span> <span class="s1">&#39;Peak&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Output:</p>
-<a class="reference internal image-reference" href="_images/e4_bvpplot.png"><img alt="_images/e4_bvpplot.png" class="align-center" src="_images/e4_bvpplot.png" style="width: 779.25px; height: 225.0px;" /></a>
-</section>
-<section id="visualize-signal-quality-metrics">
-<h2>Visualize Signal Quality Metrics<a class="headerlink" href="#visualize-signal-quality-metrics" title="Permalink to this heading">¶</a></h2>
-<p>Signal quality metrics are visualized in overlaying interactive bar charts
-of the counts of expected, missing, and invalid beats per segment.</p>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt; padding-top: 8pt">Actiwave Cardio and Other ECG Sources</div></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SQA</span><span class="o">.</span><span class="n">plot_expected2missing</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">sqa</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Sample ECG&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Output:</p>
-<a class="reference internal image-reference" href="_images/ecg_missingplot.png"><img alt="_images/ecg_missingplot.png" class="align-center" src="_images/ecg_missingplot.png" style="width: 752.0px; height: 450.0px;" /></a>
-<p><div style="font-size: 14pt; font-weight: bold; margin-bottom: 10pt; padding-top: 8pt">Empatica E4</div></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SQA</span><span class="o">.</span><span class="n">plot_expected2missing</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="n">sqa</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Sample PPG&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Output:</p>
-<a class="reference internal image-reference" href="_images/e4_missingplot.png"><img alt="_images/e4_missingplot.png" class="align-center" src="_images/e4_missingplot.png" style="width: 730.8000000000001px; height: 405.0px;" /></a>
-</section>
+<p><img src="_static/under-construction.png" width=700></p>
 </section>
 
 
@@ -295,14 +72,7 @@ of the counts of expected, missing, and invalid beats per segment.</p>
 <p class="caption" role="heading"><span class="caption-text">HeartView Pipeline</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#reading-and-pre-processing-data">Reading and Pre-Processing Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#beat-detection">Beat Detection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#signal-quality-assessment">Signal Quality Assessment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#visualize-raw-data">Visualize Raw Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#visualize-signal-quality-metrics">Visualize Signal Quality Metrics</a></li>
-</ul>
-</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">HeartView Dashboard</span></p>
 <ul>
@@ -349,7 +119,7 @@ of the counts of expected, missing, and invalid beats per segment.</p>
         <div class="right">
           
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2023, Natasha Yamane, Varun Mishra, and Matthew S. Goodwin.
+        &#169; Copyright 2024, Natasha Yamane, Varun Mishra, and Matthew S. Goodwin.
       Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
         </div>

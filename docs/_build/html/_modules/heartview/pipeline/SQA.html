@@ -47,192 +47,874 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">plotly.graph_objects</span> <span class="k">as</span> <span class="nn">go</span>
 <span class="kn">import</span> <span class="nn">dash_bootstrap_components</span> <span class="k">as</span> <span class="nn">dbc</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
 
-<div class="viewcode-block" id="evaluate_peaks"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.evaluate_peaks">[docs]</a><span class="k">def</span> <span class="nf">evaluate_peaks</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">):</span>
+<span class="c1"># ============================== CARDIOVASCULAR ==============================</span>
+<div class="viewcode-block" id="Cardio"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.Cardio">[docs]</a><span class="k">class</span> <span class="nc">Cardio</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Get the number of detected and expected number of peaks per segment.</span>
+<span class="sd">    A class for signal quality assessment on cardiovascular data, including</span>
+<span class="sd">    electrocardiograph (ECG) or photoplethysmograph (PPG) data.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    df : pandas.DataFrame</span>
-<span class="sd">        The input data frame containing the second-by-second heart</span>
-<span class="sd">        rates, interbeat intervals, and peak counts.</span>
-<span class="sd">    seg_size : int</span>
-<span class="sd">        The segment size of each segment.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    peaks_by_seg : pandas.DataFrame</span>
-<span class="sd">        A DataFrame with the number of detected and the expected number</span>
-<span class="sd">        of peaks per segment.</span>
-
+<span class="sd">    Parameters/Attributes</span>
+<span class="sd">    ---------------------</span>
+<span class="sd">    fs : int</span>
+<span class="sd">        The sampling rate of the cardiovascular data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-    <span class="n">peaks_by_seg</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Segment&#39;</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span>
-                                           <span class="s1">&#39;Detected&#39;</span><span class="p">,</span> <span class="s1">&#39;Expected&#39;</span><span class="p">])</span>
 
-    <span class="k">for</span> <span class="n">seg</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">seg_size</span><span class="p">),</span> <span class="n">start</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
-        <span class="n">subset</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">n</span><span class="p">:</span> <span class="n">n</span> <span class="o">+</span> <span class="n">seg_size</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
-        <span class="n">detected</span> <span class="o">=</span> <span class="n">subset</span><span class="p">[</span><span class="s1">&#39;# R Peaks&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-        <span class="n">expected</span> <span class="o">=</span> <span class="n">subset</span><span class="p">[</span><span class="s1">&#39;Mean HR&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">median</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="n">seg_size</span> <span class="o">/</span> <span class="mi">60</span><span class="p">)</span>
-        <span class="n">peaks_by_seg</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">peaks_by_seg</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">([{</span>
-            <span class="s1">&#39;Segment&#39;</span><span class="p">:</span> <span class="n">seg</span><span class="p">,</span>
-            <span class="s1">&#39;Timestamp&#39;</span><span class="p">:</span> <span class="n">subset</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">],</span>
-            <span class="s1">&#39;Detected&#39;</span><span class="p">:</span> <span class="n">detected</span><span class="p">,</span>
-            <span class="s1">&#39;Expected&#39;</span><span class="p">:</span> <span class="n">expected</span>
-        <span class="p">}])],</span> <span class="n">ignore_index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the Cardiovascular object.</span>
 
-    <span class="k">return</span> <span class="n">peaks_by_seg</span></div>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fs : int</span>
+<span class="sd">            The sampling rate of the ECG or PPG recording.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
 
-<div class="viewcode-block" id="compute_metrics"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.compute_metrics">[docs]</a><span class="k">def</span> <span class="nf">compute_metrics</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Compute SQA metrics by segment from the `peaks_by_seg` output.</span>
+<div class="viewcode-block" id="Cardio.compute_metrics"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.Cardio.compute_metrics">[docs]</a>    <span class="k">def</span> <span class="nf">compute_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">beats_ix</span><span class="p">,</span> <span class="n">artifacts_ix</span><span class="p">,</span> <span class="n">ts_col</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                        <span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span> <span class="n">min_hr</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span> <span class="n">rolling_window</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                        <span class="n">rolling_step</span> <span class="o">=</span> <span class="mi">15</span><span class="p">,</span> <span class="n">show_progress</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute all SQA metrics for cardiovascular data by segment or</span>
+<span class="sd">        moving window. Metrics per segment or moving window include numbers</span>
+<span class="sd">        of detected, expected, missing, and artifactual beats and</span>
+<span class="sd">        percentages of missing and artifactual beats.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    df : pandas.DataFrame</span>
-<span class="sd">        The DataFrame containing the number of detected and the expected</span>
-<span class="sd">        number of peaks per segment.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : pandas.DataFrame</span>
+<span class="sd">            A DataFrame containing pre-processed ECG or PPG data.</span>
+<span class="sd">        beats_ix : array_like</span>
+<span class="sd">            An array containing the indices of detected beats.</span>
+<span class="sd">        artifacts_ix : array_like</span>
+<span class="sd">            An array containing the indices of artifactual beats.</span>
+<span class="sd">        seg_size : int</span>
+<span class="sd">            The segment size in seconds; by default, 60.</span>
+<span class="sd">        min_hr : int, float</span>
+<span class="sd">            The minimum acceptable heart rate against which the number of</span>
+<span class="sd">            beats in the last partial segment will be compared; by default, 40.</span>
+<span class="sd">        ts_col : str, optional</span>
+<span class="sd">            The name of the column containing timestamps; by default, None.</span>
+<span class="sd">            If a string value is given, the output will contain a timestamps</span>
+<span class="sd">            column.</span>
+<span class="sd">        rolling_window : int, optional</span>
+<span class="sd">            The size, in seconds, of the sliding window across which to</span>
+<span class="sd">            compute the SQA metrics; by default, None.</span>
+<span class="sd">        rolling_step : int, optional</span>
+<span class="sd">            The step size, in seconds, of the sliding windows; by default, 15.</span>
+<span class="sd">        show_progress : bool, optional</span>
+<span class="sd">            Whether to display a progress bar while the function runs; by</span>
+<span class="sd">            default, True.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    metrics : pandas.DataFrame</span>
-<span class="sd">        A DataFrame with computed SQA metrics per segment.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        metrics : pandas.DataFrame</span>
+<span class="sd">            A DataFrame with all computed SQA metrics per segment.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-    <span class="n">metrics</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">metrics</span><span class="p">[[</span><span class="s1">&#39;Invalid&#39;</span><span class="p">,</span> <span class="s1">&#39;Missing&#39;</span><span class="p">,</span> <span class="s1">&#39;% Missing&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        If a value is given in the `rolling_window` parameter, the rolling</span>
+<span class="sd">        window approach will override the segmented approach, ignoring any</span>
+<span class="sd">        `seg_size` value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">beats_ix</span><span class="p">,</span> <span class="s1">&#39;Beat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
-    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">metrics</span><span class="p">)):</span>
-        <span class="n">det</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="s1">&#39;Detected&#39;</span><span class="p">]</span>
-        <span class="n">exp</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="s1">&#39;Expected&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">rolling_window</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metrics</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">ts_col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">seconds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_seconds</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">beats_ix</span><span class="p">,</span> <span class="n">ts_col</span><span class="p">,</span>
+                                           <span class="n">show_progress</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">seconds</span><span class="p">),</span> <span class="n">rolling_step</span><span class="p">),</span>
+                              <span class="n">disable</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">show_progress</span><span class="p">):</span>
 
-        <span class="c1"># Label invalid segments</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">det</span> <span class="o">&lt;</span> <span class="mi">30</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">det</span> <span class="o">&gt;</span> <span class="mi">220</span><span class="p">):</span>
-            <span class="n">metrics</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="s1">&#39;Invalid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                    <span class="c1"># Get missing beats</span>
+                    <span class="n">window_missing</span> <span class="o">=</span> <span class="n">seconds</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">n</span><span class="p">:(</span><span class="n">n</span> <span class="o">+</span> <span class="n">rolling_window</span><span class="p">)]</span>
+                    <span class="n">n_expected</span> <span class="o">=</span> <span class="n">window_missing</span><span class="p">[</span><span class="s1">&#39;Mean HR&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">median</span><span class="p">()</span>
+                    <span class="n">n_detected</span> <span class="o">=</span> <span class="n">window_missing</span><span class="p">[</span><span class="s1">&#39;N Beats&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+                    <span class="n">n_missing</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_expected</span> <span class="o">-</span> <span class="n">n_detected</span><span class="p">)</span> \
+                        <span class="k">if</span> <span class="n">n_expected</span> <span class="o">&gt;</span> <span class="n">n_detected</span> <span class="k">else</span> <span class="mi">0</span>
+                    <span class="n">perc_missing</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="n">n_missing</span> <span class="o">/</span> <span class="n">n_expected</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+                    <span class="n">ts</span> <span class="o">=</span> <span class="n">window_missing</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-        <span class="c1"># Compute missing peaks</span>
-        <span class="k">if</span> <span class="n">det</span> <span class="o">&lt;</span> <span class="n">exp</span><span class="p">:</span>
-            <span class="n">metrics</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="s1">&#39;Missing&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">det</span> <span class="o">-</span> <span class="n">exp</span><span class="p">)</span>
-            <span class="n">metrics</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="s1">&#39;% Missing&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">det</span> <span class="o">-</span> <span class="n">exp</span><span class="p">)</span> <span class="o">/</span> <span class="n">exp</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span>
+                    <span class="c1"># Summarize artifactual beats</span>
+                    <span class="n">artifacts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_artifacts</span><span class="p">(</span>
+                        <span class="n">df</span><span class="p">,</span> <span class="n">beats_ix</span><span class="p">,</span> <span class="n">artifacts_ix</span><span class="p">,</span> <span class="n">seg_size</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                        <span class="n">ts_col</span> <span class="o">=</span> <span class="n">ts_col</span><span class="p">)</span>
+                    <span class="n">window_artifact</span> <span class="o">=</span> <span class="n">artifacts</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">n</span><span class="p">:(</span><span class="n">n</span> <span class="o">+</span> <span class="n">rolling_window</span><span class="p">)]</span>
+                    <span class="n">n_artifact</span> <span class="o">=</span> <span class="n">window_artifact</span><span class="p">[</span><span class="s1">&#39;N Artifact&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+                    <span class="n">perc_artifact</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="n">n_artifact</span> <span class="o">/</span> <span class="n">n_detected</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">metrics</span></div>
+                    <span class="c1"># Output summary</span>
+                    <span class="n">metrics</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">metrics</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">([{</span>
+                        <span class="s1">&#39;Moving Window&#39;</span><span class="p">:</span> <span class="n">s</span><span class="p">,</span>
+                        <span class="s1">&#39;Timestamp&#39;</span><span class="p">:</span> <span class="n">ts</span><span class="p">,</span>
+                        <span class="s1">&#39;N Expected&#39;</span><span class="p">:</span> <span class="n">n_expected</span><span class="p">,</span>
+                        <span class="s1">&#39;N Detected&#39;</span><span class="p">:</span> <span class="n">n_detected</span><span class="p">,</span>
+                        <span class="s1">&#39;N Missing&#39;</span><span class="p">:</span> <span class="n">n_missing</span><span class="p">,</span>
+                        <span class="s1">&#39;% Missing&#39;</span><span class="p">:</span> <span class="n">perc_missing</span><span class="p">,</span>
+                        <span class="s1">&#39;N Artifact&#39;</span><span class="p">:</span> <span class="n">n_artifact</span><span class="p">,</span>
+                        <span class="s1">&#39;% Artifact&#39;</span><span class="p">:</span> <span class="n">perc_artifact</span>
+                    <span class="p">}])],</span> <span class="n">ignore_index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+                    <span class="n">s</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">seconds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_seconds</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">beats_ix</span><span class="p">,</span>
+                                           <span class="n">show_progress</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">seconds</span><span class="p">),</span> <span class="n">rolling_step</span><span class="p">),</span>
+                              <span class="n">disable</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">show_progress</span><span class="p">):</span>
 
-<div class="viewcode-block" id="plot_expected2missing"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.plot_expected2missing">[docs]</a><span class="k">def</span> <span class="nf">plot_expected2missing</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Plot the expected-to-missing beats chart.</span>
+                    <span class="c1"># Get missing beats</span>
+                    <span class="n">window_missing</span> <span class="o">=</span> <span class="n">seconds</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">n</span><span class="p">:(</span><span class="n">n</span> <span class="o">+</span> <span class="n">rolling_window</span><span class="p">)]</span>
+                    <span class="n">n_expected</span> <span class="o">=</span> <span class="n">window_missing</span><span class="p">[</span><span class="s1">&#39;Mean HR&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">median</span><span class="p">()</span>
+                    <span class="n">n_detected</span> <span class="o">=</span> <span class="n">window_missing</span><span class="p">[</span><span class="s1">&#39;N Beats&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+                    <span class="n">n_missing</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_expected</span> <span class="o">-</span> <span class="n">n_detected</span><span class="p">)</span> \
+                        <span class="k">if</span> <span class="n">n_expected</span> <span class="o">&gt;</span> <span class="n">n_detected</span> <span class="k">else</span> <span class="mi">0</span>
+                    <span class="n">perc_missing</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="n">n_missing</span> <span class="o">/</span> <span class="n">n_expected</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    df : pandas.DataFrame</span>
-<span class="sd">        The DataFrame containing SQA metrics per segment.</span>
-<span class="sd">    title : str</span>
-<span class="sd">        The title of the chart; by default, None.</span>
+                    <span class="c1"># Get artifactual beats</span>
+                    <span class="n">artifacts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_artifacts</span><span class="p">(</span>
+                        <span class="n">df</span><span class="p">,</span> <span class="n">beats_ix</span><span class="p">,</span> <span class="n">artifacts_ix</span><span class="p">,</span> <span class="n">seg_size</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">window_artifact</span> <span class="o">=</span> <span class="n">artifacts</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">n</span><span class="p">:(</span><span class="n">n</span> <span class="o">+</span> <span class="n">rolling_window</span><span class="p">)]</span>
+                    <span class="n">n_artifact</span> <span class="o">=</span> <span class="n">window_artifact</span><span class="p">[</span><span class="s1">&#39;N Artifact&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+                    <span class="n">perc_artifact</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="n">n_artifact</span> <span class="o">/</span> <span class="n">n_detected</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    fig : plotly.graph_objects.Figure</span>
-<span class="sd">        The resulting figure of expected-to-missing beats per segment.</span>
+                    <span class="c1"># Output summary</span>
+                    <span class="n">metrics</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">metrics</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">([{</span>
+                        <span class="s1">&#39;Moving Window&#39;</span><span class="p">:</span> <span class="n">s</span><span class="p">,</span>
+                        <span class="s1">&#39;N Expected&#39;</span><span class="p">:</span> <span class="n">n_expected</span><span class="p">,</span>
+                        <span class="s1">&#39;N Detected&#39;</span><span class="p">:</span> <span class="n">n_detected</span><span class="p">,</span>
+                        <span class="s1">&#39;N Missing&#39;</span><span class="p">:</span> <span class="n">n_missing</span><span class="p">,</span>
+                        <span class="s1">&#39;% Missing&#39;</span><span class="p">:</span> <span class="n">perc_missing</span><span class="p">,</span>
+                        <span class="s1">&#39;N Artifact&#39;</span><span class="p">:</span> <span class="n">n_artifact</span><span class="p">,</span>
+                        <span class="s1">&#39;% Artifact&#39;</span><span class="p">:</span> <span class="n">perc_artifact</span>
+                    <span class="p">}])],</span> <span class="n">ignore_index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+                    <span class="n">s</span> <span class="o">+=</span> <span class="mi">1</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">valid</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">Invalid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+            <span class="c1"># Handle last partial rolling window of data</span>
+            <span class="n">last_seg_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">seconds</span><span class="p">)</span> <span class="o">%</span> <span class="n">rolling_window</span>
+            <span class="k">if</span> <span class="n">last_seg_len</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">last_detected</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;N Detected&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">last_expected_ratio</span> <span class="o">=</span> <span class="n">min_hr</span> <span class="o">/</span> \
+                                      <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;N Expected&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">median</span><span class="p">()</span>
+                <span class="n">last_expected</span> <span class="o">=</span> <span class="n">last_expected_ratio</span> <span class="o">*</span> <span class="n">last_seg_len</span>
+                <span class="k">if</span> <span class="n">last_expected</span> <span class="o">&gt;</span> <span class="n">last_detected</span><span class="p">:</span>
+                    <span class="n">last_n_missing</span> <span class="o">=</span> <span class="n">last_expected</span> <span class="o">-</span> <span class="n">last_detected</span>
+                    <span class="n">last_perc_missing</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">last_n_missing</span> <span class="o">/</span> <span class="n">last_expected</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">last_perc_missing</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="n">last_n_missing</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;N Expected&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">last_expected</span>
+                <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;N Missing&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">last_n_missing</span>
+                <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;% Missing&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">last_perc_missing</span>
 
-    <span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">(</span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">go</span><span class="o">.</span><span class="n">Bar</span><span class="p">(</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Expected Peaks&#39;</span><span class="p">,</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">valid</span><span class="p">,</span> <span class="s1">&#39;Segment&#39;</span><span class="p">],</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">valid</span><span class="p">,</span> <span class="s1">&#39;Expected&#39;</span><span class="p">],</span>
-            <span class="n">marker</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#f2ce4b&#39;</span><span class="p">),</span>
-            <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;Segment %</span><span class="si">{x}</span><span class="s1">:&lt;/b&gt; %</span><span class="si">{y:.0f}</span><span class="s1"> &#39;</span>
-                            <span class="s1">&#39;expected beats&lt;extra&gt;&lt;/extra&gt;&#39;</span>
-        <span class="p">),</span>
-        <span class="n">go</span><span class="o">.</span><span class="n">Bar</span><span class="p">(</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Missing Peaks&#39;</span><span class="p">,</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">valid</span><span class="p">,</span> <span class="s1">&#39;Segment&#39;</span><span class="p">],</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">valid</span><span class="p">,</span> <span class="s1">&#39;Missing&#39;</span><span class="p">],</span>
-            <span class="n">opacity</span> <span class="o">=</span> <span class="mf">0.7</span><span class="p">,</span>
-            <span class="n">marker</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#fa2a0a&#39;</span><span class="p">),</span>
-            <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;Segment %</span><span class="si">{x}</span><span class="s1">:&lt;/b&gt; %</span><span class="si">{y:.0f}</span><span class="s1"> &#39;</span>
-                            <span class="s1">&#39;missing beats&lt;extra&gt;&lt;/extra&gt;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ts_col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">missing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_missing</span><span class="p">(</span>
+                    <span class="n">df</span><span class="p">,</span> <span class="n">beats_ix</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">,</span> <span class="n">min_hr</span> <span class="o">=</span> <span class="n">min_hr</span><span class="p">,</span> <span class="n">ts_col</span> <span class="o">=</span> <span class="n">ts_col</span><span class="p">,</span>
+                    <span class="n">show_progress</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+                <span class="n">artifacts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_artifacts</span><span class="p">(</span>
+                    <span class="n">df</span><span class="p">,</span> <span class="n">beats_ix</span><span class="p">,</span> <span class="n">artifacts_ix</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">,</span> <span class="n">ts_col</span><span class="p">)</span>
+                <span class="n">metrics</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">missing</span><span class="p">,</span> <span class="n">artifacts</span><span class="p">,</span>
+                                   <span class="n">on</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Segment&#39;</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">])</span>
+                <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;Invalid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;N Detected&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="n">min_hr</span> <span class="ow">or</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">220</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">missing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_missing</span><span class="p">(</span>
+                    <span class="n">df</span><span class="p">,</span> <span class="n">beats_ix</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">,</span> <span class="n">show_progress</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+                <span class="n">artifacts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_artifacts</span><span class="p">(</span>
+                    <span class="n">df</span><span class="p">,</span> <span class="n">beats_ix</span><span class="p">,</span> <span class="n">artifacts_ix</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">)</span>
+                <span class="n">metrics</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">missing</span><span class="p">,</span> <span class="n">artifacts</span><span class="p">,</span> <span class="n">on</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Segment&#39;</span><span class="p">])</span>
+
+        <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;Invalid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;N Detected&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">min_hr</span> <span class="ow">or</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">220</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">metrics</span></div>
+
+<div class="viewcode-block" id="Cardio.display_summary_table"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.Cardio.display_summary_table">[docs]</a>    <span class="k">def</span> <span class="nf">display_summary_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sqa_df</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Display the SQA summary table.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sqa_df : pandas.DataFrame</span>
+<span class="sd">            The DataFrame containing the SQA metrics per segment.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        table : dash_bootstrap_components.Table</span>
+<span class="sd">            Summary table for SQA metrics.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">missing_n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sqa_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">sqa_df</span><span class="p">[</span><span class="s1">&#39;N Missing&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">artifact_n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sqa_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">sqa_df</span><span class="p">[</span><span class="s1">&#39;N Artifact&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">invalid_n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sqa_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">sqa_df</span><span class="p">[</span><span class="s1">&#39;Invalid&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">avg_missing</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0:.2f}</span><span class="s1">%&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sqa_df</span><span class="p">[</span><span class="s1">&#39;% Missing&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+        <span class="n">avg_artifact</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0:.2f}</span><span class="s1">%&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">sqa_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">sqa_df</span><span class="p">[</span><span class="s1">&#39;% Artifact&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;% Artifact&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+
+        <span class="n">summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+            <span class="s1">&#39;Signal Quality Metrics&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Segments with Missing Beats&#39;</span><span class="p">,</span>
+                                       <span class="s1">&#39;Segments with Artifactual Beats&#39;</span><span class="p">,</span>
+                                       <span class="s1">&#39;Segments with Invalid Beats&#39;</span><span class="p">,</span>
+                                       <span class="s1">&#39;Average % Missing Beats/Segment&#39;</span><span class="p">,</span>
+                                       <span class="s1">&#39;Average % Artifactual Beats/Segment&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">missing_n</span><span class="p">,</span> <span class="n">artifact_n</span><span class="p">,</span> <span class="n">invalid_n</span><span class="p">,</span> <span class="n">avg_missing</span><span class="p">,</span> <span class="n">avg_artifact</span><span class="p">]</span>
+        <span class="p">})</span>
+
+        <span class="n">summary</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;Signal Quality Metrics&#39;</span><span class="p">,</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">table</span> <span class="o">=</span> <span class="n">dbc</span><span class="o">.</span><span class="n">Table</span><span class="o">.</span><span class="n">from_dataframe</span><span class="p">(</span>
+            <span class="n">summary</span><span class="p">,</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="n">className</span> <span class="o">=</span> <span class="s1">&#39;segmentTable&#39;</span><span class="p">,</span>
+            <span class="n">striped</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="n">hover</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="n">bordered</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="p">)</span>
-    <span class="p">])</span>
 
-    <span class="n">invalid</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">Invalid</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">table</span></div>
 
-    <span class="n">fig</span><span class="o">.</span><span class="n">add_traces</span><span class="p">(</span>
-        <span class="n">go</span><span class="o">.</span><span class="n">Bar</span><span class="p">(</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">invalid</span><span class="p">,</span> <span class="s1">&#39;Segment&#39;</span><span class="p">],</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">invalid</span><span class="p">,</span> <span class="s1">&#39;Detected&#39;</span><span class="p">],</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Invalid Segment&#39;</span><span class="p">,</span>
-            <span class="n">width</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span>
-            <span class="n">marker_color</span> <span class="o">=</span> <span class="s1">&#39;#e8e8e8&#39;</span><span class="p">,</span>
-            <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;Segment %</span><span class="si">{x}</span><span class="s1">:&lt;/b&gt; %</span><span class="si">{y:.0f}</span><span class="s1"> &#39;</span>
-                            <span class="s1">&#39;detected beats&lt;extra&gt;&lt;/extra&gt;&#39;</span>
+<div class="viewcode-block" id="Cardio.get_artifacts"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.Cardio.get_artifacts">[docs]</a>    <span class="k">def</span> <span class="nf">get_artifacts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">beats_ix</span><span class="p">,</span> <span class="n">artifacts_ix</span><span class="p">,</span>
+                      <span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span> <span class="n">ts_col</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Summarize the number and proportion of artifactual beats per segment.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : pandas.DataFrame</span>
+<span class="sd">            A DataFrame containing the pre-processed ECG or PPG data.</span>
+<span class="sd">        beats_ix : array_like</span>
+<span class="sd">            An array containing the indices of detected beats.</span>
+<span class="sd">        artifacts_ix : array_like</span>
+<span class="sd">            An array containing the indices of artifactual beats. This is</span>
+<span class="sd">            outputted from `SQA.Cardio.identify_artifacts()`.</span>
+<span class="sd">        seg_size : int</span>
+<span class="sd">            The size of the segment in seconds; by default, 60.</span>
+<span class="sd">        ts_col : str, optional</span>
+<span class="sd">            The name of the column containing timestamps; by default, None.</span>
+<span class="sd">            If a string value is given, the output will contain a timestamps</span>
+<span class="sd">            column.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        artifacts : pandas.DataFrame</span>
+<span class="sd">            A DataFrame with the number and proportion of artifactual beats</span>
+<span class="sd">            per segment.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        SQA.Cardio.identify_artifacts :</span>
+<span class="sd">            Identify artifactual beats using both or either of the methods.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">beats_ix</span><span class="p">,</span> <span class="s1">&#39;Beat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">artifacts_ix</span><span class="p">,</span> <span class="s1">&#39;Artifact&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="n">n_seg</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">*</span> <span class="n">seg_size</span><span class="p">))</span>
+        <span class="n">segments</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_seg</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">n_detected</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">//</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">*</span> <span class="n">seg_size</span><span class="p">))[</span><span class="s1">&#39;Beat&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">n_artifact</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">//</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">*</span> <span class="n">seg_size</span><span class="p">))[</span><span class="s1">&#39;Artifact&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">perc_artifact</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="n">n_artifact</span> <span class="o">/</span> <span class="n">n_detected</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">ts_col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">timestamps</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span>
+                <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">//</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">*</span> <span class="n">seg_size</span><span class="p">))</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="n">ts_col</span><span class="p">]</span>
+            <span class="n">artifacts</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span>
+                <span class="n">segments</span><span class="p">,</span>
+                <span class="n">timestamps</span><span class="p">,</span>
+                <span class="n">n_artifact</span><span class="p">,</span>
+                <span class="n">perc_artifact</span><span class="p">,</span>
+            <span class="p">],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">artifacts</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="s1">&#39;Segment&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;N Artifact&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;% Artifact&#39;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">artifacts</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span>
+                <span class="n">segments</span><span class="p">,</span>
+                <span class="n">n_artifact</span><span class="p">,</span>
+                <span class="n">perc_artifact</span><span class="p">,</span>
+            <span class="p">],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">artifacts</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="s1">&#39;Segment&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;N Artifact&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;% Artifact&#39;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="k">return</span> <span class="n">artifacts</span></div>
+
+<div class="viewcode-block" id="Cardio.identify_artifacts"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.Cardio.identify_artifacts">[docs]</a>    <span class="k">def</span> <span class="nf">identify_artifacts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">beats_ix</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">initial_hr</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                           <span class="n">prev_n</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">neighbors</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tol</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Identify locations of artifactual beats in cardiovascular data based</span>
+<span class="sd">        on the criterion beat difference approach by Berntson et al. (1990),</span>
+<span class="sd">        the Hegarty-Craver et al. (2018) approach, or both.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        beats_ix : array_like</span>
+<span class="sd">            An array containing the indices of detected beats.</span>
+<span class="sd">        method : str</span>
+<span class="sd">            The artifact identification method for identifying artifacts.</span>
+<span class="sd">            This must be &#39;hegarty&#39;, &#39;cbd&#39;, or &#39;both&#39;.</span>
+<span class="sd">        initial_hr : int or float, optional</span>
+<span class="sd">            The heart rate value for the first interbeat interval (IBI) to be</span>
+<span class="sd">            validated against; by default, 80. Required for &#39;hegarty&#39; method.</span>
+<span class="sd">        prev_n : int, optional</span>
+<span class="sd">            The number of preceding IBIs to validate against; by default, 6.</span>
+<span class="sd">            Required for &#39;hegarty&#39; method.</span>
+<span class="sd">        neighbors : int, optional</span>
+<span class="sd">            The number of surrounding IBIs with which to derive the criterion</span>
+<span class="sd">            beat difference score; by default, 5. Required for &#39;cbd&#39; method.</span>
+<span class="sd">        tol : float, optional</span>
+<span class="sd">            A configurable hyperparameter used to fine-tune the stringency of</span>
+<span class="sd">            the criterion beat difference test; by default, 1. Required for</span>
+<span class="sd">            &#39;cbd&#39; method.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        artifacts_ix : array_like</span>
+<span class="sd">            An array containing the indices of identified artifact beats.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The source code for the criterion beat difference test is from work by</span>
+<span class="sd">        Hoemann et al. (2020).</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Berntson, G., Quigley, K., Jang, J., Boysen, S. (1990). An approach to</span>
+<span class="sd">        artifact identification: Application to heart period data.</span>
+<span class="sd">        Psychophysiology, 27(5), 586–598.</span>
+
+<span class="sd">        Hegarty-Craver, M. et al. (2018). Automated respiratory sinus</span>
+<span class="sd">        arrhythmia measurement: Demonstration using executive function</span>
+<span class="sd">        assessment. Behavioral Research Methods, 50, 1816–1823.</span>
+
+<span class="sd">        Hoemann, K. et al. (2020). Context-aware experience sampling reveals</span>
+<span class="sd">        the scale of variation in affective experience. Scientific</span>
+<span class="sd">        Reports, 10(1), 1–16.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">identify_artifacts_hegarty</span><span class="p">(</span><span class="n">beats_ix</span><span class="p">,</span> <span class="n">initial_hr</span> <span class="o">=</span> <span class="mi">80</span><span class="p">,</span> <span class="n">prev_n</span> <span class="o">=</span> <span class="mi">6</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Identify locations of artifactual beats in cardiovascular data</span>
+<span class="sd">            based on the approach by Hegarty-Craver et al. (2018).&quot;&quot;&quot;</span>
+
+            <span class="n">ibis</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">beats_ix</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+            <span class="n">beats</span> <span class="o">=</span> <span class="n">beats_ix</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>  <span class="c1"># drop the first beat</span>
+            <span class="n">artifact_beats</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">valid_beats</span> <span class="o">=</span> <span class="p">[</span><span class="n">beats_ix</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>  <span class="c1"># assume first beat is valid</span>
+
+            <span class="c1"># Set the initial IBI to compare against</span>
+            <span class="n">first_ibi</span> <span class="o">=</span> <span class="mi">60000</span> <span class="o">/</span> <span class="n">initial_hr</span>
+
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ibis</span><span class="p">)):</span>
+                <span class="n">current_ibi</span> <span class="o">=</span> <span class="n">ibis</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+                <span class="n">current_beat</span> <span class="o">=</span> <span class="n">beats</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+
+                <span class="c1"># Check against an estimate of the first N IBIs</span>
+                <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="n">prev_n</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">ibi_estimate</span> <span class="o">=</span> <span class="n">first_ibi</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">next_five</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">ibis</span><span class="p">[:</span><span class="n">n</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">first_ibi</span><span class="p">)</span>
+                        <span class="n">ibi_estimate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">next_five</span><span class="p">)</span>
+
+                <span class="c1"># Check against an estimate of the preceding N IBIs</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ibi_estimate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">ibis</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="p">(</span><span class="n">prev_n</span><span class="p">):</span><span class="n">n</span><span class="p">])</span>
+
+                <span class="c1"># Set the acceptable/valid range of IBIs</span>
+                <span class="n">low</span> <span class="o">=</span> <span class="p">(</span><span class="mi">29</span> <span class="o">/</span> <span class="mi">32</span><span class="p">)</span> <span class="o">*</span> <span class="n">ibi_estimate</span>
+                <span class="n">high</span> <span class="o">=</span> <span class="p">(</span><span class="mi">37</span> <span class="o">/</span> <span class="mi">32</span><span class="p">)</span> <span class="o">*</span> <span class="n">ibi_estimate</span>
+
+                <span class="k">if</span> <span class="n">low</span> <span class="o">&lt;=</span> <span class="n">current_ibi</span> <span class="o">&lt;=</span> <span class="n">high</span><span class="p">:</span>
+                    <span class="n">valid_beats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_beat</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">artifact_beats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_beat</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">valid_beats</span><span class="p">,</span> <span class="n">artifact_beats</span>
+
+        <span class="k">def</span> <span class="nf">identify_artifacts_cbd</span><span class="p">(</span><span class="n">beats_ix</span><span class="p">,</span> <span class="n">neighbors</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">tol</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Identify locations of abnormal interbeat intervals (IBIs) using</span>
+<span class="sd">             the criterion beat difference test by Berntson et al. (1990).&quot;&quot;&quot;</span>
+
+            <span class="c1"># Derive IBIs from beat indices</span>
+            <span class="n">ibis</span> <span class="o">=</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ediff1d</span><span class="p">(</span><span class="n">beats_ix</span><span class="p">))</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+
+            <span class="c1"># Compute consecutive absolute differences across IBIs</span>
+            <span class="n">ibi_diffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ediff1d</span><span class="p">(</span><span class="n">ibis</span><span class="p">))</span>
+
+            <span class="c1"># Initialize an array to store &quot;bad&quot; IBIs</span>
+            <span class="n">ibi_bad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ibis</span><span class="p">))</span>
+            <span class="n">artifact_beats</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ibi_diffs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">neighbors</span><span class="p">:</span>
+                <span class="n">neighbors</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ibis</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ibi_diffs</span><span class="p">)):</span>
+
+                <span class="c1"># If there are not enough neighbors in the beginning</span>
+                <span class="k">if</span> <span class="n">ii</span> <span class="o">&lt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">neighbors</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">select</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">ibi_diffs</span><span class="p">[:</span><span class="n">ii</span><span class="p">],</span> <span class="n">ibi_diffs</span><span class="p">[(</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):(</span><span class="n">neighbors</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]))</span>
+                    <span class="n">select_ibi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">ibis</span><span class="p">[:</span><span class="n">ii</span><span class="p">],</span> <span class="n">ibis</span><span class="p">[(</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):(</span><span class="n">neighbors</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]))</span>
+
+                <span class="c1"># If there are not enough neighbors at the end</span>
+                <span class="k">elif</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ibi_diffs</span><span class="p">)</span> <span class="o">-</span> <span class="n">ii</span><span class="p">)</span> <span class="o">&lt;</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">neighbors</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+                        <span class="nb">len</span><span class="p">(</span><span class="n">ibi_diffs</span><span class="p">)</span> <span class="o">-</span> <span class="n">ii</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">select</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">ibi_diffs</span><span class="p">[</span><span class="o">-</span><span class="p">(</span><span class="n">neighbors</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span><span class="n">ii</span><span class="p">],</span> <span class="n">ibi_diffs</span><span class="p">[</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]))</span>
+                    <span class="n">select_ibi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">ibis</span><span class="p">[</span><span class="o">-</span><span class="p">(</span><span class="n">neighbors</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span><span class="n">ii</span><span class="p">],</span> <span class="n">ibis</span><span class="p">[</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]))</span>
+
+                <span class="c1"># If there is only one neighbor left to check against</span>
+                <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">ibi_diffs</span><span class="p">)</span> <span class="o">-</span> <span class="n">ii</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">select</span> <span class="o">=</span> <span class="n">ibi_diffs</span><span class="p">[</span><span class="o">-</span><span class="p">(</span><span class="n">neighbors</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">select_ibi</span> <span class="o">=</span> <span class="n">ibis</span><span class="p">[</span><span class="o">-</span><span class="p">(</span><span class="n">neighbors</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">select</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">ibi_diffs</span><span class="p">[</span><span class="n">ii</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">neighbors</span> <span class="o">/</span> <span class="mi">2</span><span class="p">):</span><span class="n">ii</span><span class="p">],</span>
+                         <span class="n">ibi_diffs</span><span class="p">[(</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):(</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">neighbors</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))]))</span>
+                    <span class="n">select_ibi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">ibis</span><span class="p">[</span><span class="n">ii</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">neighbors</span> <span class="o">/</span> <span class="mi">2</span><span class="p">):</span><span class="n">ii</span><span class="p">],</span>
+                         <span class="n">ibis</span><span class="p">[(</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):(</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">neighbors</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))]))</span>
+
+                <span class="c1"># Calculate the quartile deviation</span>
+                <span class="n">QD</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quartile_deviation</span><span class="p">(</span><span class="n">select</span><span class="p">)</span>
+
+                <span class="c1"># Calculate the maximum expected difference (MED)</span>
+                <span class="n">MED</span> <span class="o">=</span> <span class="mf">3.32</span> <span class="o">*</span> <span class="n">QD</span>
+
+                <span class="c1"># Calculate the minimal artifact difference (MAD)</span>
+                <span class="n">MAD</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">select_ibi</span><span class="p">)</span> <span class="o">-</span> <span class="mf">2.9</span> <span class="o">*</span> <span class="n">QD</span><span class="p">)</span> <span class="o">/</span> <span class="mi">3</span>
+
+                <span class="c1"># Calculate the criterion beat difference score</span>
+                <span class="n">criterion_beat_diff</span> <span class="o">=</span> <span class="p">(</span><span class="n">MED</span> <span class="o">+</span> <span class="n">MAD</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+                <span class="c1"># Find indices of IBIs that fail the CBD check</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">ibi_diffs</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">tol</span> <span class="o">*</span> <span class="n">criterion_beat_diff</span><span class="p">:</span>
+
+                    <span class="n">bad_neighbors</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">neighbors</span> <span class="o">*</span> <span class="mf">0.25</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">ii</span> <span class="o">+</span> <span class="p">(</span><span class="n">bad_neighbors</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">beats_ix</span><span class="p">):</span>
+                        <span class="n">artifact_beats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">beats_ix</span><span class="p">[</span><span class="n">ii</span><span class="p">:(</span><span class="n">ii</span> <span class="o">+</span>
+                                                           <span class="n">bad_neighbors</span><span class="p">)])</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">artifact_beats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">beats_ix</span><span class="p">[</span><span class="n">ii</span><span class="p">:(</span><span class="n">ii</span> <span class="o">+</span> <span class="p">(</span><span class="n">bad_neighbors</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))])</span>
+                    <span class="n">ibi_bad</span><span class="p">[</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="n">artifact_beats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">artifact_beats</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">artifact_beats</span>
+
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;hegarty&#39;</span><span class="p">:</span>
+            <span class="n">initial_hr</span> <span class="o">=</span> <span class="n">initial_hr</span> <span class="k">if</span> <span class="n">initial_hr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">80</span>
+            <span class="n">prev_n</span> <span class="o">=</span> <span class="n">prev_n</span> <span class="k">if</span> <span class="n">prev_n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">6</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">artifacts_ix</span> <span class="o">=</span> <span class="n">identify_artifacts_hegarty</span><span class="p">(</span>
+                <span class="n">beats_ix</span><span class="p">,</span> <span class="n">initial_hr</span><span class="p">,</span> <span class="n">prev_n</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;cbd&#39;</span><span class="p">:</span>
+            <span class="n">neighbors</span> <span class="o">=</span> <span class="n">neighbors</span> <span class="k">if</span> <span class="n">neighbors</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">5</span>
+            <span class="n">tol</span> <span class="o">=</span> <span class="n">tol</span> <span class="k">if</span> <span class="n">tol</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">1</span>
+            <span class="n">artifacts_ix</span> <span class="o">=</span> <span class="n">identify_artifacts_cbd</span><span class="p">(</span>
+                <span class="n">beats_ix</span><span class="p">,</span> <span class="n">neighbors</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;both&#39;</span><span class="p">:</span>
+            <span class="n">initial_hr</span> <span class="o">=</span> <span class="n">initial_hr</span> <span class="k">if</span> <span class="n">initial_hr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">80</span>
+            <span class="n">prev_n</span> <span class="o">=</span> <span class="n">prev_n</span> <span class="k">if</span> <span class="n">prev_n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">6</span>
+            <span class="n">neighbors</span> <span class="o">=</span> <span class="n">neighbors</span> <span class="k">if</span> <span class="n">neighbors</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">5</span>
+            <span class="n">tol</span> <span class="o">=</span> <span class="n">tol</span> <span class="k">if</span> <span class="n">tol</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">1</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">artifact_hegarty</span> <span class="o">=</span> <span class="n">identify_artifacts_hegarty</span><span class="p">(</span>
+                <span class="n">beats_ix</span><span class="p">,</span> <span class="n">initial_hr</span><span class="p">,</span> <span class="n">prev_n</span><span class="p">)</span>
+            <span class="n">artifact_cbd</span> <span class="o">=</span> <span class="n">identify_artifacts_cbd</span><span class="p">(</span>
+                <span class="n">beats_ix</span><span class="p">,</span> <span class="n">neighbors</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span>
+            <span class="n">artifacts_ix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">union1d</span><span class="p">(</span><span class="n">artifact_hegarty</span><span class="p">,</span> <span class="n">artifact_cbd</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;Invalid method. Method must be </span><span class="se">\&#39;</span><span class="s1">hegarty</span><span class="se">\&#39;</span><span class="s1">, </span><span class="se">\&#39;</span><span class="s1">cbd</span><span class="se">\&#39;</span><span class="s1">, &#39;</span>
+                <span class="s1">&#39;or </span><span class="se">\&#39;</span><span class="s1">both</span><span class="se">\&#39;</span><span class="s1">.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">artifacts_ix</span></div>
+
+<div class="viewcode-block" id="Cardio.get_missing"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.Cardio.get_missing">[docs]</a>    <span class="k">def</span> <span class="nf">get_missing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">beats_ix</span><span class="p">,</span> <span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span> <span class="n">min_hr</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+                    <span class="n">ts_col</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">show_progress</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Summarize the number and proportion of missing beats per segment.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : pandas.DataFrame</span>
+<span class="sd">            The DataFrame containing the pre-processed ECG or PPG data.</span>
+<span class="sd">        beats_ix : array-like</span>
+<span class="sd">            An array containing the indices of detected beats.</span>
+<span class="sd">        seg_size : int</span>
+<span class="sd">            The size of the segment in seconds; by default, 60.</span>
+<span class="sd">        min_hr : int, float</span>
+<span class="sd">            The minimum acceptable heart rate against which the number of</span>
+<span class="sd">            beats in the last partial segment will be compared; by default, 40.</span>
+<span class="sd">        ts_col : str, optional</span>
+<span class="sd">            The name of the column containing timestamps; by default, None.</span>
+<span class="sd">            If a string value is given, the output will contain a timestamps</span>
+<span class="sd">            column.</span>
+<span class="sd">        show_progress : bool, optional</span>
+<span class="sd">            Whether to display a progress by while the function runs; by</span>
+<span class="sd">            default, True.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        missing : pandas.DataFrame</span>
+<span class="sd">            A DataFrame with detected, expected, and missing numbers of</span>
+<span class="sd">            beats per segment.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">seconds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_seconds</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">beats_ix</span><span class="p">,</span> <span class="n">ts_col</span><span class="p">,</span> <span class="n">show_progress</span><span class="p">)</span>
+        <span class="n">seconds</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">seconds</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+        <span class="n">n_seg</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">seconds</span><span class="p">)</span> <span class="o">/</span> <span class="n">seg_size</span><span class="p">)</span>
+        <span class="n">segments</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_seg</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">n_expected</span> <span class="o">=</span> <span class="n">seconds</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span>
+            <span class="n">seconds</span><span class="o">.</span><span class="n">index</span> <span class="o">//</span> <span class="n">seg_size</span><span class="p">)[</span><span class="s1">&#39;Mean HR&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">median</span><span class="p">()</span>
+        <span class="n">n_detected</span> <span class="o">=</span> <span class="n">seconds</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span>
+            <span class="n">seconds</span><span class="o">.</span><span class="n">index</span> <span class="o">//</span> <span class="n">seg_size</span><span class="p">)[</span><span class="s1">&#39;N Beats&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">n_missing</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_expected</span> <span class="o">-</span> <span class="n">n_detected</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">lower</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">perc_missing</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="n">n_missing</span> <span class="o">/</span> <span class="n">n_expected</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Handle last partial segment of data</span>
+        <span class="n">last_seg_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">seconds</span><span class="p">)</span> <span class="o">%</span> <span class="n">seg_size</span>
+        <span class="k">if</span> <span class="n">last_seg_len</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">last_detected</span> <span class="o">=</span> <span class="n">n_detected</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">last_expected_ratio</span> <span class="o">=</span> <span class="n">min_hr</span> <span class="o">/</span> <span class="n">n_expected</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">median</span><span class="p">()</span>
+            <span class="n">last_expected</span> <span class="o">=</span> <span class="n">last_expected_ratio</span> <span class="o">*</span> <span class="n">last_seg_len</span>
+            <span class="k">if</span> <span class="n">last_expected</span> <span class="o">&gt;</span> <span class="n">last_detected</span><span class="p">:</span>
+                <span class="n">last_n_missing</span> <span class="o">=</span> <span class="n">last_expected</span> <span class="o">-</span> <span class="n">last_detected</span>
+                <span class="n">last_perc_missing</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">last_n_missing</span> <span class="o">/</span> <span class="n">last_expected</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">last_perc_missing</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">last_n_missing</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">n_expected</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">last_expected</span>
+            <span class="n">n_missing</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">last_n_missing</span>
+            <span class="n">perc_missing</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">last_perc_missing</span>
+
+        <span class="k">if</span> <span class="n">ts_col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">timestamps</span> <span class="o">=</span> <span class="n">seconds</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span>
+                <span class="n">seconds</span><span class="o">.</span><span class="n">index</span> <span class="o">//</span> <span class="n">seg_size</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="n">ts_col</span><span class="p">]</span>
+            <span class="n">missing</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span>
+                <span class="n">segments</span><span class="p">,</span>
+                <span class="n">timestamps</span><span class="p">,</span>
+                <span class="n">n_detected</span><span class="p">,</span>
+                <span class="n">n_expected</span><span class="p">,</span>
+                <span class="n">n_missing</span><span class="p">,</span>
+                <span class="n">perc_missing</span><span class="p">,</span>
+            <span class="p">],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">missing</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="s1">&#39;Segment&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;N Detected&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;N Expected&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;N Missing&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;% Missing&#39;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">missing</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span>
+                <span class="n">segments</span><span class="p">,</span>
+                <span class="n">n_detected</span><span class="p">,</span>
+                <span class="n">n_expected</span><span class="p">,</span>
+                <span class="n">n_missing</span><span class="p">,</span>
+                <span class="n">perc_missing</span><span class="p">,</span>
+            <span class="p">],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">missing</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="s1">&#39;Segment&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;N Detected&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;N Expected&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;N Missing&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;% Missing&#39;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="k">return</span> <span class="n">missing</span></div>
+
+<div class="viewcode-block" id="Cardio.get_seconds"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.Cardio.get_seconds">[docs]</a>    <span class="k">def</span> <span class="nf">get_seconds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">beats_ix</span><span class="p">,</span> <span class="n">ts_col</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">show_progress</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get second-by-second HR, IBI, and beat counts from ECG or PPG data</span>
+<span class="sd">        according to the approach by Graham (1978).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : pd.DataFrame</span>
+<span class="sd">            The DataFrame containing the pre-processed ECG or PPG data.</span>
+<span class="sd">        beats_ix : array-like</span>
+<span class="sd">            An array containing the indices of detected beats.</span>
+<span class="sd">        ts_col : str, optional</span>
+<span class="sd">            The name of the column containing timestamps; by default, None.</span>
+<span class="sd">            If a string value is given, the output will contain a timestamps</span>
+<span class="sd">            column.</span>
+<span class="sd">        show_progress : bool, optional</span>
+<span class="sd">            Whether to display a progress bar while the function runs; by</span>
+<span class="sd">            default, True.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        interval_data : pd.DataFrame</span>
+<span class="sd">            A DataFrame containing second-by-second HR and IBI values.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Rows with `NaN` values in the resulting DataFrame `interval_data`</span>
+<span class="sd">        denote seconds during which no beats in the data were detected.</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Graham, F. K. (1978). Constraints on measuring heart rate and period</span>
+<span class="sd">        sequentially through real and cardiac time. Psychophysiology, 15(5),</span>
+<span class="sd">        492–495.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">beats_ix</span><span class="p">,</span> <span class="s1">&#39;Beat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="n">interval_data</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Iterate over each second</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">),</span> <span class="n">disable</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">show_progress</span><span class="p">):</span>
+
+            <span class="c1"># Get data at the current second and evaluation window</span>
+            <span class="n">current_sec</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">:(</span><span class="n">i</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># Look at current and next second</span>
+                <span class="n">window</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:(</span><span class="n">i</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Look at previous, current, and next second</span>
+                <span class="n">window</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[(</span><span class="n">i</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">):(</span><span class="nb">min</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)))]</span>
+
+            <span class="c1"># Get mean IBI and HR values from the detected beats</span>
+            <span class="n">current_beats</span> <span class="o">=</span> <span class="n">current_sec</span><span class="p">[</span><span class="n">current_sec</span><span class="p">[</span><span class="s1">&#39;Beat&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">window_beats</span> <span class="o">=</span> <span class="n">window</span><span class="p">[</span><span class="n">window</span><span class="p">[</span><span class="s1">&#39;Beat&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">ibis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">window_beats</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">*</span> <span class="mi">1000</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ibis</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">mean_ibi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                <span class="n">mean_hr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">mean_ibi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">ibis</span><span class="p">)</span>
+                <span class="n">hrs</span> <span class="o">=</span> <span class="mi">60000</span> <span class="o">/</span> <span class="n">ibis</span>
+                <span class="n">r_hrs</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">hrs</span>
+                <span class="n">mean_hr</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">r_hrs</span><span class="p">)</span>
+
+            <span class="c1"># Append values for the current second</span>
+            <span class="k">if</span> <span class="n">ts_col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">interval_data</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                    <span class="s1">&#39;Second&#39;</span><span class="p">:</span> <span class="n">s</span><span class="p">,</span>
+                    <span class="s1">&#39;Timestamp&#39;</span><span class="p">:</span> <span class="n">current_sec</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">ts_col</span><span class="p">],</span>
+                    <span class="s1">&#39;Mean HR&#39;</span><span class="p">:</span> <span class="n">mean_hr</span><span class="p">,</span>
+                    <span class="s1">&#39;Mean IBI&#39;</span><span class="p">:</span> <span class="n">mean_ibi</span><span class="p">,</span>
+                    <span class="s1">&#39;N Beats&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_beats</span><span class="p">)</span>
+                <span class="p">})</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">interval_data</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                    <span class="s1">&#39;Second&#39;</span><span class="p">:</span> <span class="n">s</span><span class="p">,</span>
+                    <span class="s1">&#39;Mean HR&#39;</span><span class="p">:</span> <span class="n">mean_hr</span><span class="p">,</span>
+                    <span class="s1">&#39;Mean IBI&#39;</span><span class="p">:</span> <span class="n">mean_ibi</span><span class="p">,</span>
+                    <span class="s1">&#39;N Beats&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_beats</span><span class="p">)</span>
+                <span class="p">})</span>
+
+            <span class="n">s</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">interval_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">interval_data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">interval_data</span></div>
+
+<div class="viewcode-block" id="Cardio.plot_missing"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.Cardio.plot_missing">[docs]</a>    <span class="k">def</span> <span class="nf">plot_missing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">invalid_thresh</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plot detected and missing beat counts.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : pandas.DataFrame()</span>
+<span class="sd">            The DataFrame containing SQA metrics per segment.</span>
+<span class="sd">        invalid_thresh : int, float</span>
+<span class="sd">            The minimum number of beats detected for a segment to be considered</span>
+<span class="sd">            valid; by default, 30.</span>
+<span class="sd">        title : str, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">max_beats</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;N Detected&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span>
+        <span class="n">nearest</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="n">max_beats</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span>
+        <span class="n">dtick_value</span> <span class="o">=</span> <span class="n">nearest</span> <span class="o">/</span> <span class="mi">5</span>
+
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">(</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">go</span><span class="o">.</span><span class="n">Bar</span><span class="p">(</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Segment&#39;</span><span class="p">],</span>
+                    <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;N Expected&#39;</span><span class="p">],</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Missing&#39;</span><span class="p">,</span>
+                    <span class="n">marker</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#f2816d&#39;</span><span class="p">),</span>
+                    <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;Segment %</span><span class="si">{x}</span><span class="s1">:&lt;/b&gt; %</span><span class="si">{customdata:.0f}</span><span class="s1"> &#39;</span>
+                                    <span class="s1">&#39;missing&lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">),</span>
+                <span class="n">go</span><span class="o">.</span><span class="n">Bar</span><span class="p">(</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Segment&#39;</span><span class="p">],</span>
+                    <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;N Detected&#39;</span><span class="p">],</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Detected&#39;</span><span class="p">,</span>
+                    <span class="n">marker</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#313c42&#39;</span><span class="p">),</span>
+                    <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;Segment %</span><span class="si">{x}</span><span class="s1">:&lt;/b&gt; %</span><span class="si">{y:.0f}</span><span class="s1"> &#39;</span>
+                                    <span class="s1">&#39;detected&lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">)</span>
+            <span class="p">]</span>
         <span class="p">)</span>
-    <span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">customdata</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;N Missing&#39;</span><span class="p">])</span>
 
-    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
-        <span class="n">xaxis_title</span> <span class="o">=</span> <span class="s1">&#39;Segment Number&#39;</span><span class="p">,</span>
-        <span class="n">yaxis_title</span> <span class="o">=</span> <span class="s1">&#39;Number of Beats&#39;</span><span class="p">,</span>
-        <span class="n">xaxis</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">tickmode</span> <span class="o">=</span> <span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="n">dtick</span> <span class="o">=</span> <span class="mi">5</span><span class="p">),</span>
-        <span class="n">margin</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">t</span> <span class="o">=</span> <span class="mi">80</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="mi">20</span><span class="p">),</span>
-        <span class="n">barmode</span> <span class="o">=</span> <span class="s1">&#39;overlay&#39;</span><span class="p">,</span>
-        <span class="n">template</span> <span class="o">=</span> <span class="s1">&#39;plotly_white&#39;</span><span class="p">,</span>
-        <span class="n">legend</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-            <span class="n">orientation</span> <span class="o">=</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span>
-            <span class="n">yanchor</span> <span class="o">=</span> <span class="s1">&#39;bottom&#39;</span><span class="p">,</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-            <span class="n">xanchor</span> <span class="o">=</span> <span class="s1">&#39;right&#39;</span><span class="p">,</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="mf">1.0</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
+        <span class="c1"># Annotate invalid segments</span>
+        <span class="n">invalid</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">segment_num</span><span class="p">,</span> <span class="n">n_detected</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                <span class="nb">zip</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Segment&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;N Detected&#39;</span><span class="p">])):</span>
+            <span class="k">if</span> <span class="n">n_detected</span> <span class="o">&lt;</span> <span class="n">invalid_thresh</span><span class="p">:</span>
+                <span class="n">annotation</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">segment_num</span><span class="p">,</span>
+                    <span class="n">y</span> <span class="o">=</span> <span class="n">n_detected</span><span class="p">,</span>
+                    <span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;!&lt;/b&gt;&#39;</span><span class="p">,</span>
+                    <span class="n">showarrow</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                    <span class="n">font</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#db0f0f&#39;</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">20</span><span class="p">),</span>
+                    <span class="n">yshift</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">invalid</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">invalid</span><span class="p">:</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">(</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&lt;span style=&quot;color: #db0f0f&quot;&gt;&lt;b&gt;!&lt;/b&gt;&lt;/span&gt;  &#39;</span>
+                       <span class="s1">&#39;Invalid Number of Beats &#39;</span><span class="p">,</span>
+                <span class="n">align</span> <span class="o">=</span> <span class="s1">&#39;right&#39;</span><span class="p">,</span>
+                <span class="n">showarrow</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="n">xref</span> <span class="o">=</span> <span class="s1">&#39;paper&#39;</span><span class="p">,</span>
+                <span class="n">yref</span> <span class="o">=</span> <span class="s1">&#39;paper&#39;</span><span class="p">,</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="mf">1.3</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
-            <span class="n">title</span> <span class="o">=</span> <span class="n">title</span>
+            <span class="n">xaxis_title</span> <span class="o">=</span> <span class="s1">&#39;Segment Number&#39;</span><span class="p">,</span>
+            <span class="n">xaxis</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">tickmode</span> <span class="o">=</span> <span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="n">dtick</span> <span class="o">=</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">yaxis</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Number of Beats&#39;</span><span class="p">,</span>
+                <span class="nb">range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_beats</span><span class="p">],</span>
+                <span class="n">dtick</span> <span class="o">=</span> <span class="n">dtick_value</span><span class="p">),</span>
+            <span class="n">legend</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">orientation</span> <span class="o">=</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span>
+                <span class="n">yanchor</span> <span class="o">=</span> <span class="s1">&#39;bottom&#39;</span><span class="p">,</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+                <span class="n">xanchor</span> <span class="o">=</span> <span class="s1">&#39;right&#39;</span><span class="p">,</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">),</span>
+            <span class="n">annotations</span> <span class="o">=</span> <span class="n">invalid</span><span class="p">,</span>
+            <span class="n">font</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">family</span> <span class="o">=</span> <span class="s1">&#39;Poppins&#39;</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">13</span><span class="p">),</span>
+            <span class="n">height</span> <span class="o">=</span> <span class="mi">289</span><span class="p">,</span>
+            <span class="n">margin</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">t</span> <span class="o">=</span> <span class="mi">70</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">l</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mi">65</span><span class="p">),</span>
+            <span class="n">barmode</span> <span class="o">=</span> <span class="s1">&#39;overlay&#39;</span><span class="p">,</span>
+            <span class="n">template</span> <span class="o">=</span> <span class="s1">&#39;simple_white&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+                <span class="n">title</span> <span class="o">=</span> <span class="n">title</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">fig</span></div>
+
+<div class="viewcode-block" id="Cardio.plot_artifact"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.Cardio.plot_artifact">[docs]</a>    <span class="k">def</span> <span class="nf">plot_artifact</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">invalid_thresh</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plot detected and artifact beat counts.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : pandas.DataFrame()</span>
+<span class="sd">            The DataFrame containing SQA metrics per segment.</span>
+<span class="sd">        invalid_thresh : int, float</span>
+<span class="sd">            The minimum number of beats detected for a segment to be considered</span>
+<span class="sd">            valid; by default, 30.</span>
+<span class="sd">        title : str, optional</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">max_beats</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;N Detected&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span>
+        <span class="n">nearest</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="n">max_beats</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span>
+        <span class="n">dtick_value</span> <span class="o">=</span> <span class="n">nearest</span> <span class="o">/</span> <span class="mi">5</span>
+
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">(</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">go</span><span class="o">.</span><span class="n">Bar</span><span class="p">(</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Segment&#39;</span><span class="p">],</span>
+                    <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;N Detected&#39;</span><span class="p">],</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Detected&#39;</span><span class="p">,</span>
+                    <span class="n">marker</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#313c42&#39;</span><span class="p">),</span>
+                    <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;Segment %</span><span class="si">{x}</span><span class="s1">:&lt;/b&gt; %</span><span class="si">{y:.0f}</span><span class="s1"> &#39;</span>
+                                    <span class="s1">&#39;detected&lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">),</span>
+                <span class="n">go</span><span class="o">.</span><span class="n">Bar</span><span class="p">(</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Segment&#39;</span><span class="p">],</span>
+                    <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;N Artifact&#39;</span><span class="p">],</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Artifact&#39;</span><span class="p">,</span>
+                    <span class="n">marker</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#f2b463&#39;</span><span class="p">),</span>
+                    <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;Segment %</span><span class="si">{x}</span><span class="s1">:&lt;/b&gt; %</span><span class="si">{y:.0f}</span><span class="s1"> &#39;</span>
+                                    <span class="s1">&#39;artifact&lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">)</span>
+            <span class="p">],</span>
         <span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">fig</span></div>
+        <span class="c1"># Annotate invalid segments</span>
+        <span class="n">invalid</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">segment_num</span><span class="p">,</span> <span class="n">n_detected</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                <span class="nb">zip</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Segment&#39;</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;N Detected&#39;</span><span class="p">])):</span>
+            <span class="k">if</span> <span class="n">n_detected</span> <span class="o">&lt;</span> <span class="n">invalid_thresh</span><span class="p">:</span>
+                <span class="n">annotation</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">segment_num</span><span class="p">,</span>
+                    <span class="n">y</span> <span class="o">=</span> <span class="n">n_detected</span><span class="p">,</span>
+                    <span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;!&lt;/b&gt;&#39;</span><span class="p">,</span>
+                    <span class="n">showarrow</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                    <span class="n">font</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#db0f0f&#39;</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">20</span><span class="p">),</span>
+                    <span class="n">yshift</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">invalid</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">invalid</span><span class="p">:</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">(</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&lt;span style=&quot;color: #db0f0f&quot;&gt;&lt;b&gt;!&lt;/b&gt;&lt;/span&gt;  &#39;</span>
+                       <span class="s1">&#39;Invalid Number of Beats &#39;</span><span class="p">,</span>
+                <span class="n">align</span> <span class="o">=</span> <span class="s1">&#39;right&#39;</span><span class="p">,</span>
+                <span class="n">showarrow</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="n">xref</span> <span class="o">=</span> <span class="s1">&#39;paper&#39;</span><span class="p">,</span>
+                <span class="n">yref</span> <span class="o">=</span> <span class="s1">&#39;paper&#39;</span><span class="p">,</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="mf">1.3</span><span class="p">)</span>
 
-<div class="viewcode-block" id="display_summary_table"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.SQA.display_summary_table">[docs]</a><span class="k">def</span> <span class="nf">display_summary_table</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Display the SQA summary table.</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+            <span class="n">xaxis_title</span> <span class="o">=</span> <span class="s1">&#39;Segment Number&#39;</span><span class="p">,</span>
+            <span class="n">xaxis</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">tickmode</span> <span class="o">=</span> <span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="n">dtick</span> <span class="o">=</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">yaxis</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Number of Beats&#39;</span><span class="p">,</span>
+                <span class="nb">range</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_beats</span><span class="p">],</span>
+                <span class="n">dtick</span> <span class="o">=</span> <span class="n">dtick_value</span><span class="p">),</span>
+            <span class="n">legend</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">orientation</span> <span class="o">=</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span>
+                <span class="n">yanchor</span> <span class="o">=</span> <span class="s1">&#39;bottom&#39;</span><span class="p">,</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+                <span class="n">xanchor</span> <span class="o">=</span> <span class="s1">&#39;right&#39;</span><span class="p">,</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+                <span class="n">traceorder</span> <span class="o">=</span> <span class="s1">&#39;reversed&#39;</span><span class="p">),</span>
+            <span class="n">annotations</span> <span class="o">=</span> <span class="n">invalid</span><span class="p">,</span>
+            <span class="n">font</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">family</span> <span class="o">=</span> <span class="s1">&#39;Poppins&#39;</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">13</span><span class="p">),</span>
+            <span class="n">height</span> <span class="o">=</span> <span class="mi">289</span><span class="p">,</span>
+            <span class="n">margin</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">t</span> <span class="o">=</span> <span class="mi">70</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">l</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mi">65</span><span class="p">),</span>
+            <span class="n">barmode</span> <span class="o">=</span> <span class="s1">&#39;overlay&#39;</span><span class="p">,</span>
+            <span class="n">template</span> <span class="o">=</span> <span class="s1">&#39;simple_white&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+                <span class="n">title</span> <span class="o">=</span> <span class="n">title</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">fig</span></div>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    df : pandas.DataFrame</span>
-<span class="sd">        The DataFrame containing the SQA metrics per segment.</span>
+    <span class="k">def</span> <span class="nf">_get_iqr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the interquartile range of a data array.&quot;&quot;&quot;</span>
+        <span class="n">q75</span><span class="p">,</span> <span class="n">q25</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">[</span><span class="mi">75</span><span class="p">,</span> <span class="mi">25</span><span class="p">])</span>
+        <span class="n">iqr</span> <span class="o">=</span> <span class="n">q75</span> <span class="o">-</span> <span class="n">q25</span>
+        <span class="k">return</span> <span class="n">iqr</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    table : dash_bootstrap_components.Table</span>
-<span class="sd">        Summary table for SQA metrics.</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">missing_n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Missing&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">])</span>
-    <span class="n">invalid_n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Invalid&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">])</span>
-    <span class="n">avg_missing</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0:.2f}</span><span class="s1">%&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;% Missing&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
-
-    <span class="n">summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
-        <span class="s1">&#39;Signal Quality Metrics&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Segments with Missing Beats&#39;</span><span class="p">,</span>
-                                   <span class="s1">&#39;Segments with Invalid Beats&#39;</span><span class="p">,</span>
-                                   <span class="s1">&#39;Average % Missing Beats/Segment&#39;</span><span class="p">],</span>
-        <span class="s1">&#39;&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">missing_n</span><span class="p">,</span> <span class="n">invalid_n</span><span class="p">,</span> <span class="n">avg_missing</span><span class="p">]</span>
-    <span class="p">})</span>
-
-    <span class="n">summary</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;Signal Quality Metrics&#39;</span><span class="p">,</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
-
-    <span class="n">table</span> <span class="o">=</span> <span class="n">dbc</span><span class="o">.</span><span class="n">Table</span><span class="o">.</span><span class="n">from_dataframe</span><span class="p">(</span>
-        <span class="n">summary</span><span class="p">,</span>
-        <span class="n">index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">className</span> <span class="o">=</span> <span class="s1">&#39;segmentTable&#39;</span><span class="p">,</span>
-        <span class="n">striped</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">hover</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">bordered</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">table</span></div>
+    <span class="k">def</span> <span class="nf">_quartile_deviation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the quartile deviation in the criterion beat difference</span>
+<span class="sd">        test.&quot;&quot;&quot;</span>
+        <span class="n">iqr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_iqr</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">QD</span> <span class="o">=</span> <span class="n">iqr</span> <span class="o">*</span> <span class="mf">0.5</span>
+        <span class="k">return</span> <span class="n">QD</span></div>
 </pre></div>
 
             <div class="clearer"></div>

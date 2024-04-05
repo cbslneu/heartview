@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>API Reference &#8212; HeartView 1.0 documentation</title>
+    <title>API Reference &#8212; HeartView 2.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/agogo.css" />
     <link rel="stylesheet" type="text/css" href="_static/css/custom.css" />
@@ -27,7 +27,7 @@
             <img class="logo" src="_static/heartview-logo.png" alt="Logo"/>
           </a></p>
         <div class="headertitle"><a
-          href="index.html">HeartView 1.0 documentation</a></div>
+          href="index.html">HeartView 2.0 documentation</a></div>
         <div class="rel" role="navigation" aria-label="related navigation">
           <a href="contribute.html" title="Contribute"
              accesskey="P">previous</a> |
@@ -51,23 +51,147 @@
             
   <section id="api-reference">
 <h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this heading">¶</a></h1>
-<section id="pipeline">
-<h2>Pipeline<a class="headerlink" href="#pipeline" title="Permalink to this heading">¶</a></h2>
+<section id="data-pre-processing">
+<h2>Data Pre-Processing<a class="headerlink" href="#data-pre-processing" title="Permalink to this heading">¶</a></h2>
 <section id="module-heartview.pipeline.ECG">
 <span id="ecg"></span><h3>ECG<a class="headerlink" href="#module-heartview.pipeline.ECG" title="Permalink to this heading">¶</a></h3>
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.ECG.baseline_muscle_filter">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ECG.</span></span><span class="sig-name descname"><span class="pre">baseline_muscle_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lowcut</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highcut</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#baseline_muscle_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.baseline_muscle_filter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Filter out baseline wander and muscle noise.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="heartview.pipeline.ECG.BeatDetectors">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ECG.</span></span><span class="sig-name descname"><span class="pre">BeatDetectors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preprocessed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#BeatDetectors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.BeatDetectors" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class for detecting beats in electrocardiogram (ECG) signals using
+popular algorithms.</p>
+<dl class="simple">
+<dt>fs<span class="classifier">int</span></dt><dd><p>The sampling rate of the ECG signal.</p>
+</dd>
+<dt>preprocessed<span class="classifier">bool, optional</span></dt><dd><p>Whether the ECG signal is preprocessed or not; by default, True.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Both unfiltered and filtered ECG data may be passed as inputs to the
+beat detection functions. If unfiltered data is passed, the <cite>preprocessed</cite>
+parameter should be set to <cite>False</cite>, and the beat detection functions will
+pre-process the signal using the algorithm’s original pre-processing
+procedures.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.ECG.BeatDetectors.engzee">
+<span class="sig-name descname"><span class="pre">engzee</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#BeatDetectors.engzee"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.BeatDetectors.engzee" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Extracts QRS complex locations from an ECG signal with the Engelse</dt><dd><p>and Zeelenberg (1979) algorithm, modified by Lourenço et al. (2011).</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>signal</strong> (<em>array-like</em>) – An array containing the ECG signal.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ecg_beats</strong> – An array containing the indices of detected R peaks.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Engelse, W. A. H., &amp; Zeelenberg, C. (1979). A single scan algorithm
+for QRS detection and feature extraction. IEEE Computers in
+Cardiology, 6, 37-42.</p>
+<p>Lourenço, A., Fred, A., &amp; Ribeiro, B. (2012). Real time
+electrocardiogram segmentation for finger based ECG biometrics. In
+Proceedings of the 2012 Eighth International Conference on Intelligent
+Information Hiding and Multimedia Signal Processing (IIH-MSP)
+(pp. 21-24). IEEE.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.ECG.BeatDetectors.manikandan">
+<span class="sig-name descname"><span class="pre">manikandan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#BeatDetectors.manikandan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.BeatDetectors.manikandan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts R peak locations from an ECG signal with the Manikandan
+and Soman (2012) algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>signal</strong> (<em>array-like</em>) – An array containing the ECG signal.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ecg_beats</strong> – An array containing the indices of detected R peaks.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Manikandan, R., &amp; Soman, K. P. (2012). A novel method for detecting
+R-peaks in electrocardiogram (ECG) signal. Biomedical Signal Processing
+and Control, 7(2), 118-128.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.ECG.BeatDetectors.nabian">
+<span class="sig-name descname"><span class="pre">nabian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#BeatDetectors.nabian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.BeatDetectors.nabian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts R peak locations from an ECG signal with the Nabian
+et al. (2018) algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>signal</strong> (<em>array-like</em>) – An array containing the ECG signal.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ecg_beats</strong> – An array containing the indices of detected R peaks.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Nabian, M., et al. (2018). An open-source feature extraction tool for
+the analysis of peripheral physiological data. IEEE Journal of
+Translational Engineering in Health and Medicine, 6, 1-11.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.ECG.BeatDetectors.pantompkins">
+<span class="sig-name descname"><span class="pre">pantompkins</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#BeatDetectors.pantompkins"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.BeatDetectors.pantompkins" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts QRS complex locations from an ECG signal with the
+Pan &amp; Tompkins (1985) algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>signal</strong> (<em>array-like</em>) – An array containing the ECG signal.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ecg_beats</strong> – An array containing the indices of detected beats.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Pan, S. J., &amp; Tompkins, W. J. (1985). A real-time QRS detection
+algorithm. IEEE Transactions on Biomedical Engineering, 32(3), 230-236.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="heartview.pipeline.ECG.Filters">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ECG.</span></span><span class="sig-name descname"><span class="pre">Filters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">powerline_freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#Filters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.Filters" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class for filtering raw electrocardiogram (ECG) signals.</p>
+<dl class="simple">
+<dt>fs<span class="classifier">int</span></dt><dd><p>The sampling rate of the ECG signal.</p>
+</dd>
+<dt>powerline_freq<span class="classifier">int</span></dt><dd><p>The powerline interference frequency. This value must be either
+50 or 60 (by default, 60). The 50 Hz power grid is prevalent in
+many European, Asian, and African countries.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.ECG.Filters.baseline_wander">
+<span class="sig-name descname"><span class="pre">baseline_wander</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#Filters.baseline_wander"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.Filters.baseline_wander" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a high-pass filter to remove baseline wander from ECG data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>array_like</em>) – An array containing the noisy signal data.</p></li>
-<li><p><strong>lowcut</strong> (<em>int</em><em>, </em><em>float</em>) – The lower cut-off frequency.</p></li>
-<li><p><strong>highcut</strong> (<em>int</em><em>, </em><em>float</em>) – The higher cut-off frequency.</p></li>
-<li><p><strong>fs</strong> (<em>int</em><em>, </em><em>float</em>) – The sampling rate of the signal recording.</p></li>
+<li><p><strong>signal</strong> (<em>array_like</em>) – An array containing the noisy signal data.</p></li>
+<li><p><strong>cutoff</strong> (<em>float</em>) – The cut-off frequency at which frequencies below this value
+in the signal are attenuated; by default, 0.05 Hz.</p></li>
 <li><p><strong>order</strong> (<em>int</em>) – The filter order, i.e., the number of samples required to
-produce the desired filtered output; by default, 4.’</p></li>
+produce the desired filtered output; by default, 2.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -79,102 +203,61 @@ produce the desired filtered output; by default, 4.’</p></li>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.ECG.compute_ibis">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ECG.</span></span><span class="sig-name descname"><span class="pre">compute_ibis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peaks_ix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#compute_ibis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.compute_ibis" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute interbeat intervals from peak locations in ECG data.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.ECG.Filters.filter_signal">
+<span class="sig-name descname"><span class="pre">filter_signal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lowcut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highcut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">80</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#Filters.filter_signal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.Filters.filter_signal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter out artifact from ECG data due to powerline interference,
+baseline wander, movement, and muscle noise using an elliptic bandpass
+filter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>signal</strong> (<em>array-like</em>) – An array containing the ECG data to be filtered.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>filtered</strong> – An array containing the filtered ECG signal.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.ECG.Filters.muscle_noise">
+<span class="sig-name descname"><span class="pre">muscle_noise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lowcut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highcut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#Filters.muscle_noise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.Filters.muscle_noise" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a bandstop filter to remove muscle (EMG) noise from ECG data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The data frame containing the ECG data and a timestamp column.</p></li>
-<li><p><strong>ts_col</strong> (<em>str</em>) – The name of the column containing timestamp values.</p></li>
-<li><p><strong>peaks_ix</strong> (<em>array_like</em>) – An array of indices corresponding to peak occurrences.</p></li>
+<li><p><strong>signal</strong> (<em>array-like</em>) – An array containing the noisy signal data.</p></li>
+<li><p><strong>lowcut</strong> (<em>float</em><em>, </em><em>optional</em>) – The lower cutoff frequency of the bandstop filter;
+by default, 30.</p></li>
+<li><p><strong>highcut</strong> (<em>float</em><em>, </em><em>optional</em>) – The upper cutoff frequency of the bandstop filter;
+by default, 100</p></li>
+<li><p><strong>order</strong> (<em>int</em><em>, </em><em>optional</em>) – The filter order, i.e., the number of samples required to
+produce the desired filtered output; by default, 2.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ibi</strong> – A data frame containing timestamps and IBI values.</p>
+<dd class="field-even"><p><strong>filtered</strong> – The filtered signal with muscle/EMG noise removed.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
+<dd class="field-odd"><p>array-like</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.ECG.detect_rpeaks">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ECG.</span></span><span class="sig-name descname"><span class="pre">detect_rpeaks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#detect_rpeaks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.detect_rpeaks" title="Permalink to this definition">¶</a></dt>
-<dd><p>Detect locations of R peaks with Shannon energy &amp; smooth
-envelope extraction.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – The data frame containing the pre-processed ECG data.</p></li>
-<li><p><strong>signal</strong> (<em>str</em>) – The name of the column containing the filtered ECG data.</p></li>
-<li><p><strong>fs</strong> (<em>int</em><em>, </em><em>float</em>) – The sampling rate of the signal recording.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>id_maxes</strong> – Array containing the index locations of all detected peaks.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.array</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.ECG.get_fs">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ECG.</span></span><span class="sig-name descname"><span class="pre">get_fs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">edf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#get_fs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.get_fs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get ECG sampling rate from an Actiwave Cardio device.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>edf</strong> (<em>str</em>) – The path of the Actiwave Cardio EDF file.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>fs</strong> – The sampling rate of the Actiwave Cardio recording.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>int, float</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.ECG.get_seconds">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ECG.</span></span><span class="sig-name descname"><span class="pre">get_seconds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peaks_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seg_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#get_seconds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.get_seconds" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get second-by-second HR, IBI, and peak counts from ECG data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – The data frame containing the ECG data and a timestamp column.</p></li>
-<li><p><strong>peaks_col</strong> (<em>str</em>) – The name of the column containing peak instances.</p></li>
-<li><p><strong>fs</strong> (<em>int</em>) – The sampling rate.</p></li>
-<li><p><strong>seg_size</strong> (<em>int</em>) – The window size of each segment.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>interval_data</strong> – A data frame containing IBI values.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.ECG.powerline_int_filter">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ECG.</span></span><span class="sig-name descname"><span class="pre">powerline_int_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#powerline_int_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.powerline_int_filter" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.ECG.Filters.powerline_interference">
+<span class="sig-name descname"><span class="pre">powerline_interference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#Filters.powerline_interference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.Filters.powerline_interference" title="Permalink to this definition">¶</a></dt>
 <dd><p>Filter out powerline interference at a specified frequency.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>array_like</em>) – An array containing the noisy signal data.</p></li>
-<li><p><strong>fs</strong> (<em>int</em><em>, </em><em>float</em>) – The sampling rate of the signal recording.</p></li>
+<li><p><strong>signal</strong> (<em>array_like</em>) – An array containing the noisy signal data.</p></li>
 <li><p><strong>q</strong> (<em>float</em>) – The quality factor, i.e., how narrow or wide the stopband is
-for a notch filter. A higher quality factor indicates a
-narrower bandpass.</p></li>
-<li><p><strong>freq</strong> (<em>int</em><em>, </em><em>float</em>) – The frequency to filter out (e.g., 50 or 60 Hz); by default,
-60 Hz.</p></li>
+for a notch filter (by default, 30). A higher quality factor
+indicates a narrower bandpass.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -186,122 +269,171 @@ narrower bandpass.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.ECG.read_actiwave">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ECG.</span></span><span class="sig-name descname"><span class="pre">read_actiwave</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">edf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ECG.html#read_actiwave"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ECG.read_actiwave" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read ECG and acceleration data from an Actiwave Cardio device.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>edf</strong> (<em>str</em>) – The path of the Actiwave Cardio EDF file.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>ecg</strong> (<em>pd.DataFrame</em>) – The ECG data containing ‘Timestamp’ and ‘mV’ columns.</p></li>
-<li><p><strong>acc</strong> (<em>pd.DataFrame</em>) – The acceleration data containing ‘Timestamp’, ‘X’, ‘Y’, and ‘Z’
-columns.</p></li>
-</ul>
-</p>
-</dd>
-</dl>
 </dd></dl>
 
 </section>
 <section id="module-heartview.pipeline.PPG">
 <span id="ppg"></span><h3>PPG<a class="headerlink" href="#module-heartview.pipeline.PPG" title="Permalink to this heading">¶</a></h3>
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.PPG.get_e4_interval_data">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.PPG.</span></span><span class="sig-name descname"><span class="pre">get_e4_interval_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seg_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/PPG.html#get_e4_interval_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.PPG.get_e4_interval_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get second-by-second HR values from Empatica E4 IBI data.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="heartview.pipeline.PPG.BeatDetectors">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heartview.pipeline.PPG.</span></span><span class="sig-name descname"><span class="pre">BeatDetectors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preprocessed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/PPG.html#BeatDetectors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.PPG.BeatDetectors" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class for detecting beats in photoplethysmography (PPG) signals using
+popular algorithms.</p>
+<dl class="simple">
+<dt>fs<span class="classifier">int</span></dt><dd><p>The sampling rate of the PPG signal.</p>
+</dd>
+<dt>preprocessed<span class="classifier">bool, optional</span></dt><dd><p>Whether the input PPG data is pre-processed or not; by default,
+<cite>True</cite>. If <cite>False</cite>, the beat detection methods will pre-process the
+input data according to the original algorithms.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Both unfiltered and filtered PPG data may be passed as inputs to the
+beat detection functions. If unfiltered data is passed, the <cite>preprocessed</cite>
+parameter should be set to <cite>False</cite>, and the beat detection functions will
+pre-process the signal using the algorithm’s original pre-processing
+procedures.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.PPG.BeatDetectors.adaptive_threshold">
+<span class="sig-name descname"><span class="pre">adaptive_threshold</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ma_perc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/PPG.html#BeatDetectors.adaptive_threshold"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.PPG.BeatDetectors.adaptive_threshold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract beat locations from PPG data with the adaptive thresholding
+algorithm by van Gent al. (2018).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – The DataFrame output from <cite>get_e4_peaks</cite>.</p></li>
-<li><p><strong>seg_size</strong> (<em>int</em>) – The window size of each segment.</p></li>
+<li><p><strong>signal</strong> (<em>array_like</em>) – An array containing the PPG signal.</p></li>
+<li><p><strong>ma_perc</strong> (<em>float</em><em>, </em><em>optional</em>) – The percentage with which to raise the moving average, used for
+fitting detection solutions to the data; by default, 20.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>interval_data</strong> – A DataFrame containing second-by-second HR and IBI values and
-peak counts.</p>
+<dd class="field-even"><p><strong>ppg_beats</strong> – An array containing indices of PPG pulse onsets.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pandas.DataFrame</p>
+<dd class="field-odd"><p>array_like</p>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>The original source code can be found in the HeartPy package at:
+<a class="reference external" href="https://github.com/paulvangentcom/heartrate_analysis_python">https://github.com/paulvangentcom/heartrate_analysis_python</a>.</p>
+<p class="rubric">References</p>
+<p>Van Gent, P., Farah, H., Van Nes, N., &amp; Van Arem, B. (2019). HeartPy:
+A novel heart rate algorithm for the analysis of noisy signals.
+Transportation Research Part F: Traffic Psychology and Behaviour,
+66, 368-378.</p>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.PPG.get_e4_peaks">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.PPG.</span></span><span class="sig-name descname"><span class="pre">get_e4_peaks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ibi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/PPG.html#get_e4_peaks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.PPG.get_e4_peaks" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get HR values and peak locations from Empatica E4 IBI data.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.PPG.BeatDetectors.erma">
+<span class="sig-name descname"><span class="pre">erma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.111</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.667</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.02</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refractory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/PPG.html#BeatDetectors.erma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.PPG.BeatDetectors.erma" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract beat locations from PPG data based on the Elgendi et al.
+(2013) algorithm using event-related moving averages and dynamic
+thresholding.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ibi</strong> (<em>pandas.DataFrame</em>) – The DataFrame containing the pre-processed IBI data.</p></li>
-<li><p><strong>fs</strong> (<em>int</em><em>, </em><em>float</em>) – The sampling rate of the Empatica E4 recording.</p></li>
-<li><p><strong>start_time</strong> (<em>int</em>) – The Unix timestamp of the recording start time.</p></li>
+<li><p><strong>signal</strong> (<em>array_like</em>) – An array containing the PPG signal.</p></li>
+<li><p><strong>W1</strong> (<em>float</em><em>, </em><em>optional</em>) – The window size for peak detection in seconds; by default 111 ms.</p></li>
+<li><p><strong>W2</strong> (<em>float</em><em>, </em><em>optional</em>) – The window size for beat detection in seconds; by default, 667 ms.</p></li>
+<li><p><strong>offset</strong> (<em>float</em><em>, </em><em>optional</em>) – Offset duration adjustment; by default, 20 ms.</p></li>
+<li><p><strong>refractory</strong> (<em>float</em><em>, </em><em>optional</em>) – Refractory period to avoid double detection of the same beat
+(i.e., the minimum delay between consecutive systolic peaks); by
+default, 300 ms.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>df</strong> – A DataFrame containing peak occurrence and IBI and HR values
-at each timepoint.</p>
+<dd class="field-even"><p><strong>ppg_beats</strong> – An array containing indices of PPG pulse onsets.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pandas.DataFrame</p>
+<dd class="field-odd"><p>array_like</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Elgendi, M., Norton, I., Brearley, M., Abbott, D., &amp; Schuurmans, D.
+(2013). Systolic peak detection in acceleration photoplethysmograms
+measured from emergency responders in tropical conditions. PLoS ONE,
+8(10), e76585.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="heartview.pipeline.PPG.Filters">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heartview.pipeline.PPG.</span></span><span class="sig-name descname"><span class="pre">Filters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/PPG.html#Filters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.PPG.Filters" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class for filtering raw photoplethysmography (PPG) data.</p>
+<dl class="simple">
+<dt>fs<span class="classifier">int</span></dt><dd><p>The sampling rate of the PPG signal.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.PPG.Filters.baseline_wander">
+<span class="sig-name descname"><span class="pre">baseline_wander</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/PPG.html#Filters.baseline_wander"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.PPG.Filters.baseline_wander" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a high-pass filter to remove baseline wander from PPG data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>signal</strong> (<em>array_like</em>) – An array containing the input PPG signal to be filtered.</p></li>
+<li><p><strong>cutoff</strong> (<em>float</em>) – The cut-off frequency at which frequencies below this value
+in the PPG signal are attenuated; by default, 0.5 Hz.</p></li>
+<li><p><strong>order</strong> (<em>int</em>) – The filter order, i.e., the number of samples required to
+produce the desired filtered output; by default, 2.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.PPG.get_fs">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.PPG.</span></span><span class="sig-name descname"><span class="pre">get_fs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/PPG.html#get_fs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.PPG.get_fs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the sampling rate from an Empatica E4 file.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.PPG.Filters.filter_signal">
+<span class="sig-name descname"><span class="pre">filter_signal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lowcut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highcut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/PPG.html#Filters.filter_signal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.PPG.Filters.filter_signal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter out baseline drift, motion artifact, and powerline
+interference from PPG data and smooth out the signal for further
+processing. This function uses a 4th-order Chebyshev Type II filter
+according to results of the study by Liang et al. (2018) and a moving
+average filter using convolution.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>file</strong> (<em>str</em>) – The path of the Empatica E4 file.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>signal</strong> (<em>array_like</em>) – An array containing the input PPG signal to be filtered.</p></li>
+<li><p><strong>lowcut</strong> (<em>int</em><em>, </em><em>float</em>) – The cut-off frequency at which frequencies below this value in the
+signal are attenuated; by default, 0.5 Hz.</p></li>
+<li><p><strong>highcut</strong> (<em>int</em><em>, </em><em>float</em>) – The cut-off frequency at which frequencies above this value in the
+signal are attenuated; by default, 10 Hz.</p></li>
+<li><p><strong>order</strong> (<em>int</em>) – The filter order, i.e., the number of samples required to
+produce the desired filtered output; by default, 4.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>fs</strong> – The sampling rate of the Empatica E4 recording.</p>
+<dd class="field-even"><p><strong>filtered</strong> – An array containing the filtered PPG data.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>int, float</p>
+<dd class="field-odd"><p>array_like</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Liang, Y., Elgendi, M., Chen, Z., et al. (2018). An optimal filter for
+short photoplethysmogram signals. Scientific Data, 5, 180076.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.PPG.Filters.moving_average">
+<span class="sig-name descname"><span class="pre">moving_average</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_len</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/PPG.html#Filters.moving_average"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.PPG.Filters.moving_average" title="Permalink to this definition">¶</a></dt>
+<dd><p>Smooth a PPG signal using a moving average filter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>signal</strong> (<em>array_like</em>) – An array containing the input PPG signal to be filtered.</p></li>
+<li><p><strong>window_len</strong> (<em>int</em>) – The size of the moving average window.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>filtered</strong> – An array containing the filtered PPG signal.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array_like</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.PPG.get_start_time">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.PPG.</span></span><span class="sig-name descname"><span class="pre">get_start_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/PPG.html#get_start_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.PPG.get_start_time" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the Unix-formatted start time of an Empatica E4 recording.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>file</strong> (<em>str</em>) – The path of the Empatica E4 file.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>start</strong> – The Unix timestamp of the recording start time.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>int</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.PPG.preprocess_e4">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.PPG.</span></span><span class="sig-name descname"><span class="pre">preprocess_e4</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">e4_zip</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/PPG.html#preprocess_e4"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.PPG.preprocess_e4" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pre-process Empatica E4 data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>e4_zip</strong> (<em>str</em>) – The path of the Empatica E4 archive file ending in .zip.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>e4_data</strong> – A dictionary containing all pre-processed BVP, HR, IBI, and
-ACC data, as well as the sampling rate and start time of the
-recording.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
 </dd></dl>
 
 </section>
@@ -309,27 +441,37 @@ recording.</p>
 <span id="acc"></span><h3>ACC<a class="headerlink" href="#module-heartview.pipeline.ACC" title="Permalink to this heading">¶</a></h3>
 <dl class="py function">
 <dt class="sig sig-object py" id="heartview.pipeline.ACC.compute_auc">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ACC.</span></span><span class="sig-name descname"><span class="pre">compute_auc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ACC.html#compute_auc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ACC.compute_auc" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ACC.</span></span><span class="sig-name descname"><span class="pre">compute_auc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seg_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rolling_window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rolling_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ACC.html#compute_auc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ACC.compute_auc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the area-under-the-curve of acceleration magnitude
 across a given window size using Riemann sums.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – The data frame containing the signal data and a column with
-timestamps in datetime format.</p></li>
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – The DataFrame containing acceleration magnitude values.</p></li>
 <li><p><strong>signal</strong> (<em>str</em>) – The name of the column containing the acceleration magnitude.</p></li>
 <li><p><strong>fs</strong> (<em>int</em><em>, </em><em>float</em>) – The sampling rate.</p></li>
-<li><p><strong>window</strong> (<em>int</em>) – The window size (in seconds) by which the areas are computed.</p></li>
+<li><p><strong>seg_size</strong> (<em>int</em>) – The segment size (in seconds) by which the areas are computed; by
+default, 60.</p></li>
+<li><p><strong>ts_col</strong> (<em>str</em><em>, </em><em>optional</em>) – The name of the column containing timestamps.</p></li>
+<li><p><strong>norm</strong> (<em>str</em><em>, </em><em>optional</em>) – The method with which to normalize the magnitude values; by default,
+None. Possible options include: ‘minmax’ or ‘zscore’.</p></li>
+<li><p><strong>rolling_window</strong> (<em>int</em><em>, </em><em>optional</em>) – The size, in seconds, of the sliding window across which to
+compute the AUC values; by default, None.</p></li>
+<li><p><strong>rolling_step</strong> (<em>int</em><em>, </em><em>optional</em>) – The step size, in seconds, of the sliding windows; by default, 15.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>auc</strong> – A data frame containing the area under the signal for each
-window and its corresponding timestamp.</p>
+<dd class="field-even"><p><strong>auc</strong> – A DataFrame containing the AUC, its normalized value of the
+acceleration magnitude, and corresponding timestamp for each window.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>pandas.DataFrame</p>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>If a value is given in the <cite>rolling_window</cite> parameter, the rolling
+window approach will override the segmented approach, ignoring any
+<cite>seg_size</cite> value.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -355,13 +497,13 @@ window and its corresponding timestamp.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="heartview.pipeline.ACC.convert_acc">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ACC.</span></span><span class="sig-name descname"><span class="pre">convert_acc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sens</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ACC.html#convert_acc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ACC.convert_acc" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ACC.</span></span><span class="sig-name descname"><span class="pre">convert_acc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensitivity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ACC.html#convert_acc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ACC.convert_acc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert an acceleration signal from G-force to units of m/s^2.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>signal</strong> (<em>array_like</em>) – An array containing the acceleration signal.</p></li>
-<li><p><strong>sens</strong> (<em>int</em>) – The G-force sensitivity level of the accelerometer
+<li><p><strong>sensitivity</strong> (<em>int</em>) – The G-force sensitivity level of the accelerometer
 (e.g., <cite>2</cite> for ± 2g).</p></li>
 <li><p><strong>fs</strong> (<em>int</em>) – The sampling rate of the accelerometer recording.</p></li>
 </ul>
@@ -376,33 +518,64 @@ window and its corresponding timestamp.</p>
 </dd></dl>
 
 </section>
+</section>
 <section id="module-heartview.pipeline.SQA">
-<span id="signal-quality-assessment-sqa"></span><h3>Signal Quality Assessment (SQA)<a class="headerlink" href="#module-heartview.pipeline.SQA" title="Permalink to this heading">¶</a></h3>
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.SQA.compute_metrics">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.SQA.</span></span><span class="sig-name descname"><span class="pre">compute_metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/SQA.html#compute_metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.SQA.compute_metrics" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute SQA metrics by segment from the <cite>peaks_by_seg</cite> output.</p>
+<span id="signal-quality-assessment"></span><h2>Signal Quality Assessment<a class="headerlink" href="#module-heartview.pipeline.SQA" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="heartview.pipeline.SQA.Cardio">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heartview.pipeline.SQA.</span></span><span class="sig-name descname"><span class="pre">Cardio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/SQA.html#Cardio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.SQA.Cardio" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class for signal quality assessment on cardiovascular data, including
+electrocardiograph (ECG) or photoplethysmograph (PPG) data.</p>
+<dl class="simple">
+<dt>fs<span class="classifier">int</span></dt><dd><p>The sampling rate of the cardiovascular data.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.SQA.Cardio.compute_metrics">
+<span class="sig-name descname"><span class="pre">compute_metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beats_ix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">artifacts_ix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seg_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_hr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rolling_window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rolling_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/SQA.html#Cardio.compute_metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.SQA.Cardio.compute_metrics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute all SQA metrics for cardiovascular data by segment or
+moving window. Metrics per segment or moving window include numbers
+of detected, expected, missing, and artifactual beats and
+percentages of missing and artifactual beats.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>df</strong> (<em>pandas.DataFrame</em>) – The DataFrame containing the number of detected and the expected
-number of peaks per segment.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pandas.DataFrame</em>) – A DataFrame containing pre-processed ECG or PPG data.</p></li>
+<li><p><strong>beats_ix</strong> (<em>array_like</em>) – An array containing the indices of detected beats.</p></li>
+<li><p><strong>artifacts_ix</strong> (<em>array_like</em>) – An array containing the indices of artifactual beats.</p></li>
+<li><p><strong>seg_size</strong> (<em>int</em>) – The segment size in seconds; by default, 60.</p></li>
+<li><p><strong>min_hr</strong> (<em>int</em><em>, </em><em>float</em>) – The minimum acceptable heart rate against which the number of
+beats in the last partial segment will be compared; by default, 40.</p></li>
+<li><p><strong>ts_col</strong> (<em>str</em><em>, </em><em>optional</em>) – The name of the column containing timestamps; by default, None.
+If a string value is given, the output will contain a timestamps
+column.</p></li>
+<li><p><strong>rolling_window</strong> (<em>int</em><em>, </em><em>optional</em>) – The size, in seconds, of the sliding window across which to
+compute the SQA metrics; by default, None.</p></li>
+<li><p><strong>rolling_step</strong> (<em>int</em><em>, </em><em>optional</em>) – The step size, in seconds, of the sliding windows; by default, 15.</p></li>
+<li><p><strong>show_progress</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to display a progress bar while the function runs; by
+default, True.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>metrics</strong> – A DataFrame with computed SQA metrics per segment.</p>
+<dd class="field-even"><p><strong>metrics</strong> – A DataFrame with all computed SQA metrics per segment.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>pandas.DataFrame</p>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>If a value is given in the <cite>rolling_window</cite> parameter, the rolling
+window approach will override the segmented approach, ignoring any
+<cite>seg_size</cite> value.</p>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.SQA.display_summary_table">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.SQA.</span></span><span class="sig-name descname"><span class="pre">display_summary_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/SQA.html#display_summary_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.SQA.display_summary_table" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.SQA.Cardio.display_summary_table">
+<span class="sig-name descname"><span class="pre">display_summary_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sqa_df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/SQA.html#Cardio.display_summary_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.SQA.Cardio.display_summary_table" title="Permalink to this definition">¶</a></dt>
 <dd><p>Display the SQA summary table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>df</strong> (<em>pandas.DataFrame</em>) – The DataFrame containing the SQA metrics per segment.</p>
+<dd class="field-odd"><p><strong>sqa_df</strong> (<em>pandas.DataFrame</em>) – The DataFrame containing the SQA metrics per segment.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>table</strong> – Summary table for SQA metrics.</p>
@@ -413,21 +586,62 @@ number of peaks per segment.</p>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.SQA.evaluate_peaks">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.SQA.</span></span><span class="sig-name descname"><span class="pre">evaluate_peaks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seg_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/SQA.html#evaluate_peaks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.SQA.evaluate_peaks" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the number of detected and expected number of peaks per segment.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.SQA.Cardio.get_artifacts">
+<span class="sig-name descname"><span class="pre">get_artifacts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beats_ix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">artifacts_ix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seg_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/SQA.html#Cardio.get_artifacts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.SQA.Cardio.get_artifacts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Summarize the number and proportion of artifactual beats per segment.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – The input data frame containing the second-by-second heart
-rates, interbeat intervals, and peak counts.</p></li>
-<li><p><strong>seg_size</strong> (<em>int</em>) – The segment size of each segment.</p></li>
+<li><p><strong>data</strong> (<em>pandas.DataFrame</em>) – A DataFrame containing the pre-processed ECG or PPG data.</p></li>
+<li><p><strong>beats_ix</strong> (<em>array_like</em>) – An array containing the indices of detected beats.</p></li>
+<li><p><strong>artifacts_ix</strong> (<em>array_like</em>) – An array containing the indices of artifactual beats. This is
+outputted from <cite>SQA.Cardio.identify_artifacts()</cite>.</p></li>
+<li><p><strong>seg_size</strong> (<em>int</em>) – The size of the segment in seconds; by default, 60.</p></li>
+<li><p><strong>ts_col</strong> (<em>str</em><em>, </em><em>optional</em>) – The name of the column containing timestamps; by default, None.
+If a string value is given, the output will contain a timestamps
+column.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>peaks_by_seg</strong> – A DataFrame with the number of detected and the expected number
-of peaks per segment.</p>
+<dd class="field-even"><p><strong>artifacts</strong> – A DataFrame with the number and proportion of artifactual beats
+per segment.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">SQA.Cardio.identify_artifacts</span></code></dt><dd><p>Identify artifactual beats using both or either of the methods.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.SQA.Cardio.get_missing">
+<span class="sig-name descname"><span class="pre">get_missing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beats_ix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seg_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_hr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/SQA.html#Cardio.get_missing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.SQA.Cardio.get_missing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Summarize the number and proportion of missing beats per segment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pandas.DataFrame</em>) – The DataFrame containing the pre-processed ECG or PPG data.</p></li>
+<li><p><strong>beats_ix</strong> (<em>array-like</em>) – An array containing the indices of detected beats.</p></li>
+<li><p><strong>seg_size</strong> (<em>int</em>) – The size of the segment in seconds; by default, 60.</p></li>
+<li><p><strong>min_hr</strong> (<em>int</em><em>, </em><em>float</em>) – The minimum acceptable heart rate against which the number of
+beats in the last partial segment will be compared; by default, 40.</p></li>
+<li><p><strong>ts_col</strong> (<em>str</em><em>, </em><em>optional</em>) – The name of the column containing timestamps; by default, None.
+If a string value is given, the output will contain a timestamps
+column.</p></li>
+<li><p><strong>show_progress</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to display a progress by while the function runs; by
+default, True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>missing</strong> – A DataFrame with detected, expected, and missing numbers of
+beats per segment.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>pandas.DataFrame</p>
@@ -435,30 +649,526 @@ of peaks per segment.</p>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.SQA.plot_expected2missing">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.SQA.</span></span><span class="sig-name descname"><span class="pre">plot_expected2missing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/SQA.html#plot_expected2missing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.SQA.plot_expected2missing" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot the expected-to-missing beats chart.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.SQA.Cardio.get_seconds">
+<span class="sig-name descname"><span class="pre">get_seconds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beats_ix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/SQA.html#Cardio.get_seconds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.SQA.Cardio.get_seconds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get second-by-second HR, IBI, and beat counts from ECG or PPG data
+according to the approach by Graham (1978).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – The DataFrame containing SQA metrics per segment.</p></li>
-<li><p><strong>title</strong> (<em>str</em>) – The title of the chart; by default, None.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The DataFrame containing the pre-processed ECG or PPG data.</p></li>
+<li><p><strong>beats_ix</strong> (<em>array-like</em>) – An array containing the indices of detected beats.</p></li>
+<li><p><strong>ts_col</strong> (<em>str</em><em>, </em><em>optional</em>) – The name of the column containing timestamps; by default, None.
+If a string value is given, the output will contain a timestamps
+column.</p></li>
+<li><p><strong>show_progress</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to display a progress bar while the function runs; by
+default, True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>fig</strong> – The resulting figure of expected-to-missing beats per segment.</p>
+<dd class="field-even"><p><strong>interval_data</strong> – A DataFrame containing second-by-second HR and IBI values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Rows with <cite>NaN</cite> values in the resulting DataFrame <cite>interval_data</cite>
+denote seconds during which no beats in the data were detected.</p>
+<p class="rubric">References</p>
+<p>Graham, F. K. (1978). Constraints on measuring heart rate and period
+sequentially through real and cardiac time. Psychophysiology, 15(5),
+492–495.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.SQA.Cardio.identify_artifacts">
+<span class="sig-name descname"><span class="pre">identify_artifacts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beats_ix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_hr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prev_n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">neighbors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/SQA.html#Cardio.identify_artifacts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.SQA.Cardio.identify_artifacts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Identify locations of artifactual beats in cardiovascular data based
+on the criterion beat difference approach by Berntson et al. (1990),
+the Hegarty-Craver et al. (2018) approach, or both.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>beats_ix</strong> (<em>array_like</em>) – An array containing the indices of detected beats.</p></li>
+<li><p><strong>method</strong> (<em>str</em>) – The artifact identification method for identifying artifacts.
+This must be ‘hegarty’, ‘cbd’, or ‘both’.</p></li>
+<li><p><strong>initial_hr</strong> (<em>int</em><em> or </em><em>float</em><em>, </em><em>optional</em>) – The heart rate value for the first interbeat interval (IBI) to be
+validated against; by default, 80. Required for ‘hegarty’ method.</p></li>
+<li><p><strong>prev_n</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of preceding IBIs to validate against; by default, 6.
+Required for ‘hegarty’ method.</p></li>
+<li><p><strong>neighbors</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of surrounding IBIs with which to derive the criterion
+beat difference score; by default, 5. Required for ‘cbd’ method.</p></li>
+<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – A configurable hyperparameter used to fine-tune the stringency of
+the criterion beat difference test; by default, 1. Required for
+‘cbd’ method.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>artifacts_ix</strong> – An array containing the indices of identified artifact beats.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array_like</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The source code for the criterion beat difference test is from work by
+Hoemann et al. (2020).</p>
+<p class="rubric">References</p>
+<p>Berntson, G., Quigley, K., Jang, J., Boysen, S. (1990). An approach to
+artifact identification: Application to heart period data.
+Psychophysiology, 27(5), 586–598.</p>
+<p>Hegarty-Craver, M. et al. (2018). Automated respiratory sinus
+arrhythmia measurement: Demonstration using executive function
+assessment. Behavioral Research Methods, 50, 1816–1823.</p>
+<p>Hoemann, K. et al. (2020). Context-aware experience sampling reveals
+the scale of variation in affective experience. Scientific
+Reports, 10(1), 1–16.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.SQA.Cardio.plot_artifact">
+<span class="sig-name descname"><span class="pre">plot_artifact</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invalid_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/SQA.html#Cardio.plot_artifact"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.SQA.Cardio.plot_artifact" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot detected and artifact beat counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em>(</em><em>)</em>) – The DataFrame containing SQA metrics per segment.</p></li>
+<li><p><strong>invalid_thresh</strong> (<em>int</em><em>, </em><em>float</em>) – The minimum number of beats detected for a segment to be considered
+valid; by default, 30.</p></li>
+<li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.pipeline.SQA.Cardio.plot_missing">
+<span class="sig-name descname"><span class="pre">plot_missing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invalid_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/SQA.html#Cardio.plot_missing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.SQA.Cardio.plot_missing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot detected and missing beat counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em><em>(</em><em>)</em>) – The DataFrame containing SQA metrics per segment.</p></li>
+<li><p><strong>invalid_thresh</strong> (<em>int</em><em>, </em><em>float</em>) – The minimum number of beats detected for a segment to be considered
+valid; by default, 30.</p></li>
+<li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-heartview.heartview">
+<span id="other-useful-functions"></span><h2>Other Useful Functions<a class="headerlink" href="#module-heartview.heartview" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="heartview.heartview.Actiwave">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heartview.heartview.</span></span><span class="sig-name descname"><span class="pre">Actiwave</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#Actiwave"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.Actiwave" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class for convenient pre-processing of data from the Actiwave Cardio
+device.</p>
+<dl class="simple">
+<dt>file<span class="classifier">str</span></dt><dd><p>The path of the Actiwave Cardio device file saved in European
+Data Format (.edf).</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.heartview.Actiwave.get_acc_fs">
+<span class="sig-name descname"><span class="pre">get_acc_fs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#Actiwave.get_acc_fs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.Actiwave.get_acc_fs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the sampling rate of accelerometer data from an Actiwave Cardio
+device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fs</strong> – The sampling rate of the accelerometer recording.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.heartview.Actiwave.get_ecg_fs">
+<span class="sig-name descname"><span class="pre">get_ecg_fs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#Actiwave.get_ecg_fs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.Actiwave.get_ecg_fs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the sampling rate of ECG data from an Actiwave Cardio device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fs</strong> – The sampling rate of the ECG recording.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int, float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.heartview.Actiwave.preprocess">
+<span class="sig-name descname"><span class="pre">preprocess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_aligned</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#Actiwave.preprocess"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.Actiwave.preprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pre-process electrocardiograph (ECG) and acceleration data from
+an Actiwave Cardio file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>time_aligned</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to time-align ECG and acceleration data based on the
+sampling rate of the ECG data; by default, False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>If <cite>time_aligned</cite> is False, returns a tuple (<cite>ecg</cite>, <cite>acc</cite>),
+where <cite>ecg</cite> is a DataFrame containing the pre-processed ECG data
+and <cite>acc</cite> is a DataFrame containing the pre-processed X-, Y-, and
+Z-axis acceleration data. If <cite>time_aligned</cite> is True, returns a
+single DataFrame containing time-synced ECG and acceleration
+data according to the ECG data’s timestamps.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple or pandas.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="heartview.heartview.Empatica">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">heartview.heartview.</span></span><span class="sig-name descname"><span class="pre">Empatica</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#Empatica"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.Empatica" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class to conveniently pre-process data from Empatica devices.</p>
+<dl class="simple">
+<dt>file<span class="classifier">str</span></dt><dd><p>The path of the Empatica archive file with a ‘.zip’ extension.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.heartview.Empatica.get_acc">
+<span class="sig-name descname"><span class="pre">get_acc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#Empatica.get_acc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.Empatica.get_acc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the pre-processed acceleration data and its start time and
+sampling rate from the Empatica E4.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><p>A tuple containing the pre-processed blood volume pulse (BVP)
+data and its corresponding start time and sampling rate.</p>
+<dl class="simple">
+<dt>acc<span class="classifier">pandas.DataFrame</span></dt><dd><p>A DataFrame containing the pre-processed BVP data with
+corresponding timestamps.</p>
+</dd>
+<dt>acc_start<span class="classifier">float</span></dt><dd><p>The Unix-formatted start time of the BVP recording.</p>
+</dd>
+<dt>acc_fs<span class="classifier">int</span></dt><dd><p>The sampling rate of the BVP data.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.heartview.Empatica.get_bvp">
+<span class="sig-name descname"><span class="pre">get_bvp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#Empatica.get_bvp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.Empatica.get_bvp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the raw BVP data and its start time and sampling rate from the
+Empatica E4.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><p>A tuple containing the pre-processed blood volume pulse (BVP)
+data and its corresponding start time and sampling rate.</p>
+<dl class="simple">
+<dt>bvp<span class="classifier">pandas.DataFrame</span></dt><dd><p>A DataFrame containing the pre-processed BVP data with
+corresponding timestamps.</p>
+</dd>
+<dt>bvp_start<span class="classifier">float</span></dt><dd><p>The Unix-formatted start time of the BVP recording.</p>
+</dd>
+<dt>bvp_fs<span class="classifier">int</span></dt><dd><p>The sampling rate of the BVP data.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.heartview.Empatica.get_e4_beats">
+<span class="sig-name descname"><span class="pre">get_e4_beats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bvp_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ibi_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#Empatica.get_e4_beats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.Empatica.get_e4_beats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get locations of beats from Empatica E4 interbeat interval (IBI)
+data relative to its blood volume pulse (BVP) data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bvp_data</strong> (<em>pandas.DataFrame</em>) – A DataFrame containing the Empatica E4 BVP data, outputted from
+<cite>Empatica.preprocess()</cite>.</p></li>
+<li><p><strong>ibi_data</strong> (<em>pandas.DataFrame</em>) – A DataFrame containing the Empatica E4 IBI data, outputted from
+<cite>Empatica.preprocess()</cite>.</p></li>
+<li><p><strong>start_time</strong> (<em>int</em>) – The Unix timestamp of the recording start time.</p></li>
+<li><p><strong>show_progress</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to display a progress bar while the function runs; by
+default, True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>e4_beats</strong> – A list containing the indices of beats extracted from IBI data of
+the Empatica E4.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.heartview.Empatica.get_eda">
+<span class="sig-name descname"><span class="pre">get_eda</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#Empatica.get_eda"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.Empatica.get_eda" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the pre-processed electrodermal activity (EDA) data and its
+recording start time and sampling rate from the Empatica E4.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><p>A tuple containing the pre-processed EDA data and its
+corresponding start time and sampling rate.</p>
+<dl class="simple">
+<dt>eda<span class="classifier">pandas.DataFrame</span></dt><dd><p>A DataFrame containing the pre-processed EDA data with
+corresponding timestamps.</p>
+</dd>
+<dt>eda_start<span class="classifier">float</span></dt><dd><p>The Unix-formatted start time of the EDA recording.</p>
+</dd>
+<dt>eda_fs<span class="classifier">int</span></dt><dd><p>The sampling rate of the EDA data.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.heartview.Empatica.get_hr">
+<span class="sig-name descname"><span class="pre">get_hr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#Empatica.get_hr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.Empatica.get_hr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the pre-processed heart rate (HR) data, start time of the
+first HR measurement, and sampling rate from the Empatica E4.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>hr</strong> (<em>pandas.DataFrame</em>) – A DataFrame containing the pre-processed HR data with
+corresponding timestamps.</p></li>
+<li><p><strong>hr_start</strong> (<em>float</em>) – The Unix-formatted start time of the HR measurements.</p></li>
+<li><p><strong>hr_fs</strong> (<em>int</em>) – The sampling rate of the BVP data.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.heartview.Empatica.get_ibi">
+<span class="sig-name descname"><span class="pre">get_ibi</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#Empatica.get_ibi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.Empatica.get_ibi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the pre-processed interbeat interval (IBI) data and the start
+time of the first interval from the Empatica E4.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>ibi</strong> (<em>pandas.DataFrame</em>) – A DataFrame containing the pre-processed IBI data with
+corresponding timestamps.</p></li>
+<li><p><strong>ibi_start</strong> (<em>int</em>) – The Unix-formatted start time of the IBI data.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.heartview.Empatica.get_temp">
+<span class="sig-name descname"><span class="pre">get_temp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#Empatica.get_temp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.Empatica.get_temp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the raw skin temperature data and its recording start time and
+sampling rate from the Empatica E4.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><p>A tuple containing the pre-processed skin temperature data and its
+corresponding start time and sampling rate.</p>
+<dl class="simple">
+<dt>temp<span class="classifier">pandas.DataFrame</span></dt><dd><p>A DataFrame containing the pre-processed temperature data with
+corresponding timestamps.</p>
+</dd>
+<dt>temp_start<span class="classifier">float</span></dt><dd><p>The Unix-formatted start time of the temperature recording.</p>
+</dd>
+<dt>temp_fs<span class="classifier">int</span></dt><dd><p>The sampling rate of the temperature data.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="heartview.heartview.Empatica.preprocess">
+<span class="sig-name descname"><span class="pre">preprocess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_aligned</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#Empatica.preprocess"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.Empatica.preprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pre-process all data from the Empatica E4.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>time_aligned</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to time-align all data based on the signal with the
+highest sampling rate (i.e. blood volume pulse); by default,
+False.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>A dictionary containing the recording start time, sampling
+rates, and DataFrames pre-processed from the Empatica E4.</p>
+<dl class="simple">
+<dt>If <cite>time_aligned</cite> is False:</dt><dd><dl class="simple">
+<dt>’acc’<span class="classifier">pandas.DataFrame</span></dt><dd><p>A DataFrame containing the pre-processed ACC data with
+corresponding timestamps.</p>
+</dd>
+<dt>’bvp’<span class="classifier">pandas.DataFrame</span></dt><dd><p>A DataFrame containing the pre-processed BVP data with
+corresponding timestamps.</p>
+</dd>
+<dt>’eda’<span class="classifier">pandas.DataFrame</span></dt><dd><p>A DataFrame containing the pre-processed EDA data with
+corresponding timestamps.</p>
+</dd>
+<dt>’hr’<span class="classifier">pandas.DataFrame</span></dt><dd><p>A DataFrame containing the pre-processed HR data with
+corresponding timestamps.</p>
+</dd>
+<dt>’ibi’<span class="classifier">pandas.DataFrame</span></dt><dd><p>A DataFrame containing the pre-processed IBI data with
+corresponding timestamps and seconds elapsed since the
+start time of the IBI recording.</p>
+</dd>
+<dt>’temp’<span class="classifier">pandas.DataFrame</span></dt><dd><p>A DataFrame containing the pre-processed temperature
+data with corresponding timestamps.</p>
+</dd>
+<dt>’start_time’<span class="classifier">float</span></dt><dd><p>The Unix-formatted start time of the E4 recording.</p>
+</dd>
+<dt>’bvp_fs’<span class="classifier">float</span></dt><dd><p>The sampling rate of the BVP recording.</p>
+</dd>
+<dt>’eda_fs’<span class="classifier">float</span></dt><dd><p>The sampling rate of the EDA recording.</p>
+</dd>
+</dl>
+</dd>
+<dt>If <cite>time_aligned</cite> is True:</dt><dd><dl class="simple">
+<dt>’hrv’<span class="classifier">pandas.DataFrame</span></dt><dd><p>A DataFrame containing time-synced BVP, HR, IBI,
+and acceleration data.</p>
+</dd>
+<dt>’eda’<span class="classifier">pandas.DataFrame</span></dt><dd><p>A DataFrame containing time-synced EDA, temperature,
+and acceleration data.</p>
+</dd>
+<dt>’start_time’<span class="classifier">float</span></dt><dd><p>The Unix-formatted start time of the E4 recording.</p>
+</dd>
+<dt>’bvp_fs’<span class="classifier">float</span></dt><dd><p>The sampling rate of the BVP recording.</p>
+</dd>
+<dt>’eda_fs’<span class="classifier">float</span></dt><dd><p>The sampling rate of the EDA recording.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">heartview</span> <span class="kn">import</span> <span class="n">heartview</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">e4_archive</span> <span class="o">=</span> <span class="s1">&#39;Sample_E4_Data.zip&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">E4</span> <span class="o">=</span> <span class="n">heartview</span><span class="o">.</span><span class="n">Empatica</span><span class="p">(</span><span class="n">e4_archive</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ALL_E4_DATA</span> <span class="o">=</span> <span class="n">E4</span><span class="o">.</span><span class="n">preprocess</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="heartview.heartview.compute_ibis">
+<span class="sig-prename descclassname"><span class="pre">heartview.heartview.</span></span><span class="sig-name descname"><span class="pre">compute_ibis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beats_ix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ts_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#compute_ibis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.compute_ibis" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Compute interbeat intervals from beat locations in electrocardiograph</dt><dd><p>(ECG) or photoplethysmograph (PPG) data.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The DataFrame containing the pre-processed ECG/PPG data.</p></li>
+<li><p><strong>fs</strong> (<em>int</em>) – The sampling rate of the ECG/PPG data.</p></li>
+<li><p><strong>beats_ix</strong> (<em>array_like</em>) – An array of indices corresponding to beat occurrences.</p></li>
+<li><p><strong>ts_col</strong> (<em>str</em>) – The name of the column in <cite>data</cite> containing timestamp values; by
+default, None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ibi</strong> – A DataFrame containing timestamps and IBI values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="heartview.heartview.get_duration">
+<span class="sig-prename descclassname"><span class="pre">heartview.heartview.</span></span><span class="sig-name descname"><span class="pre">get_duration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sec'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#get_duration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.get_duration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the duration of a signal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>array_like</em>) – An array or DataFrame containing the signal.</p></li>
+<li><p><strong>fs</strong> (<em>int</em>) – The sampling rate of the data.</p></li>
+<li><p><strong>unit</strong> (<em>str</em>) – The unit in which the duration should be calculated; by default,
+in seconds (<cite>sec</cite>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>dur</strong> – The duration of the signal.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="heartview.heartview.plot_cardio_signals">
+<span class="sig-prename descclassname"><span class="pre">heartview.heartview.</span></span><span class="sig-name descname"><span class="pre">plot_cardio_signals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ibi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Timestamp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Filtered'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seg_num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seg_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#plot_cardio_signals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.plot_cardio_signals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create subplots of the electrocardiograph (ECG) or photoplethysmograph
+(PPG), interbeat interval (IBI), and acceleration data (if any).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>signal</strong> (<em>pandas.DataFrame</em>) – A DataFrame containing the pre-processed ECG or PPG data with beat
+and artifact occurrences in a “Beat” and “Artifact” column.</p></li>
+<li><p><strong>fs</strong> (<em>int</em>) – The sampling rate of the ECG or PPG data.</p></li>
+<li><p><strong>ibi</strong> (<em>pandas.DataFrame</em>) – A DataFrame containing IBI values in an “IBI” column.</p></li>
+<li><p><strong>signal_type</strong> (<em>str</em>) – The type of cardiovascular data being plotted. This must be either
+‘ECG’ or ‘PPG’.</p></li>
+<li><p><strong>x</strong> (<em>str</em><em>, </em><em>optional</em>) – The name of the column of values in the <cite>signal</cite> DataFrame to plot
+along the x-axis; by default, ‘Timestamp’.</p></li>
+<li><p><strong>y</strong> (<em>str</em><em>, </em><em>optional</em>) – The column name of values to plot along the y-axis; by default,
+‘Filtered’.</p></li>
+<li><p><strong>acc</strong> (<em>pandas.DataFrame</em><em>, </em><em>optional</em>) – A DataFrame containing pre-processed acceleration data with
+magnitude values in a “Magnitude” column.</p></li>
+<li><p><strong>seg_num</strong> (<em>int</em>) – The segment to plot.</p></li>
+<li><p><strong>seg_size</strong> (<em>int</em>) – The size of the segment, in seconds; by default, 60.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>fig</strong> – A figure containing subplots of ECG or PPG data with beat annotations
+and its corresponding IBI data.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>plotly.graph_objects.Figure</p>
 </dd>
 </dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><code class="xref py py-obj docutils literal notranslate"><span
+  class="pre">heartview.compute_ibis</span></code></dt><dd><p>Compute IBIs
+  in a DataFrame time-aligned to its corresponding cardiovascular data.</p>
+</dd>
+</dl>
+</div>
 </dd></dl>
 
-</section>
-</section>
-<section id="module-heartview.heartview">
-<span id="other-useful-functions"></span><h2>Other Useful Functions<a class="headerlink" href="#module-heartview.heartview" title="Permalink to this heading">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="heartview.heartview.plot_ibi_from_ecg">
 <span class="sig-prename descclassname"><span class="pre">heartview.heartview.</span></span><span class="sig-name descname"><span class="pre">plot_ibi_from_ecg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segment</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_segments</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/heartview.html#plot_ibi_from_ecg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.heartview.plot_ibi_from_ecg" title="Permalink to this definition">¶</a></dt>
@@ -466,7 +1176,7 @@ of peaks per segment.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – The data frame containing the signal data.</p></li>
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – The DataFrame containing the signal data.</p></li>
 <li><p><strong>x</strong> (<em>str</em>) – The column containing the x-axis value (e.g., <cite>‘Time’</cite>).</p></li>
 <li><p><strong>y</strong> (<em>str</em>) – The column containing the IBI series (e.g., <cite>‘IBI’</cite>).</p></li>
 <li><p><strong>segment</strong> (<em>int</em><em>, </em><em>float</em>) – The segment number. For example, segment <cite>1</cite> denotes the first
@@ -490,7 +1200,7 @@ segment of the recording.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – The data frame containing the signal data.</p></li>
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – The DataFrame containing the signal data.</p></li>
 <li><p><strong>x</strong> (<em>str</em>) – The column containing the x-axis value (e.g., <cite>‘Time’</cite>).</p></li>
 <li><p><strong>y</strong> (<em>str</em><em>, </em><em>list</em>) – The column(s) of the signal data (y-axis values).</p></li>
 <li><p><strong>fs</strong> (<em>int</em><em>, </em><em>float</em>) – The sampling rate.</p></li>
@@ -522,14 +1232,14 @@ By default, peaks will be plotted on the first trace.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The data frame containing the data to be segmented.</p></li>
-<li><p><strong>fs</strong> (<em>int</em>) – The sampling rate.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – The DataFrame containing the data to be segmented.</p></li>
+<li><p><strong>fs</strong> (<em>int</em>) – The sampling rate of the data.</p></li>
 <li><p><strong>seg_size</strong> (<em>int</em>) – The window size, in seconds, into which the data should be
 segmented.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>df</strong> – The original data frame with data segmented with labels in a
+<dd class="field-even"><p><strong>df</strong> – The original DataFrame with data segmented with labels in a
 ‘Segment’ column.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -559,7 +1269,13 @@ segmented.</p></li>
 <p class="caption" role="heading"><span class="caption-text">HeartView Pipeline</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#pipeline">Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-pre-processing">Data Pre-Processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-heartview.pipeline.ECG">ECG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-heartview.pipeline.PPG">PPG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-heartview.pipeline.ACC">ACC</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-heartview.pipeline.SQA">Signal Quality Assessment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-heartview.heartview">Other Useful Functions</a></li>
 </ul>
 </li>
@@ -610,7 +1326,7 @@ segmented.</p></li>
         <div class="right">
           
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2023, Natasha Yamane, Varun Mishra, and Matthew S. Goodwin.
+        &#169; Copyright 2024, Natasha Yamane, Varun Mishra, and Matthew S. Goodwin.
       Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
         </div>

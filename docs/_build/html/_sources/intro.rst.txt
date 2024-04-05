@@ -30,7 +30,7 @@ Features
 
 * **Configuration File Exporter**: Define and save pipeline parameters in a JSON configuration file that can be loaded for use on the same dataset later.
 
-* **ECG Filters**: Filter out noise from baseline wander, muscle (EMG) activity, and powerline interference from your ECG data.
+* **Signal Filters**: Filter out noise from baseline wander, muscle (EMG) activity, and powerline interference from your ECG or PPG data.
 
 * **Beat Detection**: Extract heartbeats from your ECG [|ref1|] and Empatica E4 data.
 

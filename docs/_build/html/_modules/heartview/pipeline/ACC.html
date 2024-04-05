@@ -46,15 +46,14 @@
 <span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
-
-<div class="viewcode-block" id="convert_acc"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.ACC.convert_acc">[docs]</a><span class="k">def</span> <span class="nf">convert_acc</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">sens</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
+<div class="viewcode-block" id="convert_acc"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.ACC.convert_acc">[docs]</a><span class="k">def</span> <span class="nf">convert_acc</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">sensitivity</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert an acceleration signal from G-force to units of m/s^2.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    signal: array_like</span>
 <span class="sd">        An array containing the acceleration signal.</span>
-<span class="sd">    sens : int</span>
+<span class="sd">    sensitivity : int</span>
 <span class="sd">        The G-force sensitivity level of the accelerometer</span>
 <span class="sd">        (e.g., `2` for \u00B1 2g).</span>
 <span class="sd">    fs : int</span>
@@ -65,12 +64,9 @@
 <span class="sd">    ms2 : array_like</span>
 <span class="sd">        An array containing the converted acceleration signal.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">ms2</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">ms2</span> <span class="o">=</span> <span class="p">(</span><span class="n">ms2</span> <span class="o">/</span> <span class="p">(</span><span class="n">sens</span> <span class="o">*</span> <span class="n">fs</span><span class="p">))</span> <span class="o">*</span> <span class="mf">9.81</span>
-
+    <span class="n">ms2</span> <span class="o">=</span> <span class="p">(</span><span class="n">ms2</span> <span class="o">/</span> <span class="p">(</span><span class="n">sensitivity</span> <span class="o">*</span> <span class="n">fs</span><span class="p">))</span> <span class="o">*</span> <span class="mf">9.81</span>
     <span class="k">return</span> <span class="n">ms2</span></div>
-
 
 <div class="viewcode-block" id="compute_magnitude"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.ACC.compute_magnitude">[docs]</a><span class="k">def</span> <span class="nf">compute_magnitude</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the magnitude of a 3-axis accelerometer signal.</span>
@@ -89,46 +85,226 @@
 <span class="sd">    magnitude : pandas.Series</span>
 <span class="sd">        A series of acceleration magnitude values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">axes</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;X&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">:</span> <span class="n">y</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">:</span> <span class="n">z</span><span class="p">})</span>
-    <span class="n">magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">axes</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">))</span>
-
+    <span class="n">magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">axes</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">magnitude</span></div>
 
-
-<div class="viewcode-block" id="compute_auc"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.ACC.compute_auc">[docs]</a><span class="k">def</span> <span class="nf">compute_auc</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">signal</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">window</span><span class="p">):</span>
+<div class="viewcode-block" id="compute_auc"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.ACC.compute_auc">[docs]</a><span class="k">def</span> <span class="nf">compute_auc</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">signal</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span> <span class="n">ts_col</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">norm</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">rolling_window</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">rolling_step</span> <span class="o">=</span> <span class="mi">15</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the area-under-the-curve of acceleration magnitude</span>
 <span class="sd">    across a given window size using Riemann sums.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    df : pandas.DataFrame</span>
-<span class="sd">        The data frame containing the signal data and a column with</span>
-<span class="sd">        timestamps in datetime format.</span>
+<span class="sd">        The DataFrame containing acceleration magnitude values.</span>
 <span class="sd">    signal : str</span>
 <span class="sd">        The name of the column containing the acceleration magnitude.</span>
 <span class="sd">    fs : int, float</span>
 <span class="sd">        The sampling rate.</span>
-<span class="sd">    window : int</span>
-<span class="sd">        The window size (in seconds) by which the areas are computed.</span>
+<span class="sd">    seg_size : int</span>
+<span class="sd">        The segment size (in seconds) by which the areas are computed; by</span>
+<span class="sd">        default, 60.</span>
+<span class="sd">    ts_col : str, optional</span>
+<span class="sd">        The name of the column containing timestamps.</span>
+<span class="sd">    norm: str, optional</span>
+<span class="sd">        The method with which to normalize the magnitude values; by default,</span>
+<span class="sd">        None. Possible options include: &#39;minmax&#39; or &#39;zscore&#39;.</span>
+<span class="sd">    rolling_window : int, optional</span>
+<span class="sd">        The size, in seconds, of the sliding window across which to</span>
+<span class="sd">        compute the AUC values; by default, None.</span>
+<span class="sd">    rolling_step : int, optional</span>
+<span class="sd">        The step size, in seconds, of the sliding windows; by default, 15.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    auc : pandas.DataFrame</span>
-<span class="sd">        A data frame containing the area under the signal for each</span>
-<span class="sd">        window and its corresponding timestamp.</span>
+<span class="sd">        A DataFrame containing the AUC, its normalized value of the</span>
+<span class="sd">        acceleration magnitude, and corresponding timestamp for each window.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    If a value is given in the `rolling_window` parameter, the rolling</span>
+<span class="sd">    window approach will override the segmented approach, ignoring any</span>
+<span class="sd">    `seg_size` value.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Get second-by-second AUC values</span>
+    <span class="n">seconds_auc</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">signal</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">//</span> <span class="n">fs</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 
     <span class="n">auc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
-    <span class="n">auc</span><span class="p">[</span><span class="s1">&#39;AUC&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">signal</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">//</span> <span class="p">(</span><span class="n">fs</span> <span class="o">*</span> <span class="n">window</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 
-    <span class="c1"># Look for timestamps column</span>
-    <span class="n">t</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">dtypes</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s1">&#39;datetime64[ns]&#39;</span><span class="p">)]</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">auc</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">auc</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">//</span> <span class="p">(</span><span class="n">fs</span> <span class="o">*</span> <span class="n">window</span><span class="p">))</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="c1"># Rolling windows approach</span>
+    <span class="k">if</span> <span class="n">rolling_window</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">seconds_auc</span><span class="p">),</span> <span class="n">rolling_step</span><span class="p">):</span>
+            <span class="n">window_auc</span> <span class="o">=</span> <span class="n">seconds_auc</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">n</span><span class="p">:(</span><span class="n">n</span> <span class="o">+</span> <span class="n">rolling_window</span><span class="p">)]</span>
+
+            <span class="c1"># Compute the rolling window&#39;s normalized AUC if a normalization</span>
+            <span class="c1"># method is specified</span>
+            <span class="n">norm_agg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="k">if</span> <span class="n">norm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">normalized</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">if</span> <span class="n">norm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;minmax&#39;</span><span class="p">,</span> <span class="s1">&#39;zscore&#39;</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The `norm` parameter must take None, &#39;</span>
+                                     <span class="s1">&#39;</span><span class="se">\&#39;</span><span class="s1">minmax</span><span class="se">\&#39;</span><span class="s1">, or </span><span class="se">\&#39;</span><span class="s1">zscore</span><span class="se">\&#39;</span><span class="s1">.&#39;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s1">&#39;minmax&#39;</span><span class="p">:</span>
+                    <span class="n">norm_range</span> <span class="o">=</span> <span class="n">window_auc</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">window_auc</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">window_auc</span><span class="p">:</span>
+                        <span class="n">norm_val</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="n">window_auc</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="n">norm_range</span>
+                        <span class="n">normalized</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">norm_val</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">sd</span> <span class="o">=</span> <span class="n">window_auc</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">window_auc</span><span class="p">:</span>
+                        <span class="n">norm_val</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="n">window_auc</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="n">sd</span>
+                        <span class="n">normalized</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">norm_val</span><span class="p">)</span>
+
+                <span class="c1"># Calculate the rolling window&#39;s aggregate normalized AUC</span>
+                <span class="n">norm_agg</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">normalized</span><span class="p">)</span>
+
+            <span class="c1"># Calculate the rolling window&#39;s aggregate AUC value</span>
+            <span class="n">auc_val</span> <span class="o">=</span> <span class="n">window_auc</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+            <span class="c1"># Get timestamps if a timestamp column is given</span>
+            <span class="k">if</span> <span class="n">ts_col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">ts_auc</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">ts_col</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">//</span> <span class="n">fs</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+                <span class="n">window_ts</span> <span class="o">=</span> <span class="n">ts_auc</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">n</span><span class="p">:(</span><span class="n">n</span> <span class="o">+</span> <span class="n">rolling_window</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span>
+                    <span class="n">drop</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+                <span class="n">ts</span> <span class="o">=</span> <span class="n">window_ts</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">auc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">auc</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">([{</span>
+                    <span class="s1">&#39;Moving Window&#39;</span><span class="p">:</span> <span class="n">w</span><span class="p">,</span>
+                    <span class="s1">&#39;Timestamp&#39;</span><span class="p">:</span> <span class="n">ts</span><span class="p">,</span>
+                    <span class="s1">&#39;AUC&#39;</span><span class="p">:</span> <span class="n">auc_val</span><span class="p">,</span>
+                    <span class="s1">&#39;AUC_Norm&#39;</span><span class="p">:</span> <span class="n">norm_agg</span>
+                <span class="p">}])],</span> <span class="n">ignore_index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">auc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">auc</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">([{</span>
+                    <span class="s1">&#39;Moving Window&#39;</span><span class="p">:</span> <span class="n">w</span><span class="p">,</span>
+                    <span class="s1">&#39;AUC&#39;</span><span class="p">:</span> <span class="n">auc_val</span><span class="p">,</span>
+                    <span class="s1">&#39;AUC_Norm&#39;</span><span class="p">:</span> <span class="n">norm_agg</span>
+                <span class="p">}])],</span> <span class="n">ignore_index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="n">w</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Segment-wise approach</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">seconds_auc</span><span class="p">),</span> <span class="n">seg_size</span><span class="p">):</span>
+            <span class="n">segment_auc</span> <span class="o">=</span> <span class="n">seconds_auc</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">n</span><span class="p">:(</span><span class="n">n</span> <span class="o">+</span> <span class="n">seg_size</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span>
+                <span class="n">drop</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># Compute the segment&#39;s normalized AUC if a normalization method</span>
+            <span class="c1"># is specified</span>
+            <span class="n">norm_agg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="k">if</span> <span class="n">norm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">normalized</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">if</span> <span class="n">norm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;minmax&#39;</span><span class="p">,</span> <span class="s1">&#39;zscore&#39;</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The `norm` parameter must take None, &#39;</span>
+                                     <span class="s1">&#39;</span><span class="se">\&#39;</span><span class="s1">minmax</span><span class="se">\&#39;</span><span class="s1">, or </span><span class="se">\&#39;</span><span class="s1">zscore</span><span class="se">\&#39;</span><span class="s1">.&#39;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s1">&#39;minmax&#39;</span><span class="p">:</span>
+                    <span class="n">norm_range</span> <span class="o">=</span> <span class="n">segment_auc</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">segment_auc</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">segment_auc</span><span class="p">:</span>
+                        <span class="n">norm_val</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="n">segment_auc</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="n">norm_range</span>
+                        <span class="n">normalized</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">norm_val</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">sd</span> <span class="o">=</span> <span class="n">segment_auc</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">segment_auc</span><span class="p">:</span>
+                        <span class="n">norm_val</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="n">segment_auc</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="n">sd</span>
+                        <span class="n">normalized</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">norm_val</span><span class="p">)</span>
+
+                <span class="c1"># Calculate the segment&#39;s aggregate normalized AUC</span>
+                <span class="n">norm_agg</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">normalized</span><span class="p">)</span>
+
+            <span class="c1"># Calculate the segment&#39;s aggregate AUC</span>
+            <span class="n">auc_val</span> <span class="o">=</span> <span class="n">segment_auc</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+            <span class="c1"># Get timestamps if a timestamp column is given</span>
+            <span class="k">if</span> <span class="n">ts_col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">ts_auc</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">ts_col</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">//</span> <span class="n">fs</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+                <span class="n">window_ts</span> <span class="o">=</span> <span class="n">ts_auc</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">n</span><span class="p">:(</span><span class="n">n</span> <span class="o">+</span> <span class="n">seg_size</span><span class="p">)]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span>
+                    <span class="n">drop</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+                <span class="n">ts</span> <span class="o">=</span> <span class="n">window_ts</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">auc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">auc</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">([{</span>
+                    <span class="s1">&#39;Segment&#39;</span><span class="p">:</span> <span class="n">s</span><span class="p">,</span>
+                    <span class="s1">&#39;Timestamp&#39;</span><span class="p">:</span> <span class="n">ts</span><span class="p">,</span>
+                    <span class="s1">&#39;AUC&#39;</span><span class="p">:</span> <span class="n">auc_val</span><span class="p">,</span>
+                    <span class="s1">&#39;AUC_Norm&#39;</span><span class="p">:</span> <span class="n">norm_agg</span>
+                <span class="p">}])],</span> <span class="n">ignore_index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">auc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">auc</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">([{</span>
+                    <span class="s1">&#39;Segment&#39;</span><span class="p">:</span> <span class="n">s</span><span class="p">,</span>
+                    <span class="s1">&#39;AUC&#39;</span><span class="p">:</span> <span class="n">auc_val</span><span class="p">,</span>
+                    <span class="s1">&#39;AUC_Norm&#39;</span><span class="p">:</span> <span class="n">norm_agg</span>
+                <span class="p">}])],</span> <span class="n">ignore_index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c1"># Remove normalized AUC column if all NaN</span>
+    <span class="k">if</span> <span class="n">auc</span><span class="p">[</span><span class="s1">&#39;AUC_Norm&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">auc</span><span class="p">):</span>
+        <span class="n">auc</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;AUC_Norm&#39;</span><span class="p">],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">auc</span></div>
+
+    <span class="c1"># auc = pd.DataFrame()</span>
+    <span class="c1"># normalized = []</span>
+    <span class="c1"># if rolling_window is not None:</span>
+    <span class="c1">#     w = 1</span>
+    <span class="c1">#     for n in range(0, len(seconds_auc), rolling_step):</span>
+    <span class="c1">#         window_auc = seconds_auc.iloc[n:(n + rolling_window)]</span>
+    <span class="c1">#         window_auc.reset_index(drop = True, inplace = True)</span>
+    <span class="c1">#         auc_val = window_auc.sum()</span>
+    <span class="c1">#</span>
+    <span class="c1">#         if norm is not None:</span>
+    <span class="c1">#             normalized.append(norm_val)</span>
+    <span class="c1">#         if ts_col is not None:</span>
+    <span class="c1">#             ts = window_auc[ts_col].iloc[0]</span>
+    <span class="c1">#             auc = pd.concat([auc, pd.DataFrame.from_records([{</span>
+    <span class="c1">#                 &#39;Moving Window&#39;: w,</span>
+    <span class="c1">#                 &#39;Timestamp&#39;: ts,</span>
+    <span class="c1">#                 &#39;AUC&#39;: auc_val</span>
+    <span class="c1">#             }])], ignore_index = True)</span>
+    <span class="c1">#         else:</span>
+    <span class="c1">#             auc = pd.concat([auc, pd.DataFrame.from_records([{</span>
+    <span class="c1">#                 &#39;Moving Window&#39;: w,</span>
+    <span class="c1">#                 &#39;AUC&#39;: auc_val</span>
+    <span class="c1">#             }])], ignore_index = True)</span>
+    <span class="c1">#         w += 1</span>
+    <span class="c1"># else:</span>
+    <span class="c1">#     s = 1</span>
+    <span class="c1">#     for n in range(0, len(df), int(fs * seg_size)):</span>
+    <span class="c1">#         segment_auc = df.iloc[n:(n + int(fs * seg_size))]</span>
+    <span class="c1">#         segment_auc.reset_index(drop = True, inplace = True)</span>
+    <span class="c1">#         magnitude_vals = segment_auc[signal]</span>
+    <span class="c1">#         auc_val, norm_val = _calculate_auc(magnitude_vals, norm)</span>
+    <span class="c1">#         if norm is not None:</span>
+    <span class="c1">#             normalized.append(norm_val)</span>
+    <span class="c1">#         if ts_col is not None:</span>
+    <span class="c1">#             ts = segment_auc[ts_col].iloc[0]</span>
+    <span class="c1">#             auc = pd.concat([auc, pd.DataFrame.from_records([{</span>
+    <span class="c1">#                 &#39;Segment&#39;: s,</span>
+    <span class="c1">#                 &#39;Timestamp&#39;: ts,</span>
+    <span class="c1">#                 &#39;AUC&#39;: auc_val</span>
+    <span class="c1">#             }])], ignore_index = True)</span>
+    <span class="c1">#         else:</span>
+    <span class="c1">#             auc = pd.concat([auc, pd.DataFrame.from_records([{</span>
+    <span class="c1">#                 &#39;Segment&#39;: s,</span>
+    <span class="c1">#                 &#39;AUC&#39;: auc_val</span>
+    <span class="c1">#             }])], ignore_index = True)</span>
+    <span class="c1">#         s += 1</span>
+    <span class="c1"># if normalized:</span>
+    <span class="c1">#     auc[&#39;AUC_Norm&#39;] = normalized</span>
+    <span class="c1"># return auc</span>
+
+<span class="k">def</span> <span class="nf">_calculate_auc</span><span class="p">(</span><span class="n">magnitude</span><span class="p">,</span> <span class="n">norm</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate the area-under-the-curve of acceleration magnitude and its</span>
+<span class="sd">    normalized value. If not `None`, possible options for `norm` are</span>
+<span class="sd">    &#39;minmax&#39; or &#39;zscore&#39;.&quot;&quot;&quot;</span>
+    <span class="n">auc_val</span> <span class="o">=</span> <span class="n">magnitude</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">norm</span> <span class="o">==</span> <span class="s1">&#39;minmax&#39;</span><span class="p">:</span>
+        <span class="n">range_val</span> <span class="o">=</span> <span class="n">magnitude</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">magnitude</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">norm_val</span> <span class="o">=</span> <span class="p">(</span><span class="n">auc_val</span> <span class="o">-</span> <span class="n">magnitude</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="n">range_val</span>
+    <span class="k">elif</span> <span class="n">norm</span> <span class="o">==</span> <span class="s1">&#39;zscore&#39;</span><span class="p">:</span>
+        <span class="n">sd</span> <span class="o">=</span> <span class="n">magnitude</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+        <span class="n">norm_val</span> <span class="o">=</span> <span class="p">(</span><span class="n">auc_val</span> <span class="o">-</span> <span class="n">magnitude</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="n">sd</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">norm_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">return</span> <span class="n">auc_val</span><span class="p">,</span> <span class="n">norm_val</span>
 </pre></div>
 
             <div class="clearer"></div>

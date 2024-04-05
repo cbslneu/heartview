@@ -20,7 +20,7 @@ Contents
    contribute
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: HeartView Pipeline
 
    api

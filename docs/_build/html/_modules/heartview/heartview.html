@@ -43,137 +43,635 @@
           <div class="body" role="main">
             
   <h1>Source code for heartview.heartview</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">listdir</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">remove</span><span class="p">,</span> <span class="n">makedirs</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">shutil</span> <span class="kn">import</span> <span class="n">rmtree</span>
-<span class="kn">from</span> <span class="nn">zipfile</span> <span class="kn">import</span> <span class="n">ZipFile</span>
-<span class="kn">import</span> <span class="nn">dash_bootstrap_components</span> <span class="k">as</span> <span class="nn">dbc</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pyedflib</span>
-<span class="kn">import</span> <span class="nn">json</span>
+<span></span><span class="kn">from</span> <span class="nn">zipfile</span> <span class="kn">import</span> <span class="n">ZipFile</span><span class="p">,</span> <span class="n">ZipExtFile</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="kn">import</span> <span class="n">resample</span> <span class="k">as</span> <span class="n">scipy_resample</span>
+<span class="kn">from</span> <span class="nn">plotly.subplots</span> <span class="kn">import</span> <span class="n">make_subplots</span>
+<span class="kn">from</span> <span class="nn">heartview.pipeline.ACC</span> <span class="kn">import</span> <span class="n">compute_magnitude</span>
 <span class="kn">import</span> <span class="nn">plotly.graph_objects</span> <span class="k">as</span> <span class="nn">go</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">datetime</span> <span class="k">as</span> <span class="nn">dt</span>
+<span class="kn">import</span> <span class="nn">pyedflib</span>
 
-<span class="k">def</span> <span class="nf">_clear_temp</span><span class="p">():</span>
-    <span class="n">temp</span> <span class="o">=</span> <span class="s1">&#39;./temp&#39;</span>
-    <span class="n">temp_contents</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span> <span class="k">if</span>
-                     <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">f</span> <span class="o">!=</span> <span class="s1">&#39;00.txt&#39;</span><span class="p">]</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">temp_contents</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">temp_contents</span> <span class="k">if</span>
-                 <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">f</span> <span class="o">!=</span> <span class="s1">&#39;00.txt&#39;</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
-            <span class="n">remove</span><span class="p">(</span><span class="n">temp</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">f</span><span class="p">)</span>
-        <span class="n">sessions</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">temp_contents</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">temp</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)]</span>
-        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">sessions</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">temp</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">s</span><span class="p">):</span>
-                <span class="n">rmtree</span><span class="p">(</span><span class="n">temp</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">s</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">temp</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">s</span><span class="p">):</span>
-                <span class="n">remove</span><span class="p">(</span><span class="n">temp</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">s</span><span class="p">)</span>
-    <span class="k">return</span> <span class="kc">None</span>
+<div class="viewcode-block" id="Actiwave"><a class="viewcode-back" href="../../api.html#heartview.heartview.Actiwave">[docs]</a><span class="k">class</span> <span class="nc">Actiwave</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class for convenient pre-processing of data from the Actiwave Cardio</span>
+<span class="sd">    device.</span>
 
-<span class="k">def</span> <span class="nf">_check_edf</span><span class="p">(</span><span class="n">edf</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether the EDF uploaded is a valid Actiwave Cardio file.&quot;&quot;&quot;</span>
-    <span class="n">f</span> <span class="o">=</span> <span class="n">pyedflib</span><span class="o">.</span><span class="n">EdfReader</span><span class="p">(</span><span class="n">edf</span><span class="p">)</span>
-    <span class="n">signals</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">getSignalLabels</span><span class="p">()</span>
-    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="s1">&#39;ECG0&#39;</span> <span class="ow">in</span> <span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">signals</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s1">&#39;ECG&#39;</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s1">&#39;invalid&#39;</span>
+<span class="sd">    Parameters/Attributes</span>
+<span class="sd">    ---------------------</span>
+<span class="sd">    file : str</span>
+<span class="sd">        The path of the Actiwave Cardio device file saved in European</span>
+<span class="sd">        Data Format (.edf).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-<span class="k">def</span> <span class="nf">_get_configs</span><span class="p">():</span>
-    <span class="n">cfg_dir</span> <span class="o">=</span> <span class="s1">&#39;./configs&#39;</span>
-    <span class="n">cfgs</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="n">cfg_dir</span><span class="p">)</span> <span class="k">if</span>
-            <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">f</span> <span class="o">!=</span> <span class="s1">&#39;00.txt&#39;</span><span class="p">]</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cfgs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">cfgs</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the Actiwave object.</span>
 
-<span class="k">def</span> <span class="nf">_create_configs</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">,</span> <span class="n">filters</span><span class="p">:</span> <span class="nb">list</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span> <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a JSON-formatted configuration file of user</span>
-<span class="sd">    SQA parameters.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        file : str</span>
+<span class="sd">            The path of the Actiwave Cardio device file saved in European</span>
+<span class="sd">            Data Format (.edf).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s1">&#39;.edf&#39;</span><span class="p">,</span> <span class="s1">&#39;.EDF&#39;</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;Invalid file path. The `file` parameter must take a string &#39;</span>
+                <span class="s1">&#39;value ending in </span><span class="se">\&#39;</span><span class="s1">.EDF</span><span class="se">\&#39;</span><span class="s1"> or </span><span class="se">\&#39;</span><span class="s1">.edf</span><span class="se">\&#39;</span><span class="s1">.&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="n">file</span>
+
+<div class="viewcode-block" id="Actiwave.preprocess"><a class="viewcode-back" href="../../api.html#heartview.heartview.Actiwave.preprocess">[docs]</a>    <span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_aligned</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Pre-process electrocardiograph (ECG) and acceleration data from</span>
+<span class="sd">        an Actiwave Cardio file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        time_aligned : bool, optional</span>
+<span class="sd">            Whether to time-align ECG and acceleration data based on the</span>
+<span class="sd">            sampling rate of the ECG data; by default, False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple or pandas.DataFrame</span>
+<span class="sd">            If `time_aligned` is False, returns a tuple (`ecg`, `acc`),</span>
+<span class="sd">            where `ecg` is a DataFrame containing the pre-processed ECG data</span>
+<span class="sd">            and `acc` is a DataFrame containing the pre-processed X-, Y-, and</span>
+<span class="sd">            Z-axis acceleration data. If `time_aligned` is True, returns a</span>
+<span class="sd">            single DataFrame containing time-synced ECG and acceleration</span>
+<span class="sd">            data according to the ECG data&#39;s timestamps.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">pyedflib</span><span class="o">.</span><span class="n">EdfReader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">getStartdatetime</span><span class="p">())</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">f</span><span class="o">.</span><span class="n">getFileDuration</span><span class="p">()</span>
+        <span class="n">ecg</span><span class="p">,</span> <span class="n">acc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(),</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+        <span class="n">signal_labels</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">getSignalLabels</span><span class="p">()</span>
+        <span class="n">ecg_chn</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">signal_labels</span><span class="p">))</span>
+                   <span class="k">if</span> <span class="s1">&#39;ECG&#39;</span> <span class="ow">in</span> <span class="n">signal_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+        <span class="n">acc_chn</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">signal_labels</span><span class="p">))</span>
+                   <span class="k">if</span> <span class="s1">&#39;X&#39;</span> <span class="ow">in</span> <span class="n">signal_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                   <span class="ow">or</span> <span class="s1">&#39;Y&#39;</span> <span class="ow">in</span> <span class="n">signal_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                   <span class="ow">or</span> <span class="s1">&#39;Z&#39;</span> <span class="ow">in</span> <span class="n">signal_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+        <span class="n">acc_sig</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">],</span> <span class="n">acc_chn</span><span class="p">))</span>
+        <span class="n">ecg_fs</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">getSampleFrequency</span><span class="p">(</span><span class="n">ecg_chn</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">acc_fs</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">getSampleFrequency</span><span class="p">(</span><span class="n">acc_chn</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># Get ECG data</span>
+        <span class="n">ecg</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">ecg_fs</span><span class="p">))</span>
+        <span class="n">ecg</span><span class="p">[</span><span class="s1">&#39;ECG&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">readSignal</span><span class="p">(</span><span class="n">ecg_chn</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
+        <span class="n">ecg</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ecg</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+
+        <span class="c1"># Get ACC data</span>
+        <span class="n">acc</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">acc_fs</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">acc_sig</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">acc</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">readSignal</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+        <span class="n">acc</span><span class="p">[</span><span class="s1">&#39;Magnitude&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">acc</span><span class="p">[[</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">acc</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">acc</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">time_aligned</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">]:</span>
+                <span class="n">rs</span> <span class="o">=</span> <span class="n">scipy_resample</span><span class="p">(</span><span class="n">acc</span><span class="p">[</span><span class="n">col</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">ecg</span><span class="p">))</span>
+                <span class="n">resampled</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">resampled</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">rs</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">col</span><span class="p">)],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">preprocessed</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">ecg</span><span class="p">,</span> <span class="n">resampled</span><span class="p">],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">preprocessed</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ecg</span><span class="p">,</span> <span class="n">acc</span></div>
+
+<div class="viewcode-block" id="Actiwave.get_ecg_fs"><a class="viewcode-back" href="../../api.html#heartview.heartview.Actiwave.get_ecg_fs">[docs]</a>    <span class="k">def</span> <span class="nf">get_ecg_fs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the sampling rate of ECG data from an Actiwave Cardio device.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        fs : int, float</span>
+<span class="sd">            The sampling rate of the ECG recording.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">pyedflib</span><span class="o">.</span><span class="n">EdfReader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">signal_labels</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">getSignalLabels</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">chn</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">signal_labels</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="s1">&#39;ECG&#39;</span> <span class="ow">in</span> <span class="n">signal_labels</span><span class="p">[</span><span class="n">chn</span><span class="p">]:</span>
+                <span class="n">ecg_chn</span> <span class="o">=</span> <span class="n">chn</span>
+        <span class="n">fs</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">getSampleFrequency</span><span class="p">(</span><span class="n">ecg_chn</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">fs</span></div>
+
+<div class="viewcode-block" id="Actiwave.get_acc_fs"><a class="viewcode-back" href="../../api.html#heartview.heartview.Actiwave.get_acc_fs">[docs]</a>    <span class="k">def</span> <span class="nf">get_acc_fs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the sampling rate of accelerometer data from an Actiwave Cardio</span>
+<span class="sd">        device.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        fs : int, float</span>
+<span class="sd">            The sampling rate of the accelerometer recording.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">pyedflib</span><span class="o">.</span><span class="n">EdfReader</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">signal_labels</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">getSignalLabels</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">chn</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">signal_labels</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="s1">&#39;X&#39;</span> <span class="ow">in</span> <span class="n">signal_labels</span><span class="p">[</span><span class="n">chn</span><span class="p">]:</span>
+                <span class="n">acc_chn</span> <span class="o">=</span> <span class="n">chn</span>
+        <span class="n">fs</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">getSampleFrequency</span><span class="p">(</span><span class="n">acc_chn</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">fs</span></div></div>
+
+<span class="c1"># ======================== Empatica E4 Pre-Processing ========================</span>
+<div class="viewcode-block" id="Empatica"><a class="viewcode-back" href="../../api.html#heartview.heartview.Empatica">[docs]</a><span class="k">class</span> <span class="nc">Empatica</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class to conveniently pre-process data from Empatica devices.</span>
+
+<span class="sd">    Parameters/Attributes</span>
+<span class="sd">    ---------------------</span>
+<span class="sd">    file : str</span>
+<span class="sd">        The path of the Empatica archive file with a &#39;.zip&#39; extension.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the Empatica object.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        file : str</span>
+<span class="sd">            The path of the Empatica archive file with a &#39;.zip&#39; extension.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s1">&#39;.zip&#39;</span><span class="p">,</span> <span class="s1">&#39;.ZIP&#39;</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;Invalid file path. The `file` parameter must take a string &#39;</span>
+                <span class="s1">&#39;value ending in </span><span class="se">\&#39;</span><span class="s1">.zip</span><span class="se">\&#39;</span><span class="s1"> or </span><span class="se">\&#39;</span><span class="s1">.ZIP</span><span class="se">\&#39;</span><span class="s1">.&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="n">file</span>
+
+<div class="viewcode-block" id="Empatica.preprocess"><a class="viewcode-back" href="../../api.html#heartview.heartview.Empatica.preprocess">[docs]</a>    <span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_aligned</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Pre-process all data from the Empatica E4.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        time_aligned : bool, optional</span>
+<span class="sd">            Whether to time-align all data based on the signal with the</span>
+<span class="sd">            highest sampling rate (i.e. blood volume pulse); by default,</span>
+<span class="sd">            False.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            A dictionary containing the recording start time, sampling</span>
+<span class="sd">            rates, and DataFrames pre-processed from the Empatica E4.</span>
+
+<span class="sd">            If `time_aligned` is False:</span>
+<span class="sd">                &#39;acc&#39; : pandas.DataFrame</span>
+<span class="sd">                    A DataFrame containing the pre-processed ACC data with</span>
+<span class="sd">                    corresponding timestamps.</span>
+<span class="sd">                &#39;bvp&#39; : pandas.DataFrame</span>
+<span class="sd">                    A DataFrame containing the pre-processed BVP data with</span>
+<span class="sd">                    corresponding timestamps.</span>
+<span class="sd">                &#39;eda&#39; : pandas.DataFrame</span>
+<span class="sd">                    A DataFrame containing the pre-processed EDA data with</span>
+<span class="sd">                    corresponding timestamps.</span>
+<span class="sd">                &#39;hr&#39; : pandas.DataFrame</span>
+<span class="sd">                    A DataFrame containing the pre-processed HR data with</span>
+<span class="sd">                    corresponding timestamps.</span>
+<span class="sd">                &#39;ibi&#39; : pandas.DataFrame</span>
+<span class="sd">                    A DataFrame containing the pre-processed IBI data with</span>
+<span class="sd">                    corresponding timestamps and seconds elapsed since the</span>
+<span class="sd">                    start time of the IBI recording.</span>
+<span class="sd">                &#39;temp&#39; : pandas.DataFrame</span>
+<span class="sd">                    A DataFrame containing the pre-processed temperature</span>
+<span class="sd">                    data with corresponding timestamps.</span>
+<span class="sd">                &#39;start_time&#39; : float</span>
+<span class="sd">                    The Unix-formatted start time of the E4 recording.</span>
+<span class="sd">                &#39;bvp_fs&#39; : float</span>
+<span class="sd">                    The sampling rate of the BVP recording.</span>
+<span class="sd">                &#39;eda_fs&#39; : float</span>
+<span class="sd">                    The sampling rate of the EDA recording.</span>
+
+<span class="sd">            If `time_aligned` is True:</span>
+<span class="sd">                &#39;hrv&#39; : pandas.DataFrame</span>
+<span class="sd">                    A DataFrame containing time-synced BVP, HR, IBI,</span>
+<span class="sd">                    and acceleration data.</span>
+<span class="sd">                &#39;eda&#39; : pandas.DataFrame</span>
+<span class="sd">                    A DataFrame containing time-synced EDA, temperature,</span>
+<span class="sd">                    and acceleration data.</span>
+<span class="sd">                &#39;start_time&#39; : float</span>
+<span class="sd">                    The Unix-formatted start time of the E4 recording.</span>
+<span class="sd">                &#39;bvp_fs&#39; : float</span>
+<span class="sd">                    The sampling rate of the BVP recording.</span>
+<span class="sd">                &#39;eda_fs&#39; : float</span>
+<span class="sd">                    The sampling rate of the EDA recording.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; from heartview import heartview</span>
+<span class="sd">        &gt;&gt;&gt; e4_archive = &#39;Sample_E4_Data.zip&#39;</span>
+<span class="sd">        &gt;&gt;&gt; E4 = heartview.Empatica(e4_archive)</span>
+<span class="sd">        &gt;&gt;&gt; ALL_E4_DATA = E4.preprocess()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">ZipFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">archive</span><span class="p">:</span>
+            <span class="n">e4_files</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">e4_files</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;ACC&#39;</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">archive</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="k">as</span> <span class="n">acc_file</span><span class="p">:</span>
+                        <span class="n">acc_data</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_acc</span><span class="p">()</span>
+                <span class="k">if</span> <span class="s1">&#39;BVP&#39;</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">archive</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="k">as</span> <span class="n">bvp_file</span><span class="p">:</span>
+                        <span class="n">bvp_data</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">bvp_fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bvp</span><span class="p">()</span>
+                <span class="k">if</span> <span class="s1">&#39;EDA&#39;</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">archive</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="k">as</span> <span class="n">eda_file</span><span class="p">:</span>
+                        <span class="n">eda_data</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">eda_fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_eda</span><span class="p">()</span>
+                <span class="k">if</span> <span class="s1">&#39;HR&#39;</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">archive</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="k">as</span> <span class="n">hr_file</span><span class="p">:</span>
+                        <span class="n">hr_data</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_hr</span><span class="p">()</span>
+                <span class="k">if</span> <span class="s1">&#39;IBI&#39;</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">archive</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="k">as</span> <span class="n">ibi_file</span><span class="p">:</span>
+                        <span class="n">ibi_data</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_ibi</span><span class="p">()</span>
+                <span class="k">if</span> <span class="s1">&#39;TEMP&#39;</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">archive</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="k">as</span> <span class="n">temp_file</span><span class="p">:</span>
+                        <span class="n">temp_data</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_temp</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">time_aligned</span><span class="p">:</span>
+            <span class="c1"># Merge IBI and HR values into BVP data frame</span>
+            <span class="n">full_hrv</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge_asof</span><span class="p">(</span>
+                <span class="n">bvp_data</span><span class="p">,</span> <span class="n">ibi_data</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;Seconds&#39;</span><span class="p">],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="n">on</span> <span class="o">=</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="n">direction</span> <span class="o">=</span> <span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+            <span class="n">full_hrv</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge_asof</span><span class="p">(</span>
+                <span class="n">full_hrv</span><span class="p">,</span> <span class="n">hr_data</span><span class="p">,</span>
+                <span class="n">on</span> <span class="o">=</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="n">direction</span> <span class="o">=</span> <span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+            <span class="n">bvp_ts</span> <span class="o">=</span> <span class="n">bvp_data</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">ibi_ts</span> <span class="o">=</span> <span class="n">ibi_data</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">hr_ts</span> <span class="o">=</span> <span class="n">hr_data</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">ibi_insertion_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">bvp_ts</span><span class="p">,</span> <span class="n">ibi_ts</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">hr_insertion_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">bvp_ts</span><span class="p">,</span> <span class="n">hr_ts</span><span class="p">)</span>
+            <span class="n">full_hrv</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">full_hrv</span><span class="p">)),</span>
+                                  <span class="n">ibi_insertion_points</span><span class="p">),</span> <span class="s1">&#39;IBI&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="n">full_hrv</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">full_hrv</span><span class="p">)),</span>
+                                  <span class="n">hr_insertion_points</span><span class="p">),</span> <span class="s1">&#39;HR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+            <span class="c1"># Resample acceleration data to match BVP and EDA sampling rates</span>
+            <span class="n">acc_rs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+            <span class="n">acc_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;Magnitude&#39;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">ref_data</span> <span class="ow">in</span> <span class="p">[</span><span class="n">bvp_data</span><span class="p">,</span> <span class="n">eda_data</span><span class="p">]:</span>
+                <span class="n">acc_rs</span><span class="p">[</span><span class="n">acc_cols</span><span class="p">]</span> <span class="o">=</span> <span class="n">acc_data</span><span class="p">[</span><span class="n">acc_cols</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">scipy_resample</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_data</span><span class="p">)))</span>
+                <span class="k">if</span> <span class="n">ref_data</span> <span class="ow">is</span> <span class="n">bvp_data</span><span class="p">:</span>
+                    <span class="n">full_hrv</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">full_hrv</span><span class="p">,</span> <span class="n">acc_rs</span><span class="p">,</span>
+                                        <span class="n">left_index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">right_index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">full_eda</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">eda_data</span><span class="p">,</span> <span class="n">acc_rs</span><span class="p">,</span>
+                                        <span class="n">left_index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">right_index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;hrv&#39;</span><span class="p">:</span> <span class="n">full_hrv</span><span class="p">,</span>
+                    <span class="s1">&#39;eda&#39;</span><span class="p">:</span> <span class="n">full_eda</span><span class="p">,</span>
+                    <span class="s1">&#39;start_time&#39;</span><span class="p">:</span> <span class="n">start_time</span><span class="p">,</span>
+                    <span class="s1">&#39;bvp_fs&#39;</span><span class="p">:</span> <span class="n">bvp_fs</span><span class="p">,</span>
+                    <span class="s1">&#39;eda_fs&#39;</span><span class="p">:</span> <span class="n">eda_fs</span><span class="p">}</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;acc&#39;</span><span class="p">:</span> <span class="n">acc_data</span><span class="p">,</span>
+                    <span class="s1">&#39;bvp&#39;</span><span class="p">:</span> <span class="n">bvp_data</span><span class="p">,</span>
+                    <span class="s1">&#39;eda&#39;</span><span class="p">:</span> <span class="n">eda_data</span><span class="p">,</span>
+                    <span class="s1">&#39;hr&#39;</span><span class="p">:</span> <span class="n">hr_data</span><span class="p">,</span>
+                    <span class="s1">&#39;ibi&#39;</span><span class="p">:</span> <span class="n">ibi_data</span><span class="p">,</span>
+                    <span class="s1">&#39;temp&#39;</span><span class="p">:</span> <span class="n">temp_data</span><span class="p">,</span>
+                    <span class="s1">&#39;start_time&#39;</span><span class="p">:</span> <span class="n">start_time</span><span class="p">,</span>
+                    <span class="s1">&#39;bvp_fs&#39;</span><span class="p">:</span> <span class="n">bvp_fs</span><span class="p">,</span>
+                    <span class="s1">&#39;eda_fs&#39;</span><span class="p">:</span> <span class="n">eda_fs</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="Empatica.get_acc"><a class="viewcode-back" href="../../api.html#heartview.heartview.Empatica.get_acc">[docs]</a>    <span class="k">def</span> <span class="nf">get_acc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the pre-processed acceleration data and its start time and</span>
+<span class="sd">        sampling rate from the Empatica E4.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple</span>
+<span class="sd">            A tuple containing the pre-processed blood volume pulse (BVP)</span>
+<span class="sd">            data and its corresponding start time and sampling rate.</span>
+
+<span class="sd">            acc : pandas.DataFrame</span>
+<span class="sd">                A DataFrame containing the pre-processed BVP data with</span>
+<span class="sd">                corresponding timestamps.</span>
+<span class="sd">            acc_start : float</span>
+<span class="sd">                The Unix-formatted start time of the BVP recording.</span>
+<span class="sd">            acc_fs : int</span>
+<span class="sd">                The sampling rate of the BVP data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">ZipFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">archive</span><span class="p">:</span>
+            <span class="n">e4_files</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+            <span class="n">acc_file</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">e4_files</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;ACC&#39;</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="n">acc_file</span> <span class="o">=</span> <span class="n">file</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="n">acc_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No &quot;ACC.csv&quot; file found.&#39;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">archive</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="k">as</span> <span class="n">acc_file</span><span class="p">:</span>
+                <span class="n">acc</span><span class="p">,</span> <span class="n">acc_start</span><span class="p">,</span> <span class="n">acc_fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_e4_data</span><span class="p">(</span>
+                    <span class="n">acc_file</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">])</span>
+                <span class="n">acc</span> <span class="o">=</span> <span class="n">acc</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="mi">64</span><span class="p">)</span> <span class="o">*</span> <span class="mf">9.81</span>
+                                <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s1">&#39;Timestamp&#39;</span> <span class="k">else</span> <span class="n">x</span><span class="p">)</span>
+                <span class="n">acc</span><span class="p">[</span><span class="s1">&#39;Magnitude&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">compute_magnitude</span><span class="p">(</span>
+                    <span class="n">acc</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">],</span> <span class="n">acc</span><span class="p">[</span><span class="s1">&#39;Y&#39;</span><span class="p">],</span> <span class="n">acc</span><span class="p">[</span><span class="s1">&#39;Z&#39;</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">acc</span><span class="p">,</span> <span class="n">acc_start</span><span class="p">,</span> <span class="n">acc_fs</span></div>
+
+<div class="viewcode-block" id="Empatica.get_bvp"><a class="viewcode-back" href="../../api.html#heartview.heartview.Empatica.get_bvp">[docs]</a>    <span class="k">def</span> <span class="nf">get_bvp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the raw BVP data and its start time and sampling rate from the</span>
+<span class="sd">        Empatica E4.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple</span>
+<span class="sd">            A tuple containing the pre-processed blood volume pulse (BVP)</span>
+<span class="sd">            data and its corresponding start time and sampling rate.</span>
+
+<span class="sd">            bvp : pandas.DataFrame</span>
+<span class="sd">                A DataFrame containing the pre-processed BVP data with</span>
+<span class="sd">                corresponding timestamps.</span>
+<span class="sd">            bvp_start : float</span>
+<span class="sd">                The Unix-formatted start time of the BVP recording.</span>
+<span class="sd">            bvp_fs : int</span>
+<span class="sd">                The sampling rate of the BVP data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">ZipFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">archive</span><span class="p">:</span>
+            <span class="n">e4_files</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+            <span class="n">bvp_file</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">e4_files</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;BVP&#39;</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="n">bvp_file</span> <span class="o">=</span> <span class="n">file</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="n">bvp_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No &quot;BVP.csv&quot; file found.&#39;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">archive</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">bvp_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">bvp_file</span><span class="p">:</span>
+                <span class="n">bvp</span><span class="p">,</span> <span class="n">bvp_start</span><span class="p">,</span> <span class="n">bvp_fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_e4_data</span><span class="p">(</span>
+                    <span class="n">bvp_file</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;BVP&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">bvp</span><span class="p">,</span> <span class="n">bvp_start</span><span class="p">,</span> <span class="n">bvp_fs</span></div>
+
+<div class="viewcode-block" id="Empatica.get_eda"><a class="viewcode-back" href="../../api.html#heartview.heartview.Empatica.get_eda">[docs]</a>    <span class="k">def</span> <span class="nf">get_eda</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the pre-processed electrodermal activity (EDA) data and its</span>
+<span class="sd">        recording start time and sampling rate from the Empatica E4.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple</span>
+<span class="sd">            A tuple containing the pre-processed EDA data and its</span>
+<span class="sd">            corresponding start time and sampling rate.</span>
+
+<span class="sd">            eda : pandas.DataFrame</span>
+<span class="sd">                A DataFrame containing the pre-processed EDA data with</span>
+<span class="sd">                corresponding timestamps.</span>
+<span class="sd">            eda_start : float</span>
+<span class="sd">                The Unix-formatted start time of the EDA recording.</span>
+<span class="sd">            eda_fs : int</span>
+<span class="sd">                The sampling rate of the EDA data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">ZipFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">archive</span><span class="p">:</span>
+            <span class="n">e4_files</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+            <span class="n">eda_file</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">e4_files</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;EDA&#39;</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="n">eda_file</span> <span class="o">=</span> <span class="n">file</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="n">eda_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No &quot;EDA.csv&quot; file found.&#39;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">archive</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">eda_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">eda_file</span><span class="p">:</span>
+                <span class="n">eda</span><span class="p">,</span> <span class="n">eda_start</span><span class="p">,</span> <span class="n">eda_fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_e4_data</span><span class="p">(</span>
+                    <span class="n">eda_file</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;EDA&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">eda</span><span class="p">,</span> <span class="n">eda_start</span><span class="p">,</span> <span class="n">eda_fs</span></div>
+
+<div class="viewcode-block" id="Empatica.get_hr"><a class="viewcode-back" href="../../api.html#heartview.heartview.Empatica.get_hr">[docs]</a>    <span class="k">def</span> <span class="nf">get_hr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the pre-processed heart rate (HR) data, start time of the</span>
+<span class="sd">        first HR measurement, and sampling rate from the Empatica E4.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        hr : pandas.DataFrame</span>
+<span class="sd">            A DataFrame containing the pre-processed HR data with</span>
+<span class="sd">            corresponding timestamps.</span>
+<span class="sd">        hr_start : float</span>
+<span class="sd">            The Unix-formatted start time of the HR measurements.</span>
+<span class="sd">        hr_fs : int</span>
+<span class="sd">            The sampling rate of the BVP data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">ZipFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">archive</span><span class="p">:</span>
+            <span class="n">e4_files</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+            <span class="n">hr_file</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">e4_files</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;HR&#39;</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="n">hr_file</span> <span class="o">=</span> <span class="n">file</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="n">hr_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No &quot;HR.csv&quot; file found.&#39;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">archive</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="k">as</span> <span class="n">hr_file</span><span class="p">:</span>
+                <span class="n">hr</span><span class="p">,</span> <span class="n">hr_start</span><span class="p">,</span> <span class="n">hr_fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_e4_data</span><span class="p">(</span>
+                    <span class="n">hr_file</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;HR&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">hr</span><span class="p">,</span> <span class="n">hr_start</span><span class="p">,</span> <span class="n">hr_fs</span></div>
+
+<div class="viewcode-block" id="Empatica.get_ibi"><a class="viewcode-back" href="../../api.html#heartview.heartview.Empatica.get_ibi">[docs]</a>    <span class="k">def</span> <span class="nf">get_ibi</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the pre-processed interbeat interval (IBI) data and the start</span>
+<span class="sd">        time of the first interval from the Empatica E4.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ibi : pandas.DataFrame</span>
+<span class="sd">            A DataFrame containing the pre-processed IBI data with</span>
+<span class="sd">            corresponding timestamps.</span>
+<span class="sd">        ibi_start : int</span>
+<span class="sd">            The Unix-formatted start time of the IBI data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">ZipFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">archive</span><span class="p">:</span>
+            <span class="n">e4_files</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+            <span class="n">ibi_file</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">e4_files</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;IBI&#39;</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="n">ibi_file</span> <span class="o">=</span> <span class="n">file</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="n">ibi_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No &quot;IBI.csv&quot; file found.&#39;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">archive</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="k">as</span> <span class="n">ibi_file</span><span class="p">:</span>
+                <span class="n">ibi</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">ibi_file</span><span class="p">,</span> <span class="n">header</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                                  <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Seconds&#39;</span><span class="p">,</span> <span class="s1">&#39;IBI&#39;</span><span class="p">])</span>
+                <span class="n">ibi_file</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">ibi_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_e4_start_time</span><span class="p">(</span><span class="n">ibi_file</span><span class="p">)</span>
+                <span class="n">ibi</span><span class="p">[</span><span class="s1">&#39;IBI&#39;</span><span class="p">]</span> <span class="o">*=</span> <span class="mi">1000</span>
+                <span class="n">ibi</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span>
+                    <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">ibi</span><span class="p">[</span><span class="s1">&#39;Seconds&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">ibi_start</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+                        <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="n">t</span><span class="p">)))</span>
+            <span class="k">return</span> <span class="n">ibi</span><span class="p">,</span> <span class="n">ibi_start</span></div>
+
+<div class="viewcode-block" id="Empatica.get_temp"><a class="viewcode-back" href="../../api.html#heartview.heartview.Empatica.get_temp">[docs]</a>    <span class="k">def</span> <span class="nf">get_temp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the raw skin temperature data and its recording start time and</span>
+<span class="sd">        sampling rate from the Empatica E4.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple</span>
+<span class="sd">            A tuple containing the pre-processed skin temperature data and its</span>
+<span class="sd">            corresponding start time and sampling rate.</span>
+
+<span class="sd">            temp : pandas.DataFrame</span>
+<span class="sd">                A DataFrame containing the pre-processed temperature data with</span>
+<span class="sd">                corresponding timestamps.</span>
+<span class="sd">            temp_start : float</span>
+<span class="sd">                The Unix-formatted start time of the temperature recording.</span>
+<span class="sd">            temp_fs : int</span>
+<span class="sd">                The sampling rate of the temperature data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">ZipFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">archive</span><span class="p">:</span>
+            <span class="n">e4_files</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">namelist</span><span class="p">()</span>
+            <span class="n">temp_file</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">e4_files</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;TEMP&#39;</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="n">temp_file</span> <span class="o">=</span> <span class="n">file</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="n">temp_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No &quot;TEMP.csv&quot; file found.&#39;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">archive</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">temp_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">temp_file</span><span class="p">:</span>
+                <span class="n">temp</span><span class="p">,</span> <span class="n">temp_start</span><span class="p">,</span> <span class="n">temp_fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_e4_data</span><span class="p">(</span>
+                    <span class="n">temp_file</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Temp&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">temp</span><span class="p">,</span> <span class="n">temp_start</span><span class="p">,</span> <span class="n">temp_fs</span></div>
+
+<div class="viewcode-block" id="Empatica.get_e4_beats"><a class="viewcode-back" href="../../api.html#heartview.heartview.Empatica.get_e4_beats">[docs]</a>    <span class="k">def</span> <span class="nf">get_e4_beats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bvp_data</span><span class="p">,</span> <span class="n">ibi_data</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span>
+                     <span class="n">show_progress</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get locations of beats from Empatica E4 interbeat interval (IBI)</span>
+<span class="sd">        data relative to its blood volume pulse (BVP) data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        bvp_data : pandas.DataFrame</span>
+<span class="sd">            A DataFrame containing the Empatica E4 BVP data, outputted from</span>
+<span class="sd">            `Empatica.preprocess()`.</span>
+<span class="sd">        ibi_data : pandas.DataFrame</span>
+<span class="sd">            A DataFrame containing the Empatica E4 IBI data, outputted from</span>
+<span class="sd">            `Empatica.preprocess()`.</span>
+<span class="sd">        start_time : int</span>
+<span class="sd">            The Unix timestamp of the recording start time.</span>
+<span class="sd">        show_progress : bool, optional</span>
+<span class="sd">            Whether to display a progress bar while the function runs; by</span>
+<span class="sd">            default, True.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        e4_beats : list</span>
+<span class="sd">            A list containing the indices of beats extracted from IBI data of</span>
+<span class="sd">            the Empatica E4.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ibi</span> <span class="o">=</span> <span class="n">ibi_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">bvp</span> <span class="o">=</span> <span class="n">bvp_data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">ibi</span><span class="p">[</span><span class="s1">&#39;Unix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ibi</span><span class="p">[</span><span class="s1">&#39;Seconds&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">start_time</span>
+        <span class="n">ibi</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ibi</span><span class="p">[</span><span class="s1">&#39;Unix&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+        <span class="n">bvp</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">bvp</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">])</span>
+        <span class="n">e4_beats</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">ibi</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">],</span> <span class="n">disable</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">show_progress</span><span class="p">):</span>
+            <span class="n">time_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">bvp</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span>
+            <span class="n">closest_ix</span> <span class="o">=</span> <span class="n">time_diff</span><span class="o">.</span><span class="n">idxmin</span><span class="p">()</span>
+            <span class="n">e4_beats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">closest_ix</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">e4_beats</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_e4_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get pre-processed data from an Empatica E4 file.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The `name` parameter must take either a string &#39;</span>
+                             <span class="s1">&#39;or a list of strings.&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">col_name</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">col_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">header</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">names</span> <span class="o">=</span> <span class="n">col_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_e4_fs</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_e4_start_time</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;seek&#39;</span><span class="p">):</span>
+                <span class="n">file</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_e4_fs</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+                <span class="n">file</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">start_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_e4_start_time</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">timestamps</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;s&#39;</span><span class="p">),</span>
+            <span class="n">periods</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">freq</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="mi">1</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">fs</span><span class="si">}</span><span class="s1">S&#39;</span><span class="p">)</span>
+        <span class="n">timestamps</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span>
+                        <span class="n">left_index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">right_index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">fs</span>
+
+    <span class="k">def</span> <span class="nf">_get_e4_fs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the sampling rate from an Empatica E4 file.&quot;&quot;&quot;</span>
+        <span class="n">contents</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">header</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">nrows</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">usecols</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">fs</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">fs</span>
+
+    <span class="k">def</span> <span class="nf">_get_e4_start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the Unix-formatted start time of an Empatica E4 recording.&quot;&quot;&quot;</span>
+        <span class="n">contents</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">header</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">nrows</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">usecols</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="ow">is</span> <span class="n">ZipExtFile</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;IBI&#39;</span> <span class="ow">in</span> <span class="n">file</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;IBI.csv&#39;</span><span class="p">):</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">start</span></div>
+
+<span class="c1"># ======================== Other Data Pre-Processing =========================</span>
+<div class="viewcode-block" id="get_duration"><a class="viewcode-back" href="../../api.html#heartview.heartview.get_duration">[docs]</a><span class="k">def</span> <span class="nf">get_duration</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;sec&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the duration of a signal.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
+<span class="sd">    data : array_like</span>
+<span class="sd">        An array or DataFrame containing the signal.</span>
 <span class="sd">    fs : int</span>
-<span class="sd">        The sampling rate of the recording.</span>
-<span class="sd">    seg_size : int</span>
-<span class="sd">        The window size of each segment, in seconds (e.g., 60).</span>
-<span class="sd">    filters : list, None</span>
-<span class="sd">        A list of ECG filters (i.e., &#39;powerline-interference&#39;</span>
-<span class="sd">        and/or &#39;baseline-wander&#39;)</span>
-<span class="sd">    headers : dict</span>
-<span class="sd">        A dictionary mapping data variables to headers in the</span>
-<span class="sd">        uploaded CSV file.</span>
+<span class="sd">        The sampling rate of the data.</span>
+<span class="sd">    unit : str</span>
+<span class="sd">        The unit in which the duration should be calculated; by default,</span>
+<span class="sd">        in seconds (`sec`).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dur : float</span>
+<span class="sd">        The duration of the signal.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="c1"># Save user configuration</span>
-    <span class="n">configs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;device&quot;</span><span class="p">:</span> <span class="n">device</span><span class="p">,</span>
-               <span class="s2">&quot;sampling rate&quot;</span><span class="p">:</span> <span class="n">fs</span><span class="p">,</span>
-               <span class="s2">&quot;segment size&quot;</span><span class="p">:</span> <span class="n">seg_size</span><span class="p">,</span>
-               <span class="s2">&quot;filters&quot;</span><span class="p">:</span> <span class="n">filters</span><span class="p">,</span>
-               <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="n">headers</span><span class="p">}</span>
-
-    <span class="c1"># Serialize JSON</span>
-    <span class="n">json_object</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">configs</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">json_object</span>
-
-<span class="k">def</span> <span class="nf">_load_config</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a JSON configuration file into a dictionary.&quot;&quot;&quot;</span>
-    <span class="n">cfg</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-    <span class="n">configs</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">configs</span>
-
-<span class="k">def</span> <span class="nf">_export_sqa</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">data_type</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Export the SQA summary data in Zip or Excel format.&quot;&quot;&quot;</span>
-    <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;./temp/sqa_metrics.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;./temp/peaks_by_segment.csv&#39;</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s1">&#39;E4&#39;</span><span class="p">:</span>
-        <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_BVP.csv&#39;</span><span class="p">)</span>
-        <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_ACC.csv&#39;</span><span class="p">)</span>
-        <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_IBI.csv&#39;</span><span class="p">)</span>
+    <span class="n">dur</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">/</span> <span class="n">fs</span>
+    <span class="k">if</span> <span class="n">unit</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;sec&#39;</span><span class="p">,</span> <span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="s1">&#39;min&#39;</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="s1">&#39;hour&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The `unit` parameter must take </span><span class="se">\&#39;</span><span class="s1">sec</span><span class="se">\&#39;</span><span class="s1">, </span><span class="se">\&#39;</span><span class="s1">min</span><span class="se">\&#39;</span><span class="s1">, &#39;</span>
+                         <span class="s1">&#39;or </span><span class="se">\&#39;</span><span class="s1">hour</span><span class="se">\&#39;</span><span class="s1">.&#39;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s1">&#39;Actiwave&#39;</span><span class="p">:</span>
-            <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_ECG.csv&#39;</span><span class="p">)</span>
-            <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_ACC.csv&#39;</span><span class="p">)</span>
-            <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_IBI.csv&#39;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_ECG.csv&#39;</span><span class="p">)</span>
-            <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_IBI.csv&#39;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_ACC.csv&#39;</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="s1">&#39;./temp&#39;</span><span class="p">):</span>
-                <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./temp/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_ACC.csv&#39;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;./downloads/&#39;</span><span class="p">):</span>
-        <span class="n">makedirs</span><span class="p">(</span><span class="s1">&#39;./downloads&#39;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">pass</span>
-    <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;zip&#39;</span><span class="p">:</span>
-        <span class="k">with</span> <span class="n">ZipFile</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./downloads/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_sqa_summary.zip&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">archive</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">csv</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
-                <span class="n">archive</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">csv</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;excel&#39;</span><span class="p">:</span>
-        <span class="k">with</span> <span class="n">pd</span><span class="o">.</span><span class="n">ExcelWriter</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;./downloads/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">_sqa_summary.xlsx&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">xlsx</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">csv</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
-                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">csv</span><span class="p">)</span>
-                <span class="n">fname</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">csv</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span>
-                <span class="n">df</span><span class="o">.</span><span class="n">to_excel</span><span class="p">(</span><span class="n">xlsx</span><span class="p">,</span> <span class="n">sheet_name</span> <span class="o">=</span> <span class="n">fname</span><span class="p">,</span> <span class="n">index</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="k">return</span> <span class="kc">None</span>
-
-<span class="k">def</span> <span class="nf">_get_csv_headers</span><span class="p">(</span><span class="n">csv</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the headers of a user-uploaded CSV file in a list.&quot;&quot;&quot;</span>
-    <span class="n">initial</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">csv</span><span class="p">,</span> <span class="n">nrows</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">headers</span> <span class="o">=</span> <span class="n">initial</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">headers</span>
+        <span class="k">if</span> <span class="n">unit</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;min&#39;</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">round</span><span class="p">((</span><span class="n">dur</span> <span class="o">/</span> <span class="mi">60</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unit</span> <span class="o">==</span> <span class="p">(</span><span class="s1">&#39;hour&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">round</span><span class="p">(((</span><span class="n">dur</span> <span class="o">/</span> <span class="mi">60</span><span class="p">)</span> <span class="o">/</span> <span class="mi">60</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">dur</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="segment_data"><a class="viewcode-back" href="../../api.html#heartview.heartview.segment_data">[docs]</a><span class="k">def</span> <span class="nf">segment_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Segment data into specific window sizes.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Segment data into specific window sizes.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    data : pd.DataFrame</span>
-<span class="sd">        The data frame containing the data to be segmented.</span>
+<span class="sd">        The DataFrame containing the data to be segmented.</span>
 <span class="sd">    fs : int</span>
-<span class="sd">        The sampling rate.</span>
+<span class="sd">        The sampling rate of the data.</span>
 <span class="sd">    seg_size : int</span>
 <span class="sd">        The window size, in seconds, into which the data should be</span>
 <span class="sd">        segmented.</span>
@@ -181,7 +679,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    df : pd.DataFrame</span>
-<span class="sd">        The original data frame with data segmented with labels in a</span>
+<span class="sd">        The original DataFrame with data segmented with labels in a</span>
 <span class="sd">        &#39;Segment&#39; column.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -190,64 +688,305 @@
     <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">seg_size</span> <span class="o">*</span> <span class="n">fs</span><span class="p">)):</span>
         <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">:(</span><span class="n">n</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">seg_size</span> <span class="o">*</span> <span class="n">fs</span><span class="p">)),</span> <span class="s1">&#39;Segment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">segment</span>
         <span class="n">segment</span> <span class="o">+=</span> <span class="mi">1</span>
-
     <span class="k">return</span> <span class="n">df</span></div>
 
+<div class="viewcode-block" id="compute_ibis"><a class="viewcode-back" href="../../api.html#heartview.heartview.compute_ibis">[docs]</a><span class="k">def</span> <span class="nf">compute_ibis</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">beats_ix</span><span class="p">,</span> <span class="n">ts_col</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute interbeat intervals from beat locations in electrocardiograph</span>
+<span class="sd">     (ECG) or photoplethysmograph (PPG) data.</span>
 
-<span class="k">def</span> <span class="nf">_blank_fig</span><span class="p">(</span><span class="n">context</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Display the default blank figure.&quot;&quot;&quot;</span>
-    <span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">y</span> <span class="o">=</span> <span class="p">[]))</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">template</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                      <span class="n">paper_bgcolor</span> <span class="o">=</span> <span class="s1">&#39;rgba(0, 0, 0, 0)&#39;</span><span class="p">,</span>
-                      <span class="n">plot_bgcolor</span> <span class="o">=</span> <span class="s1">&#39;rgba(0, 0, 0, 0)&#39;</span><span class="p">)</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">showgrid</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-                     <span class="n">showticklabels</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-                     <span class="n">zeroline</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">showgrid</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-                     <span class="n">showticklabels</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-                     <span class="n">zeroline</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">context</span> <span class="o">==</span> <span class="s1">&#39;pending&#39;</span><span class="p">:</span>
-        <span class="n">fig</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">(</span><span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&lt;i&gt;Input participant data to view...&lt;/i&gt;&#39;</span><span class="p">,</span>
-                           <span class="n">xref</span> <span class="o">=</span> <span class="s1">&#39;paper&#39;</span><span class="p">,</span> <span class="n">yref</span> <span class="o">=</span> <span class="s1">&#39;paper&#39;</span><span class="p">,</span>
-                           <span class="n">font</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">family</span> <span class="o">=</span> <span class="s1">&#39;Poppins&#39;</span><span class="p">,</span>
-                                       <span class="n">size</span> <span class="o">=</span> <span class="mi">14</span><span class="p">,</span>
-                                       <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#3a4952&#39;</span><span class="p">),</span>
-                           <span class="n">x</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">showarrow</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">context</span> <span class="o">==</span> <span class="s1">&#39;none&#39;</span><span class="p">:</span>
-        <span class="n">fig</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">(</span><span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&lt;i&gt;No data to view.&lt;/i&gt;&#39;</span><span class="p">,</span>
-                           <span class="n">xref</span> <span class="o">=</span> <span class="s1">&#39;paper&#39;</span><span class="p">,</span> <span class="n">yref</span> <span class="o">=</span> <span class="s1">&#39;paper&#39;</span><span class="p">,</span>
-                           <span class="n">font</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">family</span> <span class="o">=</span> <span class="s1">&#39;Poppins&#39;</span><span class="p">,</span>
-                                       <span class="n">size</span> <span class="o">=</span> <span class="mi">14</span><span class="p">,</span>
-                                       <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#3a4952&#39;</span><span class="p">),</span>
-                           <span class="n">x</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">showarrow</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">fig</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : pd.DataFrame</span>
+<span class="sd">        The DataFrame containing the pre-processed ECG/PPG data.</span>
+<span class="sd">    fs : int</span>
+<span class="sd">        The sampling rate of the ECG/PPG data.</span>
+<span class="sd">    beats_ix : array_like</span>
+<span class="sd">        An array of indices corresponding to beat occurrences.</span>
+<span class="sd">    ts_col : str</span>
+<span class="sd">        The name of the column in `data` containing timestamp values; by</span>
+<span class="sd">        default, None.</span>
 
-<span class="k">def</span> <span class="nf">_blank_table</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Display the default blank table.&quot;&quot;&quot;</span>
-    <span class="n">summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
-        <span class="s1">&#39;Signal Quality Metrics&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Segments with Missing Beats&#39;</span><span class="p">,</span>
-                       <span class="s1">&#39;Segments with Invalid Beats&#39;</span><span class="p">,</span>
-                       <span class="s1">&#39;Average Missing Beats/Segment&#39;</span><span class="p">,</span>
-                       <span class="s1">&#39;File Duration&#39;</span><span class="p">],</span>
-        <span class="s1">&#39;&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;N/A&#39;</span><span class="p">,</span> <span class="s1">&#39;N/A&#39;</span><span class="p">,</span> <span class="s1">&#39;N/A&#39;</span><span class="p">,</span> <span class="s1">&#39;N/A&#39;</span><span class="p">]})</span>
-    <span class="n">summary</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;Signal Quality Metrics&#39;</span><span class="p">,</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">dbc</span><span class="o">.</span><span class="n">Table</span><span class="o">.</span><span class="n">from_dataframe</span><span class="p">(</span>
-        <span class="n">summary</span><span class="p">,</span>
-        <span class="n">index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">className</span> <span class="o">=</span> <span class="s1">&#39;segmentTable&#39;</span><span class="p">,</span>
-        <span class="n">striped</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">hover</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">bordered</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ibi : pd.DataFrame</span>
+<span class="sd">        A DataFrame containing timestamps and IBI values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">df</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">ibis</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">beats_ix</span><span class="p">)</span> <span class="o">/</span> <span class="n">fs</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+    <span class="k">if</span> <span class="n">ts_col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ibi</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="n">ts_col</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ibi</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;Sample&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span><span class="p">})</span>
+    <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">ix</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">beats_ix</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+        <span class="n">ibi</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ix</span><span class="p">,</span> <span class="s1">&#39;IBI&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ibis</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">ibi</span></div>
+
+<div class="viewcode-block" id="plot_cardio_signals"><a class="viewcode-back" href="../../api.html#heartview.heartview.plot_cardio_signals">[docs]</a><span class="k">def</span> <span class="nf">plot_cardio_signals</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">ibi</span><span class="p">,</span> <span class="n">signal_type</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span>
+                        <span class="n">y</span> <span class="o">=</span> <span class="s1">&#39;Filtered&#39;</span><span class="p">,</span> <span class="n">acc</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">seg_num</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                        <span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create subplots of the electrocardiograph (ECG) or photoplethysmograph</span>
+<span class="sd">    (PPG), interbeat interval (IBI), and acceleration data (if any).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    signal : pandas.DataFrame</span>
+<span class="sd">        A DataFrame containing the pre-processed ECG or PPG data with beat</span>
+<span class="sd">        and artifact occurrences in a &quot;Beat&quot; and &quot;Artifact&quot; column.</span>
+<span class="sd">    fs : int</span>
+<span class="sd">        The sampling rate of the ECG or PPG data.</span>
+<span class="sd">    ibi : pandas.DataFrame</span>
+<span class="sd">        A DataFrame containing IBI values in an &quot;IBI&quot; column.</span>
+<span class="sd">    signal_type : str</span>
+<span class="sd">        The type of cardiovascular data being plotted. This must be either</span>
+<span class="sd">        &#39;ECG&#39; or &#39;PPG&#39;.</span>
+<span class="sd">    x : str, optional</span>
+<span class="sd">        The name of the column of values in the `signal` DataFrame to plot</span>
+<span class="sd">        along the x-axis; by default, &#39;Timestamp&#39;.</span>
+<span class="sd">    y : str, optional</span>
+<span class="sd">        The column name of values to plot along the y-axis; by default,</span>
+<span class="sd">        &#39;Filtered&#39;.</span>
+<span class="sd">    acc : pandas.DataFrame, optional</span>
+<span class="sd">        A DataFrame containing pre-processed acceleration data with</span>
+<span class="sd">        magnitude values in a &quot;Magnitude&quot; column.</span>
+<span class="sd">    seg_num : int</span>
+<span class="sd">        The segment to plot.</span>
+<span class="sd">    seg_size : int</span>
+<span class="sd">        The size of the segment, in seconds; by default, 60.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    fig : plotly.graph_objects.Figure</span>
+<span class="sd">        A figure containing subplots of ECG or PPG data with beat annotations</span>
+<span class="sd">        and its corresponding IBI data.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    heartview.compute_ibis : Compute IBIs in a DataFrame time-aligned to its</span>
+<span class="sd">    corresponding cardiovascular data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">seg_start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">seg_num</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">seg_size</span> <span class="o">*</span> <span class="n">fs</span><span class="p">)</span>
+    <span class="n">seg_end</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">seg_start</span> <span class="o">+</span> <span class="p">(</span><span class="n">fs</span> <span class="o">*</span> <span class="n">seg_size</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="p">[</span><span class="n">signal</span><span class="p">,</span> <span class="n">ibi</span><span class="p">]:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
+    <span class="n">signal_segment</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">seg_start</span><span class="p">:</span><span class="n">seg_end</span><span class="p">]</span>
+    <span class="n">ibi_segment</span> <span class="o">=</span> <span class="n">ibi</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">seg_start</span><span class="p">:</span><span class="n">seg_end</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+
+    <span class="n">x_array</span> <span class="o">=</span> <span class="n">signal_segment</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">signal_type</span> <span class="o">==</span> <span class="s1">&#39;PPG&#39;</span><span class="p">:</span>
+        <span class="n">y_axis</span> <span class="o">=</span> <span class="s1">&#39;bvp&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">y_axis</span> <span class="o">=</span> <span class="s1">&#39;mV&#39;</span>
+
+    <span class="k">if</span> <span class="n">acc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">make_subplots</span><span class="p">(</span><span class="n">rows</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                            <span class="n">shared_xaxes</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                            <span class="n">vertical_spacing</span> <span class="o">=</span> <span class="mf">0.02</span><span class="p">,</span>
+                            <span class="n">row_heights</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.50</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
+
+        <span class="c1"># ACC subplot</span>
+        <span class="n">acc</span> <span class="o">=</span> <span class="n">scipy_resample</span><span class="p">(</span><span class="n">acc</span><span class="p">[</span><span class="s1">&#39;Magnitude&#39;</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">signal</span><span class="p">))</span>
+        <span class="n">acc_segment</span> <span class="o">=</span> <span class="n">acc</span><span class="p">[</span><span class="n">seg_start</span><span class="p">:</span><span class="n">seg_end</span><span class="p">]</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">x_array</span><span class="p">,</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">acc_segment</span><span class="p">,</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;ACC&#39;</span><span class="p">,</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;forestgreen&#39;</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mf">1.5</span><span class="p">),</span>
+                <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;ACC&lt;/b&gt;: %</span><span class="si">{y:.2f}</span><span class="s1"> m/s² &lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">),</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span>
+            <span class="n">title_text</span> <span class="o">=</span> <span class="s1">&#39;m/s²&#39;</span><span class="p">,</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">showgrid</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="n">gridwidth</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">gridcolor</span> <span class="o">=</span> <span class="s1">&#39;lightgrey&#39;</span><span class="p">,</span>
+            <span class="n">griddash</span> <span class="o">=</span> <span class="s1">&#39;dot&#39;</span><span class="p">,</span>
+            <span class="n">tickcolor</span> <span class="o">=</span> <span class="s1">&#39;grey&#39;</span><span class="p">,</span>
+            <span class="n">linecolor</span> <span class="o">=</span> <span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+
+        <span class="c1"># ECG/PPG subplot</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">x_array</span><span class="p">,</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">signal_segment</span><span class="p">[</span><span class="n">y</span><span class="p">],</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">signal_type</span><span class="p">,</span>
+                <span class="n">showlegend</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#3562bd&#39;</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mf">1.5</span><span class="p">),</span>
+                <span class="n">hovertemplate</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&lt;b&gt;</span><span class="si">{</span><span class="n">signal_type</span><span class="si">}</span><span class="s1">:&lt;/b&gt; %</span><span class="se">{{</span><span class="s1">y:.2f</span><span class="se">}}</span><span class="s1"> </span><span class="si">{</span><span class="n">y_axis</span><span class="si">}</span><span class="s1"> &#39;</span>
+                                <span class="sa">f</span><span class="s1">&#39;&lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">),</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span>
+            <span class="n">title_text</span> <span class="o">=</span> <span class="n">y_axis</span><span class="p">,</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">showgrid</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="n">gridwidth</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">gridcolor</span> <span class="o">=</span> <span class="s1">&#39;lightgrey&#39;</span><span class="p">,</span>
+            <span class="n">griddash</span> <span class="o">=</span> <span class="s1">&#39;dot&#39;</span><span class="p">,</span>
+            <span class="n">tickcolor</span> <span class="o">=</span> <span class="s1">&#39;grey&#39;</span><span class="p">,</span>
+            <span class="n">linecolor</span> <span class="o">=</span> <span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+
+        <span class="c1"># IBI subplot</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">ibi_segment</span><span class="p">[</span><span class="n">x</span><span class="p">],</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">ibi_segment</span><span class="p">[</span><span class="s1">&#39;IBI&#39;</span><span class="p">],</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;IBI&#39;</span><span class="p">,</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#eb4034&#39;</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mf">1.5</span><span class="p">),</span>
+                <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;IBI&lt;/b&gt;: %</span><span class="si">{y:.2f}</span><span class="s1"> ms &lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">),</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span>
+            <span class="n">title_text</span> <span class="o">=</span> <span class="s1">&#39;ms&#39;</span><span class="p">,</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">title_standoff</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">showgrid</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="n">gridwidth</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">gridcolor</span> <span class="o">=</span> <span class="s1">&#39;lightgrey&#39;</span><span class="p">,</span>
+            <span class="n">griddash</span> <span class="o">=</span> <span class="s1">&#39;dot&#39;</span><span class="p">,</span>
+            <span class="n">tickcolor</span> <span class="o">=</span> <span class="s1">&#39;grey&#39;</span><span class="p">,</span>
+            <span class="n">linecolor</span> <span class="o">=</span> <span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Detected beats</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">signal_segment</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">signal_segment</span><span class="o">.</span><span class="n">Beat</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">],</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">signal_segment</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">signal_segment</span><span class="o">.</span><span class="n">Beat</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="p">],</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Detected Beat&#39;</span><span class="p">,</span>
+                <span class="n">showlegend</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;markers&#39;</span><span class="p">,</span>
+                <span class="n">marker</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#f9c669&#39;</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">6</span><span class="p">),</span>
+                <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;Beat&lt;/b&gt;: %{x|%H:%M:%S.</span><span class="si">%3f</span><span class="s1">} &#39;</span>
+                                <span class="s1">&#39;&lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">),</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Artifactual beats</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">signal_segment</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">signal_segment</span><span class="o">.</span><span class="n">Artifact</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">],</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">signal_segment</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">signal_segment</span><span class="o">.</span><span class="n">Artifact</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="p">],</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Artifact&#39;</span><span class="p">,</span>
+                <span class="n">showlegend</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;markers&#39;</span><span class="p">,</span>
+                <span class="n">marker</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span><span class="p">),</span>
+                <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;Artifact&lt;/b&gt;: %{x|%H:%M:%S.</span><span class="si">%3f</span><span class="s1">} &#39;</span>
+                                <span class="s1">&#39;&lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">),</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">make_subplots</span><span class="p">(</span><span class="n">rows</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                            <span class="n">shared_xaxes</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                            <span class="n">vertical_spacing</span> <span class="o">=</span> <span class="mf">0.02</span><span class="p">,</span>
+                            <span class="n">row_heights</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">])</span>
+
+        <span class="c1"># ECG/PPG subplot</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">x_array</span><span class="p">,</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">signal_segment</span><span class="p">[</span><span class="n">y</span><span class="p">],</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">signal_type</span><span class="p">,</span>
+                <span class="n">showlegend</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#3562bd&#39;</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mf">1.5</span><span class="p">),</span>
+                <span class="n">hovertemplate</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&lt;b&gt;</span><span class="si">{</span><span class="n">signal_type</span><span class="si">}</span><span class="s1">:&lt;/b&gt; %</span><span class="se">{{</span><span class="s1">y:.2f</span><span class="se">}}</span><span class="s1"> </span><span class="si">{</span><span class="n">y_axis</span><span class="si">}</span><span class="s1"> &#39;</span>
+                                <span class="sa">f</span><span class="s1">&#39;&lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">),</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span>
+            <span class="n">title_text</span> <span class="o">=</span> <span class="n">y_axis</span><span class="p">,</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">title_standoff</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">showgrid</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="n">gridwidth</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">gridcolor</span> <span class="o">=</span> <span class="s1">&#39;lightgrey&#39;</span><span class="p">,</span>
+            <span class="n">griddash</span> <span class="o">=</span> <span class="s1">&#39;dot&#39;</span><span class="p">,</span>
+            <span class="n">tickcolor</span> <span class="o">=</span> <span class="s1">&#39;grey&#39;</span><span class="p">,</span>
+            <span class="n">linecolor</span> <span class="o">=</span> <span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+
+        <span class="c1"># IBI subplot</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">ibi_segment</span><span class="p">[</span><span class="n">x</span><span class="p">],</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">ibi_segment</span><span class="p">[</span><span class="s1">&#39;IBI&#39;</span><span class="p">],</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;IBI&#39;</span><span class="p">,</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#eb4034&#39;</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mf">1.5</span><span class="p">),</span>
+                <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;IBI&lt;/b&gt;: %</span><span class="si">{y:.2f}</span><span class="s1"> ms &lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">),</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span>
+            <span class="n">title_text</span> <span class="o">=</span> <span class="s1">&#39;ms&#39;</span><span class="p">,</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">title_standoff</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">showgrid</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="n">gridwidth</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">gridcolor</span> <span class="o">=</span> <span class="s1">&#39;lightgrey&#39;</span><span class="p">,</span>
+            <span class="n">griddash</span> <span class="o">=</span> <span class="s1">&#39;dot&#39;</span><span class="p">,</span>
+            <span class="n">tickcolor</span> <span class="o">=</span> <span class="s1">&#39;grey&#39;</span><span class="p">,</span>
+            <span class="n">linecolor</span> <span class="o">=</span> <span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Detected beats</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">signal_segment</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">signal_segment</span><span class="o">.</span><span class="n">Beat</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">],</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">signal_segment</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">signal_segment</span><span class="o">.</span><span class="n">Beat</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="p">],</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Detected Beat&#39;</span><span class="p">,</span>
+                <span class="n">showlegend</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;markers&#39;</span><span class="p">,</span>
+                <span class="n">marker</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;#f9c669&#39;</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="mi">6</span><span class="p">),</span>
+                <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;Beat&lt;/b&gt;: %{x|%H:%M:%S.</span><span class="si">%3f</span><span class="s1">} &#39;</span>
+                                <span class="s1">&#39;&lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">),</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Artifactual beats</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">signal_segment</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">signal_segment</span><span class="o">.</span><span class="n">Artifact</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">],</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">signal_segment</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">signal_segment</span><span class="o">.</span><span class="n">Artifact</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="p">],</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Artifact&#39;</span><span class="p">,</span>
+                <span class="n">showlegend</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;markers&#39;</span><span class="p">,</span>
+                <span class="n">marker</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span><span class="p">),</span>
+                <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s1">&#39;&lt;b&gt;Artifact&lt;/b&gt;: %{x|%H:%M:%S.</span><span class="si">%3f</span><span class="s1">} &#39;</span>
+                                <span class="s1">&#39;&lt;extra&gt;&lt;/extra&gt;&#39;</span><span class="p">),</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Format shared x-axis</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span>
+        <span class="n">tickfont</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="mi">14</span><span class="p">),</span>
+        <span class="n">tickcolor</span> <span class="o">=</span> <span class="s1">&#39;grey&#39;</span><span class="p">,</span>
+        <span class="n">linecolor</span> <span class="o">=</span> <span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Format figure</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="mi">450</span><span class="p">,</span>
+        <span class="n">title_text</span> <span class="o">=</span> <span class="n">title</span><span class="p">,</span>
+        <span class="n">template</span> <span class="o">=</span> <span class="s1">&#39;simple_white&#39;</span><span class="p">,</span>
+        <span class="n">font</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">family</span> <span class="o">=</span> <span class="s1">&#39;Poppins&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;black&#39;</span><span class="p">),</span>
+        <span class="n">legend</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">font</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="mi">16</span><span class="p">),</span>
+            <span class="n">orientation</span> <span class="o">=</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span>
+            <span class="n">yanchor</span> <span class="o">=</span> <span class="s1">&#39;bottom&#39;</span><span class="p">,</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="mf">1.05</span><span class="p">,</span>
+            <span class="n">xanchor</span> <span class="o">=</span> <span class="s1">&#39;right&#39;</span><span class="p">,</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">),</span>
+        <span class="n">annotations</span> <span class="o">=</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">capitalize</span><span class="p">(),</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.22</span><span class="p">,</span>
+            <span class="n">showarrow</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="n">xref</span> <span class="o">=</span> <span class="s1">&#39;paper&#39;</span><span class="p">,</span>
+            <span class="n">yref</span> <span class="o">=</span> <span class="s1">&#39;paper&#39;</span><span class="p">,</span>
+            <span class="n">font</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">size</span> <span class="o">=</span> <span class="mi">16</span><span class="p">)</span>
+        <span class="p">)],</span>
+        <span class="n">margin</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">l</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mi">70</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">fig</span></div>
 
 <div class="viewcode-block" id="plot_signal"><a class="viewcode-back" href="../../api.html#heartview.heartview.plot_signal">[docs]</a><span class="k">def</span> <span class="nf">plot_signal</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">seg_size</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span> <span class="n">segment</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_segments</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
                 <span class="n">signal_type</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">peaks</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize a signal.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Visualize a signal.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    df : pandas.DataFrame</span>
-<span class="sd">        The data frame containing the signal data.</span>
+<span class="sd">        The DataFrame containing the signal data.</span>
 <span class="sd">    x : str</span>
 <span class="sd">        The column containing the x-axis value (e.g., `&#39;Time&#39;`).</span>
 <span class="sd">    y : str, list</span>
@@ -373,12 +1112,13 @@
         <span class="k">return</span> <span class="n">fig</span></div>
 
 <div class="viewcode-block" id="plot_ibi_from_ecg"><a class="viewcode-back" href="../../api.html#heartview.heartview.plot_ibi_from_ecg">[docs]</a><span class="k">def</span> <span class="nf">plot_ibi_from_ecg</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">segment</span><span class="p">,</span> <span class="n">n_segments</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize an IBI series generated from ECG data.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Visualize an IBI series generated from ECG data.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    df : pd.DataFrame</span>
-<span class="sd">        The data frame containing the signal data.</span>
+<span class="sd">        The DataFrame containing the signal data.</span>
 <span class="sd">    x : str</span>
 <span class="sd">        The column containing the x-axis value (e.g., `&#39;Time&#39;`).</span>
 <span class="sd">    y : str</span>

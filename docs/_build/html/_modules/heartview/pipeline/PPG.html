@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>heartview.pipeline.PPG &#8212; HeartView 1.0 documentation</title>
+    <title>heartview.pipeline.PPG &#8212; HeartView 2.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/agogo.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
@@ -24,7 +24,7 @@
             <img class="logo" src="../../../_static/heartview-logo.png" alt="Logo"/>
           </a></p>
         <div class="headertitle"><a
-          href="../../../index.html">HeartView 1.0 documentation</a></div>
+          href="../../../index.html">HeartView 2.0 documentation</a></div>
         <div class="rel" role="navigation" aria-label="related navigation">
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |
@@ -43,209 +43,314 @@
           <div class="body" role="main">
             
   <h1>Source code for heartview.pipeline.PPG</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">datetime</span> <span class="k">as</span> <span class="nn">dt</span>
-<span class="kn">from</span> <span class="nn">zipfile</span> <span class="kn">import</span> <span class="n">ZipFile</span><span class="p">,</span> <span class="n">ZipExtFile</span>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="kn">import</span> <span class="n">butter</span><span class="p">,</span> <span class="n">cheby2</span><span class="p">,</span> <span class="n">filtfilt</span><span class="p">,</span> <span class="n">find_peaks</span>
+<span class="kn">from</span> <span class="nn">scipy.ndimage</span> <span class="kn">import</span> <span class="n">uniform_filter1d</span>
 
-<div class="viewcode-block" id="get_fs"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.PPG.get_fs">[docs]</a><span class="k">def</span> <span class="nf">get_fs</span><span class="p">(</span><span class="n">file</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the sampling rate from an Empatica E4 file.</span>
+<span class="c1"># ============================== PPG Filters =================================</span>
+<div class="viewcode-block" id="Filters"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.PPG.Filters">[docs]</a><span class="k">class</span> <span class="nc">Filters</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class for filtering raw photoplethysmography (PPG) data.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    file : str</span>
-<span class="sd">        The path of the Empatica E4 file.</span>
+<span class="sd">    Parameters/Attributes</span>
+<span class="sd">    ---------------------</span>
+<span class="sd">    fs : int</span>
+<span class="sd">        The sampling rate of the PPG signal.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the Filters object.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    fs : int, float</span>
-<span class="sd">        The sampling rate of the Empatica E4 recording.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fs : int</span>
+<span class="sd">            The sampling rate of the PPG signal.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+
+<div class="viewcode-block" id="Filters.baseline_wander"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.PPG.Filters.baseline_wander">[docs]</a>    <span class="k">def</span> <span class="nf">baseline_wander</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signal</span><span class="p">,</span> <span class="n">cutoff</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">order</span> <span class="o">=</span> <span class="mi">2</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply a high-pass filter to remove baseline wander from PPG data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        signal : array_like</span>
+<span class="sd">            An array containing the input PPG signal to be filtered.</span>
+<span class="sd">        cutoff : float</span>
+<span class="sd">            The cut-off frequency at which frequencies below this value</span>
+<span class="sd">            in the PPG signal are attenuated; by default, 0.5 Hz.</span>
+<span class="sd">        order : int</span>
+<span class="sd">            The filter order, i.e., the number of samples required to</span>
+<span class="sd">            produce the desired filtered output; by default, 2.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nyquist</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+        <span class="n">highcut</span> <span class="o">=</span> <span class="n">cutoff</span> <span class="o">/</span> <span class="n">nyquist</span>
+        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">butter</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">highcut</span><span class="p">,</span> <span class="n">btype</span> <span class="o">=</span> <span class="s1">&#39;high&#39;</span><span class="p">,</span> <span class="n">analog</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="n">filtfilt</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">signal</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">filtered</span></div>
+
+<div class="viewcode-block" id="Filters.moving_average"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.PPG.Filters.moving_average">[docs]</a>    <span class="k">def</span> <span class="nf">moving_average</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signal</span><span class="p">,</span> <span class="n">window_len</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Smooth a PPG signal using a moving average filter.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        signal : array_like</span>
+<span class="sd">            An array containing the input PPG signal to be filtered.</span>
+<span class="sd">        window_len : int</span>
+<span class="sd">            The size of the moving average window.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        filtered : array_like</span>
+<span class="sd">            An array containing the filtered PPG signal.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">window_len</span><span class="p">)</span> <span class="o">/</span> <span class="n">window_len</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;same&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">filtered</span></div>
+
+<div class="viewcode-block" id="Filters.filter_signal"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.PPG.Filters.filter_signal">[docs]</a>    <span class="k">def</span> <span class="nf">filter_signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signal</span><span class="p">,</span> <span class="n">lowcut</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">highcut</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">order</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Filter out baseline drift, motion artifact, and powerline</span>
+<span class="sd">        interference from PPG data and smooth out the signal for further</span>
+<span class="sd">        processing. This function uses a 4th-order Chebyshev Type II filter</span>
+<span class="sd">        according to results of the study by Liang et al. (2018) and a moving</span>
+<span class="sd">        average filter using convolution.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        signal : array_like</span>
+<span class="sd">            An array containing the input PPG signal to be filtered.</span>
+<span class="sd">        lowcut : int, float</span>
+<span class="sd">            The cut-off frequency at which frequencies below this value in the</span>
+<span class="sd">            signal are attenuated; by default, 0.5 Hz.</span>
+<span class="sd">        highcut : int, float</span>
+<span class="sd">            The cut-off frequency at which frequencies above this value in the</span>
+<span class="sd">            signal are attenuated; by default, 10 Hz.</span>
+<span class="sd">        order : int</span>
+<span class="sd">            The filter order, i.e., the number of samples required to</span>
+<span class="sd">            produce the desired filtered output; by default, 4.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        filtered : array_like</span>
+<span class="sd">            An array containing the filtered PPG data.</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Liang, Y., Elgendi, M., Chen, Z., et al. (2018). An optimal filter for</span>
+<span class="sd">        short photoplethysmogram signals. Scientific Data, 5, 180076.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nyquist</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+        <span class="n">low</span> <span class="o">=</span> <span class="n">lowcut</span> <span class="o">/</span> <span class="n">nyquist</span>
+        <span class="n">high</span> <span class="o">=</span> <span class="n">highcut</span> <span class="o">/</span> <span class="n">nyquist</span>
+        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">cheby2</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">Wn</span> <span class="o">=</span> <span class="p">[</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">],</span> <span class="n">btype</span> <span class="o">=</span> <span class="s1">&#39;bandpass&#39;</span><span class="p">)</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="n">filtfilt</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">signal</span><span class="p">)</span>
+        <span class="n">filtered_smoothed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">moving_average</span><span class="p">(</span><span class="n">filtered</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">*</span> <span class="mf">0.25</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">filtered_smoothed</span></div></div>
+
+<span class="c1"># ======================= PPG Beat Detection Methods =========================</span>
+<div class="viewcode-block" id="BeatDetectors"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.PPG.BeatDetectors">[docs]</a><span class="k">class</span> <span class="nc">BeatDetectors</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class for detecting beats in photoplethysmography (PPG) signals using</span>
+<span class="sd">    popular algorithms.</span>
+
+<span class="sd">    Parameters/Attributes</span>
+<span class="sd">    ---------------------</span>
+<span class="sd">    fs : int</span>
+<span class="sd">        The sampling rate of the PPG signal.</span>
+<span class="sd">    preprocessed : bool, optional</span>
+<span class="sd">        Whether the input PPG data is pre-processed or not; by default,</span>
+<span class="sd">        `True`. If `False`, the beat detection methods will pre-process the</span>
+<span class="sd">        input data according to the original algorithms.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Both unfiltered and filtered PPG data may be passed as inputs to the</span>
+<span class="sd">    beat detection functions. If unfiltered data is passed, the `preprocessed`</span>
+<span class="sd">    parameter should be set to `False`, and the beat detection functions will</span>
+<span class="sd">    pre-process the signal using the algorithm&#39;s original pre-processing</span>
+<span class="sd">    procedures.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">contents</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">header</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">nrows</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">usecols</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="n">fs</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">preprocessed</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a BeatDetectors object.</span>
 
-    <span class="k">return</span> <span class="n">fs</span></div>
-
-<div class="viewcode-block" id="get_start_time"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.PPG.get_start_time">[docs]</a><span class="k">def</span> <span class="nf">get_start_time</span><span class="p">(</span><span class="n">file</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the Unix-formatted start time of an Empatica E4 recording.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    file : str</span>
-<span class="sd">        The path of the Empatica E4 file.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    start : int</span>
-<span class="sd">        The Unix timestamp of the recording start time.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">contents</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">header</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">nrows</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">usecols</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="ow">is</span> <span class="n">ZipExtFile</span><span class="p">:</span>
-        <span class="k">if</span> <span class="s1">&#39;IBI&#39;</span> <span class="ow">in</span> <span class="n">file</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
-            <span class="n">start</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fs : int</span>
+<span class="sd">            The sampling rate of the PPG signal.</span>
+<span class="sd">        preprocessed : bool, optional</span>
+<span class="sd">            Whether the PPG signal is preprocessed or not; by default, `True`.</span>
+<span class="sd">            If `False`, the beat detection methods will pre-process the</span>
+<span class="sd">            input data according to the original algorithms.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">preprocessed</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">&#39;The `preprocessed` attribute must be True or False.&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">start</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;IBI.csv&#39;</span><span class="p">):</span>
-            <span class="n">start</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">preprocessed</span> <span class="o">=</span> <span class="n">preprocessed</span>
+
+<div class="viewcode-block" id="BeatDetectors.adaptive_threshold"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.PPG.BeatDetectors.adaptive_threshold">[docs]</a>    <span class="k">def</span> <span class="nf">adaptive_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signal</span><span class="p">,</span> <span class="n">ma_perc</span> <span class="o">=</span> <span class="mi">20</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract beat locations from PPG data with the adaptive thresholding</span>
+<span class="sd">        algorithm by van Gent al. (2018).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        signal : array_like</span>
+<span class="sd">            An array containing the PPG signal.</span>
+<span class="sd">        ma_perc : float, optional</span>
+<span class="sd">            The percentage with which to raise the moving average, used for</span>
+<span class="sd">            fitting detection solutions to the data; by default, 20.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ppg_beats : array_like</span>
+<span class="sd">            An array containing indices of PPG pulse onsets.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The original source code can be found in the HeartPy package at:</span>
+<span class="sd">        https://github.com/paulvangentcom/heartrate_analysis_python.</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Van Gent, P., Farah, H., Van Nes, N., &amp; Van Arem, B. (2019). HeartPy:</span>
+<span class="sd">        A novel heart rate algorithm for the analysis of noisy signals.</span>
+<span class="sd">        Transportation Research Part F: Traffic Psychology and Behaviour,</span>
+<span class="sd">        66, 368-378.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocessed</span><span class="p">:</span>
+            <span class="n">filt</span> <span class="o">=</span> <span class="n">Filters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+            <span class="n">signal</span> <span class="o">=</span> <span class="n">filt</span><span class="o">.</span><span class="n">filter_signal</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">start</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="k">pass</span>
 
-    <span class="k">return</span> <span class="n">start</span></div>
+        <span class="n">ma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moving_average</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
+        <span class="n">rmean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ma</span><span class="p">)</span>
+        <span class="n">mn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rmean</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span> <span class="o">*</span> <span class="n">ma_perc</span>
+        <span class="n">ma</span> <span class="o">=</span> <span class="n">rmean</span> <span class="o">+</span> <span class="n">mn</span>
 
-<div class="viewcode-block" id="preprocess_e4"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.PPG.preprocess_e4">[docs]</a><span class="k">def</span> <span class="nf">preprocess_e4</span><span class="p">(</span><span class="n">e4_zip</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pre-process Empatica E4 data.</span>
+        <span class="n">peaksx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">signal</span> <span class="o">&gt;</span> <span class="n">ma</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">peaksy</span> <span class="o">=</span> <span class="n">signal</span><span class="p">[</span><span class="n">peaksx</span><span class="p">]</span>
+        <span class="n">peakedges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">]),</span>
+                                    <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">peaksx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]),</span>
+                                    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">peaksx</span><span class="p">)])))</span>
+        <span class="n">ppg_beats</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">peakedges</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">y_values</span> <span class="o">=</span> <span class="n">peaksy</span><span class="p">[</span><span class="n">peakedges</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span><span class="n">peakedges</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                <span class="n">ppg_beats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">peaksx</span><span class="p">[</span><span class="n">peakedges</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">y_values</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">y_values</span><span class="p">))])</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="k">return</span> <span class="n">ppg_beats</span></div>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    e4_zip : str</span>
-<span class="sd">        The path of the Empatica E4 archive file ending in .zip.</span>
+<div class="viewcode-block" id="BeatDetectors.erma"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.PPG.BeatDetectors.erma">[docs]</a>    <span class="k">def</span> <span class="nf">erma</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signal</span><span class="p">,</span> <span class="n">W1</span> <span class="o">=</span> <span class="mf">0.111</span><span class="p">,</span> <span class="n">W2</span> <span class="o">=</span> <span class="mf">0.667</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="mf">0.02</span><span class="p">,</span>
+             <span class="n">refractory</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract beat locations from PPG data based on the Elgendi et al.</span>
+<span class="sd">        (2013) algorithm using event-related moving averages and dynamic</span>
+<span class="sd">        thresholding.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    e4_data : dict</span>
-<span class="sd">        A dictionary containing all pre-processed BVP, HR, IBI, and</span>
-<span class="sd">        ACC data, as well as the sampling rate and start time of the</span>
-<span class="sd">        recording.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        signal : array_like</span>
+<span class="sd">            An array containing the PPG signal.</span>
+<span class="sd">        W1 : float, optional</span>
+<span class="sd">            The window size for peak detection in seconds; by default 111 ms.</span>
+<span class="sd">        W2 : float, optional</span>
+<span class="sd">            The window size for beat detection in seconds; by default, 667 ms.</span>
+<span class="sd">        offset : float, optional</span>
+<span class="sd">            Offset duration adjustment; by default, 20 ms.</span>
+<span class="sd">        refractory : float, optional</span>
+<span class="sd">            Refractory period to avoid double detection of the same beat</span>
+<span class="sd">            (i.e., the minimum delay between consecutive systolic peaks); by</span>
+<span class="sd">            default, 300 ms.</span>
 
-    <span class="k">with</span> <span class="n">ZipFile</span><span class="p">(</span><span class="n">e4_zip</span><span class="p">)</span> <span class="k">as</span> <span class="n">z</span><span class="p">:</span>
-        <span class="n">bvp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;BVP.csv&#39;</span><span class="p">),</span> <span class="n">header</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;BVP&#39;</span><span class="p">])</span>
-        <span class="n">bvp_fs</span> <span class="o">=</span> <span class="n">get_fs</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;BVP.csv&#39;</span><span class="p">))</span>
-        <span class="n">bvp_start</span> <span class="o">=</span> <span class="n">get_start_time</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;BVP.csv&#39;</span><span class="p">))</span>
-        <span class="n">hr</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;HR.csv&#39;</span><span class="p">),</span> <span class="n">header</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;HR&#39;</span><span class="p">])</span>
-        <span class="n">ibi</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;IBI.csv&#39;</span><span class="p">),</span> <span class="n">header</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-                          <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Seconds&#39;</span><span class="p">,</span> <span class="s1">&#39;IBI&#39;</span><span class="p">])</span>
-        <span class="n">ibi_start</span> <span class="o">=</span> <span class="n">get_start_time</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;IBI.csv&#39;</span><span class="p">))</span>
-        <span class="n">acc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;ACC.csv&#39;</span><span class="p">),</span> <span class="n">header</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-                          <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;Z&#39;</span><span class="p">])</span>
-        <span class="n">acc_fs</span> <span class="o">=</span> <span class="n">get_fs</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;ACC.csv&#39;</span><span class="p">))</span>
-        <span class="n">acc_start</span> <span class="o">=</span> <span class="n">get_start_time</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;ACC.csv&#39;</span><span class="p">))</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ppg_beats : array_like</span>
+<span class="sd">            An array containing indices of PPG pulse onsets.</span>
 
-    <span class="c1"># Pre-process IBI</span>
-    <span class="n">ibi</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">ibi</span><span class="p">[</span><span class="s1">&#39;Seconds&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">ibi_start</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
-        <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">t</span><span class="p">)))</span>
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Elgendi, M., Norton, I., Brearley, M., Abbott, D., &amp; Schuurmans, D.</span>
+<span class="sd">        (2013). Systolic peak detection in acceleration photoplethysmograms</span>
+<span class="sd">        measured from emergency responders in tropical conditions. PLoS ONE,</span>
+<span class="sd">        8(10), e76585.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
-    <span class="c1"># Pre-process BVP</span>
-    <span class="n">bvp_end</span> <span class="o">=</span> <span class="n">bvp_start</span> <span class="o">+</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bvp</span><span class="p">)</span> <span class="o">/</span> <span class="n">bvp_fs</span><span class="p">)</span>
-    <span class="n">bvp</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Unix&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">bvp_start</span><span class="p">,</span> <span class="n">bvp_end</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">bvp_fs</span><span class="p">))</span>
-    <span class="n">bvp</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="n">bvp</span><span class="p">[</span><span class="s1">&#39;Unix&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
-        <span class="k">lambda</span> <span class="n">unix</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">unix</span><span class="p">)))</span>
-    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ibi</span><span class="p">)):</span>
-        <span class="n">ix</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">bvp_start</span> <span class="o">+</span> <span class="n">ibi</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="s1">&#39;Seconds&#39;</span><span class="p">])</span>
-        <span class="n">bvp</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">bvp</span><span class="p">[</span><span class="s1">&#39;Unix&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">ix</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">bvp</span><span class="p">[</span><span class="s1">&#39;Unix&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">ix</span><span class="p">),</span> <span class="s1">&#39;Peak&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocessed</span><span class="p">:</span>
+            <span class="n">signal</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bandpass_filter</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">pass</span>
 
-    <span class="c1"># Pre-process ACC</span>
-    <span class="n">acc_end</span> <span class="o">=</span> <span class="n">acc_start</span> <span class="o">+</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">acc</span><span class="p">)</span> <span class="o">/</span> <span class="n">acc_fs</span><span class="p">)</span>
-    <span class="n">acc</span> <span class="o">=</span> <span class="n">acc</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="mi">64</span><span class="p">)</span> <span class="o">*</span> <span class="mf">9.81</span><span class="p">)</span>
-    <span class="n">acc</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">acc_start</span><span class="p">,</span> <span class="n">acc_end</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span> <span class="n">acc_fs</span><span class="p">)))</span>
-    <span class="n">acc</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">acc</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+        <span class="n">signal_copy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
 
-    <span class="c1"># Pre-process HR</span>
-    <span class="n">hr_end</span> <span class="o">=</span> <span class="n">bvp_start</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">hr</span><span class="p">)</span>
-    <span class="n">hr</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Unix&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">bvp_start</span><span class="p">,</span> <span class="n">hr_end</span><span class="p">))</span>
-    <span class="n">hr</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">,</span> <span class="n">hr</span><span class="p">[</span><span class="s1">&#39;Unix&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
-        <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">t</span><span class="p">)))</span>
+        <span class="c1"># Clipping and squaring</span>
+        <span class="n">squared</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">signal_copy</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
 
-    <span class="c1"># -- check for and add invalid beats</span>
-    <span class="n">hr</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">hr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;Invalid&#39;</span><span class="p">,</span> <span class="n">hr</span><span class="p">[</span><span class="s1">&#39;HR&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
-        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mi">30</span> <span class="ow">or</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">220</span> <span class="k">else</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="c1"># Calculate peak and beat detection thresholds</span>
+        <span class="n">ma_kernel_peak</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">W1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">))</span>
+        <span class="n">ma_kernel_beat</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">W2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">))</span>
+        <span class="n">filt</span> <span class="o">=</span> <span class="n">Filters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">)</span>
+        <span class="n">ma_peak</span> <span class="o">=</span> <span class="n">filt</span><span class="o">.</span><span class="n">moving_average</span><span class="p">(</span><span class="n">squared</span><span class="p">,</span> <span class="n">ma_kernel_peak</span><span class="p">)</span>
+        <span class="n">ma_beat</span> <span class="o">=</span> <span class="n">filt</span><span class="o">.</span><span class="n">moving_average</span><span class="p">(</span><span class="n">squared</span><span class="p">,</span> <span class="n">ma_kernel_beat</span><span class="p">)</span>
 
-    <span class="c1"># -- get peak locations</span>
-    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ibi</span><span class="p">)):</span>
-        <span class="n">ix</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">ibi_start</span> <span class="o">+</span> <span class="n">ibi</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="s1">&#39;Seconds&#39;</span><span class="p">])</span>
-        <span class="n">hr</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">hr</span><span class="p">[</span><span class="s1">&#39;Unix&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">ix</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">hr</span><span class="p">[</span><span class="s1">&#39;Unix&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">ix</span><span class="p">),</span> <span class="s1">&#39;Peak&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="c1"># Calculate threshold value</span>
+        <span class="n">thr1</span> <span class="o">=</span> <span class="n">ma_beat</span> <span class="o">+</span> <span class="n">offset</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">squared</span><span class="p">)</span>
 
-    <span class="n">e4_data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;bvp&#39;</span><span class="p">:</span> <span class="n">bvp</span><span class="p">,</span>
-               <span class="s1">&#39;hr&#39;</span><span class="p">:</span> <span class="n">hr</span><span class="p">,</span>
-               <span class="s1">&#39;ibi&#39;</span><span class="p">:</span> <span class="n">ibi</span><span class="p">,</span>
-               <span class="s1">&#39;acc&#39;</span><span class="p">:</span> <span class="n">acc</span><span class="p">,</span>
-               <span class="s1">&#39;fs&#39;</span><span class="p">:</span> <span class="n">bvp_fs</span><span class="p">,</span>
-               <span class="s1">&#39;start time&#39;</span><span class="p">:</span> <span class="n">bvp_start</span><span class="p">}</span>
+        <span class="c1"># Identify start and end of PPG waves</span>
+        <span class="n">waves</span> <span class="o">=</span> <span class="n">ma_peak</span> <span class="o">&gt;</span> <span class="n">thr1</span>
+        <span class="n">beg_waves</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="o">~</span><span class="n">waves</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">waves</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">end_waves</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">waves</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">~</span><span class="n">waves</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">end_waves</span> <span class="o">=</span> <span class="n">end_waves</span><span class="p">[</span><span class="n">end_waves</span> <span class="o">&gt;</span> <span class="n">beg_waves</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
 
-    <span class="k">return</span> <span class="n">e4_data</span></div>
+        <span class="c1"># Set duration criteria for peaks</span>
+        <span class="n">min_len</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">W1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">))</span>
+        <span class="n">min_delay</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">refractory</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">))</span>
 
-<div class="viewcode-block" id="get_e4_peaks"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.PPG.get_e4_peaks">[docs]</a><span class="k">def</span> <span class="nf">get_e4_peaks</span><span class="p">(</span><span class="n">ibi</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">start_time</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get HR values and peak locations from Empatica E4 IBI data.</span>
+        <span class="c1"># Identify systolic peaks within waves</span>
+        <span class="n">ppg_beats</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">beg</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">beg_waves</span><span class="p">,</span> <span class="n">end_waves</span><span class="p">):</span>
+            <span class="n">len_wave</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">beg</span>
+            <span class="c1"># If the PPG wave is wider than the minimum duration</span>
+            <span class="k">if</span> <span class="n">len_wave</span> <span class="o">&gt;=</span> <span class="n">min_len</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">signal_copy</span><span class="p">[</span><span class="n">beg</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+                <span class="n">local_max</span><span class="p">,</span> <span class="n">props</span> <span class="o">=</span> <span class="n">find_peaks</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">prominence</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">local_max</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">peak</span> <span class="o">=</span> <span class="n">beg</span> <span class="o">+</span> <span class="n">local_max</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">props</span><span class="p">[</span><span class="s1">&#39;prominences&#39;</span><span class="p">])]</span>
+                    <span class="c1"># If the IBI is greater than the refractory period</span>
+                    <span class="k">if</span> <span class="n">peak</span> <span class="o">-</span> <span class="n">ppg_beats</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">min_delay</span><span class="p">:</span>
+                        <span class="n">ppg_beats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">peak</span><span class="p">)</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    ibi : pandas.DataFrame</span>
-<span class="sd">        The DataFrame containing the pre-processed IBI data.</span>
-<span class="sd">    fs : int, float</span>
-<span class="sd">        The sampling rate of the Empatica E4 recording.</span>
-<span class="sd">    start_time : int</span>
-<span class="sd">        The Unix timestamp of the recording start time.</span>
+        <span class="n">ppg_beats</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">ppg_beats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ppg_beats</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="s1">&#39;int&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ppg_beats</span></div>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    df : pandas.DataFrame</span>
-<span class="sd">        A DataFrame containing peak occurrence and IBI and HR values</span>
-<span class="sd">        at each timepoint.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_bandpass_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signal</span><span class="p">,</span> <span class="n">lowcut</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">highcut</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span> <span class="n">order</span> <span class="o">=</span> <span class="mi">2</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A second-order bandpass filter to remove baseline wander from</span>
+<span class="sd">        a PPG signal in the pre-processing procedure of the Elgendi et al.</span>
+<span class="sd">        (2013) beat detection algorithm. All filter parameters are set as</span>
+<span class="sd">        default values according to algorithm.&quot;&quot;&quot;</span>
+        <span class="n">nyquist_freq</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span>
+        <span class="n">low</span> <span class="o">=</span> <span class="n">lowcut</span> <span class="o">/</span> <span class="n">nyquist_freq</span>
+        <span class="n">high</span> <span class="o">=</span> <span class="n">highcut</span> <span class="o">/</span> <span class="n">nyquist_freq</span>
+        <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">butter</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="p">[</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">],</span> <span class="n">btype</span> <span class="o">=</span> <span class="s1">&#39;band&#39;</span><span class="p">,</span> <span class="n">analog</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="n">filtfilt</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">signal</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">filtered</span>
 
-    <span class="n">ibi</span><span class="p">[</span><span class="s1">&#39;IBI&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ibi</span><span class="p">[</span><span class="s1">&#39;IBI&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">1000</span>
-    <span class="n">ibi</span><span class="p">[</span><span class="s1">&#39;HR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">60000</span> <span class="o">/</span> <span class="n">ibi</span><span class="p">[</span><span class="s1">&#39;IBI&#39;</span><span class="p">]</span>
-    <span class="n">end</span> <span class="o">=</span> <span class="n">start_time</span> <span class="o">+</span> <span class="n">ibi</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;Seconds&#39;</span><span class="p">]</span>
-
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
-    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Unix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="n">fs</span><span class="p">)</span>
-    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Unix&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
-    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Second&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span> <span class="o">//</span> <span class="n">fs</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Peak&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-
-    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ibi</span><span class="p">)):</span>
-        <span class="n">unix</span> <span class="o">=</span> <span class="n">start_time</span> <span class="o">+</span> <span class="n">ibi</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="s1">&#39;Seconds&#39;</span><span class="p">]</span>
-        <span class="n">IBI</span> <span class="o">=</span> <span class="n">ibi</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="s1">&#39;IBI&#39;</span><span class="p">]</span>
-        <span class="n">HR</span> <span class="o">=</span> <span class="n">ibi</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="s1">&#39;HR&#39;</span><span class="p">]</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Unix&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">unix</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Unix&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">unix</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="n">fs</span><span class="p">)),</span> <span class="s1">&#39;Peak&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Unix&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">unix</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Unix&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">unix</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="n">fs</span><span class="p">)),</span> <span class="s1">&#39;IBI&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">IBI</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Unix&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">unix</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Unix&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">unix</span> <span class="o">+</span> <span class="mi">1</span><span class="o">/</span><span class="n">fs</span><span class="p">)),</span> <span class="s1">&#39;HR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">HR</span>
-
-    <span class="k">return</span> <span class="n">df</span></div>
-
-<div class="viewcode-block" id="get_e4_interval_data"><a class="viewcode-back" href="../../../api.html#heartview.pipeline.PPG.get_e4_interval_data">[docs]</a><span class="k">def</span> <span class="nf">get_e4_interval_data</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">seg_size</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get second-by-second HR values from Empatica E4 IBI data.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    df : pandas.DataFrame</span>
-<span class="sd">        The DataFrame output from `get_e4_peaks`.</span>
-<span class="sd">    seg_size : int</span>
-<span class="sd">        The window size of each segment.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    interval_data : pandas.DataFrame</span>
-<span class="sd">        A DataFrame containing second-by-second HR and IBI values and</span>
-<span class="sd">        peak counts.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">interval_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Second&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
-        <span class="n">subset</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Second&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">s</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
-        <span class="n">ts</span> <span class="o">=</span> <span class="n">subset</span><span class="p">[</span><span class="s1">&#39;Timestamp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">n_peaks</span> <span class="o">=</span> <span class="n">subset</span><span class="p">[</span><span class="s1">&#39;Peak&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-        <span class="n">ibis</span> <span class="o">=</span> <span class="n">subset</span><span class="p">[</span><span class="s1">&#39;IBI&#39;</span><span class="p">]</span>
-        <span class="n">r_hr</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">subset</span><span class="p">[</span><span class="s1">&#39;HR&#39;</span><span class="p">]</span>
-        <span class="n">mean_ibi</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">ibis</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="s1">&#39;float64&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-        <span class="n">mean_hr</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">r_hr</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="s1">&#39;float64&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">subset</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s1">&#39;Mean IBI&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mean_ibi</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">subset</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s1">&#39;Mean HR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mean_hr</span>
-
-        <span class="n">interval_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">interval_data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">([{</span>
-            <span class="s1">&#39;Second&#39;</span><span class="p">:</span> <span class="n">s</span><span class="p">,</span>
-            <span class="s1">&#39;Timestamp&#39;</span><span class="p">:</span> <span class="n">ts</span><span class="p">,</span>
-            <span class="s1">&#39;Mean HR&#39;</span><span class="p">:</span> <span class="n">mean_hr</span><span class="p">,</span>
-            <span class="s1">&#39;Mean IBI&#39;</span><span class="p">:</span> <span class="n">mean_ibi</span><span class="p">,</span>
-            <span class="s1">&#39;# R Peaks&#39;</span><span class="p">:</span> <span class="n">n_peaks</span><span class="p">}]</span>
-        <span class="p">)],</span> <span class="n">ignore_index</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
-    <span class="n">interval_data</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Segment&#39;</span><span class="p">,</span> <span class="n">interval_data</span><span class="p">[</span><span class="s1">&#39;Second&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
-        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span> <span class="o">//</span> <span class="n">seg_size</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-
-    <span class="k">return</span> <span class="n">interval_data</span></div>
+    <span class="k">def</span> <span class="nf">_moving_average</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signal</span><span class="p">,</span> <span class="n">window_len</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Helper function to compute the moving average of a signal in</span>
+<span class="sd">        the van Gent et al. (2019) beat detection algorithm. The window</span>
+<span class="sd">        length is set by default to 0.75 according to the algorithm.&quot;&quot;&quot;</span>
+        <span class="n">ma</span> <span class="o">=</span> <span class="n">uniform_filter1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="s1">&#39;float&#39;</span><span class="p">),</span>
+                              <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">window_len</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">ma</span></div>
 </pre></div>
 
             <div class="clearer"></div>
@@ -305,7 +410,7 @@
         <div class="right">
           
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2023, Natasha Yamane, Varun Mishra, and Matthew S. Goodwin.
+        &#169; Copyright 2024, Natasha Yamane, Varun Mishra, and Matthew S. Goodwin.
       Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
         </div>
