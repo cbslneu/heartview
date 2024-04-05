@@ -1,7 +1,7 @@
 <div align="center"> 
   <img src="https://github.com/nmy2103/heartview/blob/main/assets/heartview-logo.png?raw=true" height="100">
   <br>
-  <img src="https://badgen.net/badge/python/3.11/blue">
+  <img src="https://badgen.net/badge/python/3.9+/blue">
   <img src="https://badgen.net/badge/license/GPL-3.0/orange">
   <img src="https://badgen.net/badge/docs/passing/green">
   <img src="https://badgen.net/badge/contributions/welcome/cyan">
@@ -22,14 +22,47 @@ Currently, HeartView works with data collected from the Actiwave Cardio, Empatic
 <br>Read and transform raw ECG, PPG, and accelerometer data from European Data Format (EDF), archive (ZIP), and CSV files.
 * **Configuration File Exporter**
 <br>Define and save pipeline parameters in a JSON configuration file that can be loaded for use on the same dataset later.
-* **ECG Filters**
-<br>Filter out noise from baseline wander, muscle (EMG) activity, and powerline interference from your ECG data.
+* **Signal Filters**
+<br>Filter out noise from baseline wander, muscle (EMG) activity, and powerline interference from your ECG or PPG data.
 * **Beat Detection**
 <br>Extract heartbeats from your ECG [[1](https://doi.org/10.1016/j.bspc.2011.03.004)] and Empatica E4 data.
 * **Visualization Dashboard**
 <br>View and interact with our signal quality assessment chart and ECG/PPG, interbeat interval (IBI), and acceleration signal plots by segment.
 * **Signal Quality Metrics**
 <br>Generate segment-by-segment information about missing and invalid data.
+
+<hr>
+
+## Latest Release [HeartView 2.0]
+
+### Pipeline Enhancements:
+- Added beat detection algorithms for ECG and PPG pre-processing. 
+- Added default filters for ECG, PPG, and ACC.
+- Implemented artifact identification methods in the `SQA.py` module.
+- Added progress bars for real-time feedback.  
+
+### Dashboard Improvements:
+- Enhanced handling of uploaded data files.
+- Added artifactual beats visualization and metrics. 
+- Improved segment view selection options. 
+- Enabled data downsampling for faster chart rendering.
+
+### Structural Refactoring:
+- Refactored functions into new classes for clarity. 
+- Updated function and package names in documentation.
+
+For a full list of changes, see the [full changelog](CHANGELOG.md).
+
+## Roadmap
+We're constantly working on improving HeartView. Here's a glimpse of what's 
+in store in the near future:
+
+- Automated beat correction functionality
+- Manual beat correction feature
+- Data imputation techniques
+- Electrodermal activity (EDA) data pre-processing and quality assessment
+
+<hr>
 
 ## Installation
 1. Clone the HeartView GitHub repository into a directory of your choice.
@@ -59,6 +92,8 @@ venv\Scripts\activate
 ```
 pip3 install -r requirements.txt
 ```
+
+<hr>
 
 ## HeartView Dashboard
 ### Executing
