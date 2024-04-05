@@ -2,3 +2,4 @@ temp/00.txt
 configs/00.txt
 cache/
 .ipynb_checkpoints/
+**/__pycache__/
