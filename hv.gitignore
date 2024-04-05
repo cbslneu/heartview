@@ -3,3 +3,5 @@ configs/00.txt
 cache/
 .ipynb_checkpoints/
 **/__pycache__/
+docs/
+venv/
