@@ -31,8 +31,6 @@ Currently, HeartView works with data collected from the Actiwave Cardio, Empatic
 * **Signal Quality Metrics**
 <br>Generate segment-by-segment information about missing and invalid data.
 
-<hr>
-
 ## Latest Release [HeartView 2.0]
 
 ### Pipeline Enhancements:
@@ -62,8 +60,6 @@ in store in the near future:
 - Data imputation techniques
 - Electrodermal activity (EDA) data pre-processing and quality assessment
 
-<hr>
-
 ## Installation
 1. Clone the HeartView GitHub repository into a directory of your choice.
 ```
@@ -92,8 +88,6 @@ venv\Scripts\activate
 ```
 pip3 install -r requirements.txt
 ```
-
-<hr>
 
 ## HeartView Dashboard
 ### Executing
