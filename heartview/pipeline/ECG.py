@@ -364,7 +364,7 @@ class BeatDetectors:
         R-peaks in electrocardiogram (ECG) signal. Biomedical Signal Processing
         and Control, 7(2), 118-128.
         """
-        def _adapt_thresh(signal, beats_ix, fs, window = 0.44, step = 0.1):
+        def _adapt_thresh(signal, beats_ix, fs, window, step = 0.1):
             """Get beat indices with amplitudes that pass a minimum reference 
             threshold."""
             
