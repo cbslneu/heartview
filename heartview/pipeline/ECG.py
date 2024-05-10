@@ -1,10 +1,8 @@
 from scipy.signal import butter, cheby1, ellip, filtfilt, find_peaks, \
     hilbert, iirnotch, lfilter, sosfiltfilt
 from scipy.ndimage import uniform_filter1d
-import pyedflib
 import pandas as pd
 import numpy as np
-import datetime as dt
 
 # ============================== ECG Filters =================================
 class Filters:
@@ -340,7 +338,7 @@ class BeatDetectors:
         ecg_beats = self._remove_dupes(ecg_beats)
         return ecg_beats
 
-    def manikandan(self, signal):
+    def manikandan(self, signal, adaptive_threshold = True, window = 0.44):
         """Extracts R peak locations from an ECG signal with the Manikandan
         and Soman (2012) algorithm.
 
@@ -348,6 +346,12 @@ class BeatDetectors:
         ----------
         signal : array-like
             An array containing the ECG signal.
+        adaptive_threshold : boolean, optional
+            Whether to refine beat detection using adaptive thresholding;
+            by default, True.
+        window : float, optional
+            The size (in seconds) of the sliding search window for the
+            adaptive threshold; by default, 0.44 seconds (440 milliseconds).
 
         Returns
         -------
@@ -360,6 +364,30 @@ class BeatDetectors:
         R-peaks in electrocardiogram (ECG) signal. Biomedical Signal Processing
         and Control, 7(2), 118-128.
         """
+        def _adapt_thresh(signal, beats_ix, fs, window = 0.44, step = 0.1):
+            """Get beat indices with amplitudes that pass a minimum reference 
+            threshold."""
+            
+            window_len = int(fs * window)
+            window_step = int(fs * step)
+            signal_beats = pd.DataFrame({'signal': signal})
+            signal_beats.loc[beats_ix, 'beat'] = 1
+            
+            for n in range(0, len(signal_beats), window_step):
+                w = signal_beats[n:(n + window_len)]
+                if not w.beat.sum() >= 2:
+                    pass
+                else:
+                    s = w['signal']
+                    beats = w[w.beat == 1].index.values
+                    if len(beats) == 2:
+                        thresh = (s[beats].min() + s[beats].max()) * 0.5
+                    if len(beats) > 2:
+                        thresh = (s[beats].median() + s[beats].max()) * 0.5
+                    reject = s[beats][s[beats] < thresh].index
+                    signal_beats.loc[reject, 'beat'] = np.nan
+            passing_beats = signal_beats[signal_beats.beat == 1].index.values
+            return passing_beats
 
         if not self.preprocessed:
             signal = self._cheby1_filter(signal)
@@ -427,7 +455,12 @@ class BeatDetectors:
                 ecg_beats = np.append(ecg_beats, peak_loc)
 
         ecg_beats = self._remove_dupes(ecg_beats)
-        return ecg_beats
+        
+        if adaptive_threshold is True:
+            passing_beats = _adapt_thresh(signal, ecg_beats, self.fs, window)
+            return passing_beats
+        else:
+            return ecg_beats
 
     def nabian(self, signal):
         """Extracts R peak locations from an ECG signal with the Nabian
@@ -640,6 +673,7 @@ class BeatDetectors:
 
     def _remove_dupes(self, ecg_beats):
         """Remove duplicate indices in an `ecg_beats` array."""
+        ecg_beats = np.array(ecg_beats)
         unique_values, unique_ix = np.unique(ecg_beats, return_index = True)
         dupe_removed = ecg_beats[sorted(unique_ix)]
         return dupe_removed
