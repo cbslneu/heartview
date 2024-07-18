@@ -31,6 +31,22 @@ Currently, HeartView works with data collected from the Actiwave Cardio, Empatic
 * **Signal Quality Metrics**
 <br>Generate segment-by-segment information about missing and invalid data.
 
+## Citation
+If you use this software in your research, please cite [this paper](https://link.springer.com/chapter/10.1007/978-3-031-59717-6_8). :yellow_heart:
+```
+@inproceedings{Yamane2024,
+  author    = {Yamane, N. and Mishra, V. and Goodwin, M.S.},
+  title     = {HeartView: An Extensible, Open-Source, Web-Based Signal Quality Assessment Pipeline for Ambulatory Cardiovascular Data},
+  booktitle = {Pervasive Computing Technologies for Healthcare. PH 2023},
+  series    = {Lecture Notes of the Institute for Computer Sciences, Social Informatics and Telecommunications Engineering},
+  volume    = {572},
+  year      = {2024},
+  editor    = {Salvi, D. and Van Gorp, P. and Shah, S.A.},
+  publisher = {Springer, Cham},
+  doi       = {10.1007/978-3-031-59717-6_8},
+}
+```
+
 ## Latest Release [HeartView 2.0]
 
 ### Pipeline Enhancements:
