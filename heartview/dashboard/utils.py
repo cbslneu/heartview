@@ -1,4 +1,5 @@
 from os import listdir, path, remove, makedirs
+from os import name as os_name
 from pathlib import Path
 from shutil import rmtree
 from zipfile import ZipFile
@@ -11,20 +12,22 @@ import numpy as np
 import pyedflib
 import json
 
+sep = '\\' if os_name == 'nt' else '/'
+
 # ====================== HeartView Dashboard Functions =======================
 def _clear_temp():
-    temp = './temp'
+    temp = f'.{sep}temp'
     temp_contents = [f for f in listdir(temp) if
                      not f.startswith('.') and f != '00.txt']
     if len(temp_contents) > 0:
         files = [f for f in temp_contents if
-                 not path.isdir(f'{temp}/{f}') and f != '00.txt']
+                 not path.isdir(f'{temp}{sep}{f}') and f != '00.txt']
         for f in files:
-            remove(temp + '/' + f)
-        subdirs = [s for s in temp_contents if path.isdir(f'{temp}/{s}')]
+            remove(temp + sep + f)
+        subdirs = [s for s in temp_contents if path.isdir(f'{temp}{sep}{s}')]
         for s in subdirs:
-            if path.isdir(temp + '/' + s):
-                rmtree(temp + '/' + s)
+            if path.isdir(temp + sep + s):
+                rmtree(temp + sep + s)
     return None
 
 def _check_edf(edf):
@@ -37,7 +40,7 @@ def _check_edf(edf):
         return 'invalid'
 
 def _get_configs():
-    cfg_dir = './configs'
+    cfg_dir = f'.{sep}configs'
     cfgs = [f for f in listdir(cfg_dir) if
             not f.startswith('.') and f != '00.txt']
     if len(cfgs) > 0:
@@ -86,32 +89,32 @@ def _load_config(filename):
 
 def _export_sqa(file, data_type, type: str):
     """Export the SQA summary data in Zip or Excel format."""
-    files = [f'./temp/{file}_SQA.csv']
+    files = [f'.{sep}temp{sep}{file}_SQA.csv']
     if data_type == 'E4':
-        files.append(f'./temp/{file}_BVP.csv')
-        files.append(f'./temp/{file}_ACC.csv')
-        files.append(f'./temp/{file}_IBI.csv')
-        files.append(f'./temp/{file}_EDA.csv')
+        files.append(f'.{sep}temp{sep}{file}_BVP.csv')
+        files.append(f'.{sep}temp{sep}{file}_ACC.csv')
+        files.append(f'.{sep}temp{sep}{file}_IBI.csv')
+        files.append(f'.{sep}temp{sep}{file}_EDA.csv')
     else:
         if data_type == 'Actiwave':
-            files.append(f'./temp/{file}_ECG.csv')
-            files.append(f'./temp/{file}_ACC.csv')
-            files.append(f'./temp/{file}_IBI.csv')
+            files.append(f'.{sep}temp{sep}{file}_ECG.csv')
+            files.append(f'.{sep}temp{sep}{file}_ACC.csv')
+            files.append(f'.{sep}temp{sep}{file}_IBI.csv')
         else:
-            files.append(f'./temp/{file}_ECG.csv')
-            files.append(f'./temp/{file}_IBI.csv')
-            if f'{file}_ACC.csv' in listdir('./temp'):
-                files.append(f'./temp/{file}_ACC.csv')
-    if not path.exists('./downloads/'):
-        makedirs('./downloads')
+            files.append(f'.{sep}temp{sep}{file}_ECG.csv')
+            files.append(f'.{sep}temp{sep}{file}_IBI.csv')
+            if f'{file}_ACC.csv' in listdir(f'.{sep}temp'):
+                files.append(f'.{sep}temp{sep}{file}_ACC.csv')
+    if not path.exists(f'.{sep}downloads{sep}'):
+        makedirs('.{sep}downloads')
     else:
         pass
     if type == 'zip':
-        with ZipFile(f'./downloads/{file}_sqa_summary.zip', 'w') as archive:
+        with ZipFile(f'.{sep}downloads{sep}{file}_sqa_summary.zip', 'w') as archive:
             for csv in files:
                 archive.write(csv)
     if type == 'excel':
-        with pd.ExcelWriter(f'./downloads/{file}_sqa_summary.xlsx') as xlsx:
+        with pd.ExcelWriter(f'.{sep}downloads{sep}{file}_sqa_summary.xlsx') as xlsx:
             for csv in files:
                 df = pd.read_csv(csv)
                 fname = Path(csv).stem
