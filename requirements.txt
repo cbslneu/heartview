@@ -1,4 +1,4 @@
-blosc2==2.0.0
+blosc2
 celery
 cython==0.29.21
 dash
@@ -8,7 +8,7 @@ dash_uploader
 diskcache
 matplotlib
 multiprocess
-numpy
+numpy==1.26.4
 packaging==21.3
 pandas
 plotly

@@ -4,16 +4,19 @@ from heartview import heartview
 from heartview.pipeline import ACC, ECG, PPG, SQA
 from heartview.dashboard import utils
 from os import listdir, makedirs, stat, path
+from os import name as os_name
 from time import sleep
 import dash_uploader as du
 import zipfile
 import pandas as pd
 
+sep = '\\' if os_name == 'nt' else '/'
+
 def get_callbacks(app):
     """Attach callback functions to the dashboard app."""
 
     # ============================= DATA UPLOAD ===============================
-    du.configure_upload(app, './temp', use_upload_id = True)
+    du.configure_upload(app, f'.{sep}temp', use_upload_id = True)
     @du.callback(
         output = [
             Output('file-check', 'children'),
@@ -26,13 +29,14 @@ def get_callbacks(app):
     def db_get_file_types(filenames):
         """Save the data type to the local memory depending on the file
         type."""
-        temp = './temp'
+        temp = f'.{sep}temp'
         session = [s for s in listdir(temp) if
-                   path.isdir(f'{temp}/{s}') and s != 'cfg'][0]
+                   path.isdir(f'{temp}{sep}{s}') and s != 'cfg'][0]
+        session_path = f'{temp}{sep}{session}'
         file = sorted(
-            listdir(f'{temp}/{session}'),
-            key = lambda t: -stat(f'{temp}/{session}/{t}').st_mtime)[0]
-        filename = f'{temp}/{session}/{file}'
+            listdir(session_path),
+            key = lambda t: -stat(f'{session_path}{sep}{t}').st_mtime)[0]
+        filename = f'{session_path}{sep}{file}'
 
         if filenames[0].endswith(('edf', 'EDF')):
             if utils._check_edf(filenames[0]) == 'ECG':
@@ -382,10 +386,10 @@ def get_callbacks(app):
 
             total_progress = 6
             filepath = load_data['filename']
-            filename = filepath.split('/')[-1]
-            file = filepath.split('/')[-1].split('.')[0]
+            filename = filepath.split(sep)[-1]
+            file = filepath.split(sep)[-1].split('.')[0]
             data = {}
-            makedirs('./temp/_render/', exist_ok = True)
+            makedirs(f'.{sep}temp{sep}_render{sep}', exist_ok = True)
             perc = (1 / total_progress) * 100
             set_progress((perc, f'{perc:.0f}%'))
 
@@ -395,7 +399,7 @@ def get_callbacks(app):
                 if file_type == 'Actiwave':
                     actiwave = heartview.Actiwave(filepath)
                     ecg, acc = actiwave.preprocess()
-                    acc.to_csv(f'./temp/{file}_ACC.csv', index = False)
+                    acc.to_csv(f'.{sep}temp{sep}{file}_ACC.csv', index = False)
                     fs = actiwave.get_ecg_fs()
                 else:
                     # If no timestamps are provided
@@ -423,7 +427,8 @@ def get_callbacks(app):
                     try:
                         acc['Magnitude'] = ACC.compute_magnitude(
                             acc['X'], acc['Y'], acc['Z'])
-                        acc.to_csv(f'./temp/{file}_ACC.csv', index = False)
+                        acc.to_csv(
+                            f'.{sep}temp{sep}{file}_ACC.csv', index = False)
                     except:
                         acc = None
 
@@ -441,7 +446,7 @@ def get_callbacks(app):
                     beats_ix = detect_beats.manikandan(ecg['ECG'])
                 ecg.loc[beats_ix, 'Beat'] = 1
                 ecg.insert(0, 'Segment', ecg.index // (seg_size * fs) + 1)
-                ecg.to_csv(f'./temp/{file}_ECG.csv', index = False)
+                ecg.to_csv(f'.{sep}temp{sep}{file}_ECG.csv', index = False)
                 perc = (3 / total_progress) * 100
                 set_progress((perc * 100, f'{perc:.0f}%'))
 
@@ -473,9 +478,9 @@ def get_callbacks(app):
                                                   seg_size = seg_size,
                                                   show_progress = False)
 
-                # Save to 'temp/' directory
-                ibi.to_csv(f'./temp/{file}_IBI.csv', index = False)
-                metrics.to_csv(f'./temp/{file}_SQA.csv', index = False)
+                # Save to 'temp' directory
+                ibi.to_csv(f'.{sep}temp{sep}{file}_IBI.csv', index = False)
+                metrics.to_csv(f'.{sep}temp{sep}{file}_SQA.csv', index = False)
 
                 # Downsample ECG data for quicker plot rendering
                 ds_ecg, ds_ibi, ds_acc, ds_fs = utils._downsample_data(
@@ -484,10 +489,13 @@ def get_callbacks(app):
                 perc = (5 / total_progress) * 100
                 set_progress((perc * 100, f'{perc:.0f}%'))
 
-                ds_ecg.to_csv(f'./temp/_render/signal.csv', index = False)
-                ds_ibi.to_csv(f'./temp/_render/ibi.csv', index = False)
+                ds_ecg.to_csv(
+                    f'.{sep}temp{sep}_render{sep}signal.csv', index = False)
+                ds_ibi.to_csv(
+                    f'.{sep}temp{sep}_render{sep}ibi.csv', index = False)
                 if ds_acc is not None:
-                    ds_acc.to_csv(f'./temp/_render/acc.csv', index = False)
+                    ds_acc.to_csv(
+                        f'.{sep}temp{sep}_render{sep}acc.csv', index = False)
 
             # Handle PPG CSV files
             if file_type == 'csv' and dtype == 'PPG':
@@ -515,7 +523,8 @@ def get_callbacks(app):
                 try:
                     acc['Magnitude'] = ACC.compute_magnitude(
                         acc['X'], acc['Y'], acc['Z'])
-                    acc.to_csv(f'./temp/{file}_ACC.csv', index = False)
+                    acc.to_csv(
+                        f'.{sep}temp{sep}{file}_ACC.csv', index = False)
                 except:
                     acc = None
 
@@ -531,7 +540,7 @@ def get_callbacks(app):
                     beats_ix = detect_beats.adaptive_threshold(ppg['PPG'])
                 ppg.loc[beats_ix, 'Beat'] = 1
                 ppg.insert(0, 'Segment', ppg.index // (seg_size * fs) + 1)
-                ppg.to_csv(f'./temp/{file}_PPG.csv', index = False)
+                ppg.to_csv(f'.{sep}temp{sep}{file}_PPG.csv', index = False)
                 signal = ppg.copy()
                 artifacts_ix = sqa.identify_artifacts(
                     beats_ix, method = 'both')
@@ -560,18 +569,21 @@ def get_callbacks(app):
                                                   seg_size = seg_size,
                                                   show_progress = False)
 
-                ibi.to_csv(f'./temp/{file}_IBI.csv', index = False)
-                metrics.to_csv(f'./temp/{file}_SQA.csv', index = False)
+                ibi.to_csv(f'.{sep}temp{sep}{file}_IBI.csv', index = False)
+                metrics.to_csv(f'.{sep}temp{sep}{file}_SQA.csv', index = False)
 
                 # Downsample PPG data for quicker plot rendering
                 ds_ppg, ds_ibi, ds_acc, ds_fs = utils._downsample_data(
                     ppg, fs, dtype, beats_ix, artifacts_ix, acc)
                 fs = ds_fs
 
-                ds_ppg.to_csv(f'./temp/_render/signal.csv', index = False)
-                ds_ibi.to_csv(f'./temp/_render/ibi.csv', index = False)
+                ds_ppg.to_csv(
+                    f'.{sep}temp{sep}_render{sep}signal.csv', index = False)
+                ds_ibi.to_csv(
+                    f'.{sep}temp{sep}_render{sep}ibi.csv', index = False)
                 if ds_acc is not None:
-                    ds_acc.to_csv(f'./temp/_render/acc.csv', index = False)
+                    ds_acc.to_csv(
+                        f'.{sep}temp{sep}_render{sep}acc.csv', index = False)
 
             # Handle Empatica files
             if file_type == 'E4':
@@ -580,7 +592,8 @@ def get_callbacks(app):
                 E4 = heartview.Empatica(filepath)
                 e4_data = E4.preprocess()
                 acc, bvp, eda = e4_data['acc'], e4_data['bvp'], e4_data['eda']
-                acc.to_csv(f'./temp/_render/acc.csv', index = False)
+                acc.to_csv(
+                    f'.{sep}temp{sep}_render{sep}acc.csv', index = False)
                 start_time, bvp_fs = e4_data['start_time'], e4_data['bvp_fs']
                 sqa = SQA.Cardio(bvp_fs)
 
@@ -591,16 +604,18 @@ def get_callbacks(app):
                 e4_beats = detect_beats.adaptive_threshold(bvp['BVP'])
                 ibi = heartview.compute_ibis(
                     bvp, bvp_fs, e4_beats, ts_col = 'Timestamp')
-                ibi.to_csv(f'./temp/{file}_IBI.csv', index = False)
+                ibi.to_csv(f'.{sep}temp{sep}{file}_IBI.csv', index = False)
                 bvp.loc[e4_beats, 'Beat'] = 1
                 bvp.insert(0, 'Segment', bvp.index // (seg_size * fs) + 1)
-                bvp.to_csv(f'./temp/{file}_BVP.csv', index = False)
+                bvp.to_csv(f'.{sep}temp{sep}{file}_BVP.csv', index = False)
                 signal = bvp.copy()
                 artifacts_ix = sqa.identify_artifacts(
                     e4_beats, method = 'both')
                 signal.loc[artifacts_ix, 'Artifact'] = 1
-                signal.to_csv(f'./temp/_render/signal.csv', index = False)
-                ibi.to_csv('./temp/_render/ibi.csv', index = False)
+                signal.to_csv(
+                    f'.{sep}temp{sep}_render{sep}signal.csv', index = False)
+                ibi.to_csv(
+                    f'.{sep}temp{sep}_render{sep}ibi.csv', index = False)
 
 
                 # Compute SQA metrics
@@ -612,7 +627,8 @@ def get_callbacks(app):
                                               ts_col = 'Timestamp',
                                               seg_size = seg_size,
                                               show_progress = False)
-                metrics.to_csv(f'./temp/{file}_SQA.csv', index = False)
+                metrics.to_csv(
+                    f'.{sep}temp{sep}{file}_SQA.csv', index = False)
 
             # Store data variables in memory
             data['file type'] = file_type
@@ -650,7 +666,7 @@ def get_callbacks(app):
             raise PreventUpdate
 
         file = data['filename'].split('.')[0]
-        sqa = pd.read_csv(f'./temp/{file}_SQA.csv')
+        sqa = pd.read_csv(f'.{sep}temp{sep}{file}_SQA.csv')
         fs = int(data['fs'])
         sqa_view == 'default'
 
@@ -692,7 +708,7 @@ def get_callbacks(app):
         data_type = data['data type']
         fs = int(data['fs'])
 
-        sqa = pd.read_csv(f'./temp/{file}_SQA.csv')
+        sqa = pd.read_csv(f'.{sep}temp{sep}{file}_SQA.csv')
         segments = sqa['Segment'].tolist()
 
         # Signal quality metrics
@@ -723,15 +739,15 @@ def get_callbacks(app):
             raise PreventUpdate
         else:
             data_type = data['data type']
-            signal = pd.read_csv(f'./temp/_render/signal.csv')
+            signal = pd.read_csv(f'.{sep}temp{sep}_render{sep}signal.csv')
             fs = int(data['fs'])
             seg_size = int(segment_size)
 
             # If cardiovascular data was run
             if data_type in ['ECG', 'PPG', 'BVP']:
-                ibi = pd.read_csv(f'./temp/_render/ibi.csv')
+                ibi = pd.read_csv(f'.{sep}temp{sep}_render{sep}ibi.csv')
                 try:
-                    acc = pd.read_csv(f'./temp/_render/acc.csv')
+                    acc = pd.read_csv(f'.{sep}temp{sep}_render{sep}acc.csv')
                 except FileNotFoundError:
                     acc = None
 
