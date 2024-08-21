@@ -106,7 +106,7 @@ def _export_sqa(file, data_type, type: str):
             if f'{file}_ACC.csv' in listdir(f'.{sep}temp'):
                 files.append(f'.{sep}temp{sep}{file}_ACC.csv')
     if not path.exists(f'.{sep}downloads{sep}'):
-        makedirs('.{sep}downloads')
+        makedirs(f'.{sep}downloads')
     else:
         pass
     if type == 'zip':
@@ -158,12 +158,6 @@ def _setup_data_samples(csv, dtype: str, dropdown: list):
     samples = np.arange(len(df)) + 1
     df.insert(0, 'Sample', samples)
     return df
-
-# def _get_segment_count(signal, fs, seg_size):
-#     """Get a list of segment numbers for the pre-processed data."""
-#     seg_n = len(signal) // (seg_size * fs)
-#     segments = np.arange(1, seg_n + 1).tolist()
-#     return segments
 
 def _downsample_data(df, fs, signal_type, beats_ix, artifacts_ix, acc = None):
     """Downsample pre-processed cardio data and any acceleration data for

@@ -16,7 +16,7 @@ if 'REDIS_URL' in environ:
     background_callback_manager = CeleryManager(celery_app)
 else:
     import diskcache
-    cache = diskcache.Cache('./cache')
+    cache = diskcache.Cache(f'.{sep}cache')
     background_callback_manager = DiskcacheManager(cache)
 
 app = Dash(
