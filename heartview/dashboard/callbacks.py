@@ -433,16 +433,17 @@ def get_callbacks(app):
                         acc = None
 
                 # Filter ECG and detect beats
-                detect_beats = ECG.BeatDetectors(fs)
                 perc = (2 / total_progress) * 100
                 set_progress((perc * 100, f'{perc:.0f}%'))
                 if filt_on:
+                    detect_beats = ECG.BeatDetectors(fs)
                     filt = ECG.Filters(fs)
                     ecg['Filtered'] = filt.filter_signal(ecg['ECG'])
                     perc = (3 / total_progress) * 100
                     set_progress((perc * 100, f'{perc:.0f}%'))
                     beats_ix = detect_beats.manikandan(ecg['Filtered'])
                 else:
+                    detect_beats = ECG.BeatDetectors(fs, preprocessed = False)
                     beats_ix = detect_beats.manikandan(ecg['ECG'])
                 ecg.loc[beats_ix, 'Beat'] = 1
                 ecg.insert(0, 'Segment', ecg.index // (seg_size * fs) + 1)
