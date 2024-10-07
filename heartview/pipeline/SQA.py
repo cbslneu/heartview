@@ -73,6 +73,15 @@ class Cardio:
         If a value is given in the `rolling_window` parameter, the rolling
         window approach will override the segmented approach, ignoring any
         `seg_size` value.
+
+        Examples
+        --------
+        >>> from heartview.pipeline import SQA
+        >>> sqa = SQA.Cardio(fs = 1000)
+        >>> artifacts_ix = sqa.identify_artifacts(beats_ix, method = 'both')
+        >>> cardio_qa = sqa.compute_metrics(ecg, beats_ix, artifacts_ix, \
+        ...                                 ts_col = 'Timestamp', \
+        ...                                 seg_size = 60, min_hr = 40)
         """
         df = data.copy()
         df.index = df.index.astype(int)
@@ -172,7 +181,7 @@ class Cardio:
             if ts_col is not None:
                 missing = self.get_missing(
                     df, beats_ix, seg_size, min_hr = min_hr, ts_col = ts_col,
-                    show_progress = False)
+                    show_progress = show_progress)
                 artifacts = self.get_artifacts(
                     df, beats_ix, artifacts_ix, seg_size, ts_col)
                 metrics = pd.merge(missing, artifacts,
@@ -181,7 +190,7 @@ class Cardio:
                     lambda n: 1 if n < min_hr or n > 220 else np.nan)
             else:
                 missing = self.get_missing(
-                    df, beats_ix, seg_size, show_progress = False)
+                    df, beats_ix, seg_size, show_progress = show_progress)
                 artifacts = self.get_artifacts(
                     df, beats_ix, artifacts_ix, seg_size)
                 metrics = pd.merge(missing, artifacts, on = ['Segment'])
@@ -321,9 +330,12 @@ class Cardio:
         method : str
             The artifact identification method for identifying artifacts.
             This must be 'hegarty', 'cbd', or 'both'.
-        initial_hr : int or float, optional
+        initial_hr : int, float, or 'auto', optional
             The heart rate value for the first interbeat interval (IBI) to be
-            validated against; by default, 80. Required for 'hegarty' method.
+            validated against; by default, 'auto' for automatic calculation
+            using the mean heart rate value obtained from six consecutive
+            IBIs with the smallest average successive difference. Required
+            for the 'hegarty' method.
         prev_n : int, optional
             The number of preceding IBIs to validate against; by default, 6.
             Required for 'hegarty' method.
@@ -360,7 +372,8 @@ class Cardio:
         Reports, 10(1), 1–16.
         """
 
-        def identify_artifacts_hegarty(beats_ix, initial_hr = 80, prev_n = 6):
+        def identify_artifacts_hegarty(beats_ix, initial_hr = 'auto',
+                                       prev_n = 6):
             """Identify locations of artifactual beats in cardiovascular data
             based on the approach by Hegarty-Craver et al. (2018)."""
 
@@ -370,7 +383,13 @@ class Cardio:
             valid_beats = [beats_ix[0]]  # assume first beat is valid
 
             # Set the initial IBI to compare against
-            first_ibi = 60000 / initial_hr
+            if initial_hr == 'auto':
+                successive_diff = np.abs(np.diff(ibis))
+                min_diff_ix = np.convolve(
+                    successive_diff, np.ones(6) / 6, mode = 'valid').argmin()
+                first_ibi = ibis[min_diff_ix:min_diff_ix + 6].mean()
+            else:
+                first_ibi = 60000 / initial_hr
 
             for n in range(len(ibis)):
                 current_ibi = ibis[n]
@@ -389,15 +408,15 @@ class Cardio:
                     ibi_estimate = np.median(ibis[n - (prev_n):n])
 
                 # Set the acceptable/valid range of IBIs
-                low = (29 / 32) * ibi_estimate
-                high = (37 / 32) * ibi_estimate
+                low = (26 / 32) * ibi_estimate
+                high = (44 / 32) * ibi_estimate
 
                 if low <= current_ibi <= high:
                     valid_beats.append(current_beat)
                 else:
                     artifact_beats.append(current_beat)
 
-            return valid_beats, artifact_beats
+            return np.array(valid_beats), np.array(artifact_beats)
 
         def identify_artifacts_cbd(beats_ix, neighbors = 5, tol = 1):
             """Identify locations of abnormal interbeat intervals (IBIs) using
@@ -474,7 +493,7 @@ class Cardio:
             return artifact_beats
 
         if method == 'hegarty':
-            initial_hr = initial_hr if initial_hr is not None else 80
+            initial_hr = initial_hr if initial_hr is not None else 'auto'
             prev_n = prev_n if prev_n is not None else 6
             _, artifacts_ix = identify_artifacts_hegarty(
                 beats_ix, initial_hr, prev_n)
