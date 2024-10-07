@@ -92,6 +92,7 @@ class Actiwave:
         f.close()
 
         if time_aligned:
+            resampled = pd.DataFrame()
             for col in ['X', 'Y', 'Z']:
                 rs = scipy_resample(acc[col], len(ecg))
                 resampled = pd.concat(
@@ -115,9 +116,13 @@ class Actiwave:
         for chn in range(len(signal_labels)):
             if 'ECG' in signal_labels[chn]:
                 ecg_chn = chn
-        fs = f.getSampleFrequency(ecg_chn)
-        f.close()
-        return fs
+        try:
+            fs = f.getSampleFrequency(ecg_chn)
+            return fs
+        except NameError:
+            raise NameError('No ECG channel found.')
+        finally:
+            f.close()
 
     def get_acc_fs(self):
         """
@@ -134,9 +139,13 @@ class Actiwave:
         for chn in range(len(signal_labels)):
             if 'X' in signal_labels[chn]:
                 acc_chn = chn
-        fs = f.getSampleFrequency(acc_chn)
-        f.close()
-        return fs
+        try:
+            fs = f.getSampleFrequency(acc_chn)
+            return fs
+        except NameError:
+            raise NameError('No ACC channels found.')
+        finally:
+            f.close()
 
 # ======================== Empatica E4 Pre-Processing ========================
 class Empatica:
@@ -726,12 +735,19 @@ def plot_cardio_signals(signal, fs, ibi, signal_type, x = 'Timestamp',
     seg_start = int((seg_num - 1) * seg_size * fs)
     seg_end = int(seg_start + (fs * seg_size))
     for df in [signal, ibi]:
-        df = pd.to_datetime(df[x])
+        df[x] = pd.to_datetime(df[x])
     signal_segment = signal.iloc[seg_start:seg_end]
     ibi_segment = ibi.iloc[seg_start:seg_end].dropna()
 
     x_array = signal_segment[x]
-    if signal_type == 'PPG':
+    if not pd.api.types.is_datetime64_any_dtype(x_array):
+        artifact_hover = '<b>Potential Artifact</b> <extra></extra>'
+        beat_hover = '<b>Beat</b> <extra></extra>'
+    else:
+        artifact_hover = '<b>Potential Artifact</b>: %{x|%H:%M:%S.%3f} ' \
+                         '<extra></extra>'
+        beat_hover = '<b>Beat</b>: %{x|%H:%M:%S.%3f} <extra></extra>'
+    if signal_type == 'PPG' or signal_type == 'BVP':
         y_axis = 'bvp'
     else:
         y_axis = 'mV'
@@ -755,6 +771,7 @@ def plot_cardio_signals(signal, fs, ibi, signal_type, x = 'Timestamp',
             row = 1, col = 1)
         fig.update_yaxes(
             title_text = 'm/s²',
+            title_standoff = 5,
             row = 1, col = 1,
             showgrid = True,
             gridwidth = 0.5,
@@ -776,6 +793,7 @@ def plot_cardio_signals(signal, fs, ibi, signal_type, x = 'Timestamp',
             row = 2, col = 1)
         fig.update_yaxes(
             title_text = y_axis,
+            title_standoff = 5,
             row = 2, col = 1,
             showgrid = True,
             gridwidth = 0.5,
@@ -795,7 +813,8 @@ def plot_cardio_signals(signal, fs, ibi, signal_type, x = 'Timestamp',
             row = 3, col = 1)
         fig.update_yaxes(
             title_text = 'ms',
-            row = 3, col = 1, title_standoff = 1,
+            row = 3, col = 1,
+            title_standoff = 1,
             showgrid = True,
             gridwidth = 0.5,
             gridcolor = 'lightgrey',
@@ -812,8 +831,7 @@ def plot_cardio_signals(signal, fs, ibi, signal_type, x = 'Timestamp',
                 showlegend = True,
                 mode = 'markers',
                 marker = dict(color = '#f9c669', size = 6),
-                hovertemplate = '<b>Beat</b>: %{x|%H:%M:%S.%3f} '
-                                '<extra></extra>'),
+                hovertemplate = beat_hover),
             row = 2, col = 1)
 
         # Artifactual beats
@@ -821,12 +839,11 @@ def plot_cardio_signals(signal, fs, ibi, signal_type, x = 'Timestamp',
             go.Scatter(
                 x = signal_segment.loc[signal_segment.Artifact == 1, x],
                 y = signal_segment.loc[signal_segment.Artifact == 1, y],
-                name = 'Artifact',
+                name = 'Potential Artifact',
                 showlegend = True,
                 mode = 'markers',
                 marker = dict(color = 'red'),
-                hovertemplate = '<b>Artifact</b>: %{x|%H:%M:%S.%3f} '
-                                '<extra></extra>'),
+                hovertemplate = artifact_hover),
             row = 2, col = 1)
 
     else:
@@ -848,7 +865,8 @@ def plot_cardio_signals(signal, fs, ibi, signal_type, x = 'Timestamp',
             row = 1, col = 1)
         fig.update_yaxes(
             title_text = y_axis,
-            row = 1, col = 1, title_standoff = 1,
+            row = 1, col = 1,
+            title_standoff = 5,
             showgrid = True,
             gridwidth = 0.5,
             gridcolor = 'lightgrey',
@@ -884,8 +902,7 @@ def plot_cardio_signals(signal, fs, ibi, signal_type, x = 'Timestamp',
                 showlegend = True,
                 mode = 'markers',
                 marker = dict(color = '#f9c669', size = 6),
-                hovertemplate = '<b>Beat</b>: %{x|%H:%M:%S.%3f} '
-                                '<extra></extra>'),
+                hovertemplate = beat_hover),
             row = 1, col = 1)
 
         # Artifactual beats
@@ -893,19 +910,21 @@ def plot_cardio_signals(signal, fs, ibi, signal_type, x = 'Timestamp',
             go.Scatter(
                 x = signal_segment.loc[signal_segment.Artifact == 1, x],
                 y = signal_segment.loc[signal_segment.Artifact == 1, y],
-                name = 'Artifact',
+                name = 'Potential Artifact',
                 showlegend = True,
                 mode = 'markers',
                 marker = dict(color = 'red'),
-                hovertemplate = '<b>Artifact</b>: %{x|%H:%M:%S.%3f} '
-                                '<extra></extra>'),
+                hovertemplate = artifact_hover),
             row = 1, col = 1)
 
     # Format shared x-axis
+    x_min = signal_segment[x].min()
+    x_max = signal_segment[x].max()
     fig.update_xaxes(
         tickfont = dict(size = 14),
         tickcolor = 'grey',
-        linecolor = 'grey')
+        linecolor = 'grey',
+        range = [x_min, x_max])
 
     # Format figure
     fig.update_layout(
