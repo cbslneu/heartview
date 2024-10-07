@@ -3,6 +3,23 @@ All notable changes to this project will be documented in this file. The
 format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [HeartView 2.0.1] - 2024-10-07
+
+### Added
+- To `__init__.py` file within the `heartview` package:
+  - Package version
+
+#### Dashboard
+- Input field for artifact identification tolerance level
+
+### Changed
+
+#### Dashboard
+- Handling of user-inputted artifact identification tolerance level
+- Shared x-axis limits in bottom signal plots
+- "Export Summary" button to be disabled by default. It becomes enabled 
+  once the required data is processed and available for export.
+
 ## [HeartView 2.0] - 2024-04-04
 
 ### Added
