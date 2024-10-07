@@ -186,7 +186,7 @@ h6 {
 .btn-close:hover {
     background-color: transparent !important;
 }
-#run-data:disabled {
+#run-data:disabled, #configure:disabled, #export-summary:disabled {
     background-color: #bababa;
     pointer-events: none;
 }
@@ -201,7 +201,7 @@ h6 {
     display: flex;
     align-items: center;
     margin-top: 0;
-    padding-top: 13px;
+    padding-top: 18px;
 }
 .Select-clear {
     font-weight: normal !important;
@@ -214,7 +214,7 @@ h6 {
 #data-types {
     margin-left: 10px;
 }
-#segment-data span {
+#segment-data span, #artifact-params span {
     font-weight: 600;
     padding-right: 5px;
 }
@@ -258,11 +258,12 @@ input[type="checkbox"] {
     font-size: 13pt;
     margin-top: 13px;
 }
-#segment-data {
+#segment-data, #artifact-params {
     display: flex;
     align-items: center;
+    margin-top: 10px;
 }
-#seg-data-help {
+#seg-data-help, #artifact-tol-help {
     margin-left: 5px;
     padding-right: 10px;
     font-size: 13pt;
@@ -283,7 +284,7 @@ input[type="checkbox"] {
     height: 17.5px !important;
 }
 #toggle-config {
-    padding-top: 15px;
+    padding-top: 18px;
     padding-bottom: 13px;
     display: inline-block;
 }
@@ -301,10 +302,14 @@ input[type="checkbox"] {
     border-radius: 5px;
     border-color: #ee8a78;
     color: #de7765;
+    text-align: center;
+    border: 1px dashed;
+    padding: 5px;
+    cursor: pointer;
 }
-#config-uploader-padding > label {
-    margin: 0px !important;
-}
+/*#config-uploader-padding > label {*/
+/*    margin: 0px !important;*/
+/*}*/
 #header-filter {  /* ECG filters header */
     padding-top: 15px;
 }
@@ -313,6 +318,7 @@ input[type="checkbox"] {
     font-style: italic;
     margin-top: 5px;
     float: right;
+    margin-top: 5px;
 }
 
 /* ================= DATA UPLOAD & PIPELINE PROGRESS BARS ================= */
@@ -374,6 +380,9 @@ input[type="number"] {
 }
 input[type="number"]:disabled {
     color: grey;
+}
+#artifact-tol {
+    width: 45px;
 }
 .form-check-inline {
     display: inline-flex;
