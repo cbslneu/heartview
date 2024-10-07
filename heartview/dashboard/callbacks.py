@@ -338,6 +338,7 @@ def get_callbacks(app):
             State('data-type-dropdown-4', 'value'),
             State('data-type-dropdown-5', 'value'),
             State('seg-size', 'value'),
+            State('artifact-tol', 'value'),
             State('toggle-filter', 'on')
         ],
         background = True,
@@ -357,7 +358,7 @@ def get_callbacks(app):
     )
     def run_pipeline(set_progress, n, close_dtype_err, close_mapping_err,
                      load_data, dtype, fs, d1, d2, d3, d4, d5, seg_size,
-                     filt_on):
+                     artifact_tol, filt_on):
         """Read Actiwave Cardio, Empatica E4, or CSV-formatted data, save
         the data to the local memory, and load the progress spinner."""
 
@@ -454,7 +455,7 @@ def get_callbacks(app):
                 # Identify artifactual beats
                 sqa = SQA.Cardio(fs)
                 artifacts_ix = sqa.identify_artifacts(
-                    beats_ix, method = 'both')
+                    beats_ix, method = 'cbd', tol = artifact_tol)
                 ecg.loc[artifacts_ix, 'Artifact'] = 1
 
                 # Compute IBIs and SQA metrics
@@ -544,7 +545,7 @@ def get_callbacks(app):
                 ppg.to_csv(f'.{sep}temp{sep}{file}_PPG.csv', index = False)
                 signal = ppg.copy()
                 artifacts_ix = sqa.identify_artifacts(
-                    beats_ix, method = 'both')
+                    beats_ix, method = 'cbd', tol = artifact_tol)
                 signal.loc[artifacts_ix, 'Artifact'] = 1
 
                 # Compute IBIs
@@ -611,7 +612,7 @@ def get_callbacks(app):
                 bvp.to_csv(f'.{sep}temp{sep}{file}_BVP.csv', index = False)
                 signal = bvp.copy()
                 artifacts_ix = sqa.identify_artifacts(
-                    e4_beats, method = 'both')
+                    e4_beats, method = 'cbd', tol = artifact_tol)
                 signal.loc[artifacts_ix, 'Artifact'] = 1
                 signal.to_csv(
                     f'.{sep}temp{sep}_render{sep}signal.csv', index = False)
@@ -688,7 +689,8 @@ def get_callbacks(app):
         [Output('device', 'children'),
          Output('filename', 'children'),
          Output('summary-table', 'children'),
-         Output('segment-dropdown', 'options')],
+         Output('segment-dropdown', 'options'),
+         Output('export-summary', 'disabled')],
         Input('memory-db', 'data'),
     )
     def update_sqa_table(data):
@@ -718,7 +720,7 @@ def get_callbacks(app):
             table = cardio_sqa.display_summary_table(sqa)
         else:
             table = utils._blank_table()
-        return device, filename, table, segments
+        return device, filename, table, segments, False
 
     # === Update signal plots =================================================
     @app.callback(

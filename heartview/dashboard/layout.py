@@ -129,6 +129,17 @@ layout = html.Div(id = 'main', children = [
                     'will be segmented; by default, 60 seconds.',
                     target = 'seg-data-help')
             ]),
+            html.Div(id = 'artifact-params', children = [
+                html.Span('Artifact Identification Tolerance:'),
+                dcc.Input(id = 'artifact-tol', value = 1, type = 'number',
+                          min = 0.1, max = 2, step = 0.1),
+                html.I(className = 'fa-regular fa-circle-question',
+                       id = 'artifact-tol-help'),
+                dbc.Tooltip(
+                    'This sets the tolerance level of the artifact detection '
+                    'algorithm. Lower tolerance flags more artifacts.',
+                    target = 'artifact-tol-help')
+            ]),
             html.Div(id = 'filter-data', children = [
                 daq.BooleanSwitch(
                     id = 'toggle-filter',
@@ -201,7 +212,7 @@ layout = html.Div(id = 'main', children = [
                 html.Div(id = 'config-check', children = [
                     html.I(className = 'fa-solid fa-circle-check',
                        style = {'color': '#63e6be', 'fontSize': '26pt'}),
-                    html.P('Configuration file saved.',
+                    html.P('Configuration file created.',
                            style = {'marginTop': '5px'})
                 ], hidden = True)
             ]),
@@ -267,7 +278,8 @@ layout = html.Div(id = 'main', children = [
                 html.Div(children = [
                     html.Button('Export Summary',
                                 id = 'export-summary',
-                                n_clicks = 0),
+                                n_clicks = 0,
+                                disabled = True),
                     dbc.Modal(
                         id = 'export-modal',
                         is_open = False,
@@ -282,7 +294,11 @@ layout = html.Div(id = 'main', children = [
                                         html.Div(
                                             id = 'export-description',
                                             children = [
-                                                html.Div('Download summary data as a Zip archive file (.zip) or Excel (.xlsx) file.'),
+                                                html.Div([
+                                                    html.Span('''Download summary data as a Zip archive file (.zip) or Excel (.xlsx) file.'''),
+                                                    html.Span(''' Excel files may take a while to write.''',
+                                                              style = {'fontStyle': 'italic', 'color': '#de7765'})]
+                                                ),
                                                 html.Div(children = [
                                                     html.I(className = 'fa-solid fa-download fa-bounce'),
                                                     dcc.RadioItems(
