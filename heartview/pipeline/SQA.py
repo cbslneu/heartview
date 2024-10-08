@@ -579,7 +579,7 @@ class Cardio:
 
         if ts_col is not None:
             timestamps = seconds.groupby(
-                seconds.index // seg_size).first()[ts_col]
+                seconds.index // seg_size).first()['Timestamp']
             missing = pd.concat([
                 segments,
                 timestamps,
