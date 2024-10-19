@@ -91,14 +91,14 @@ class Cardio:
             metrics = pd.DataFrame()
             if ts_col is not None:
                 seconds = self.get_seconds(data, beats_ix, ts_col,
-                                           show_progress = False)
+                                           show_progress = show_progress)
                 s = 1
                 for n in tqdm(range(0, len(seconds), rolling_step),
                               disable = not show_progress):
 
                     # Get missing beats
                     window_missing = seconds.iloc[n:(n + rolling_window)]
-                    n_expected = window_missing['Mean HR'].median()
+                    n_expected = round(window_missing['Mean HR'].median() * (seg_size / 60), 0)
                     n_detected = window_missing['N Beats'].sum()
                     n_missing = (n_expected - n_detected) \
                         if n_expected > n_detected else 0
@@ -127,14 +127,14 @@ class Cardio:
                     s += 1
             else:
                 seconds = self.get_seconds(data, beats_ix,
-                                           show_progress = False)
+                                           show_progress = show_progress)
                 s = 1
                 for n in tqdm(range(0, len(seconds), rolling_step),
                               disable = not show_progress):
 
                     # Get missing beats
                     window_missing = seconds.iloc[n:(n + rolling_window)]
-                    n_expected = window_missing['Mean HR'].median()
+                    n_expected = round(window_missing['Mean HR'].median() * (seg_size / 60), 0)
                     n_detected = window_missing['N Beats'].sum()
                     n_missing = (n_expected - n_detected) \
                         if n_expected > n_detected else 0
@@ -163,8 +163,7 @@ class Cardio:
             last_seg_len = len(seconds) % rolling_window
             if last_seg_len > 0:
                 last_detected = metrics['N Detected'].iloc[-1]
-                last_expected_ratio = min_hr / \
-                                      metrics['N Expected'].iloc[:-1].median()
+                last_expected_ratio = min_hr / metrics['N Expected'].iloc[:-1].median()
                 last_expected = last_expected_ratio * last_seg_len
                 if last_expected > last_detected:
                     last_n_missing = last_expected - last_detected
@@ -553,8 +552,9 @@ class Cardio:
 
         n_seg = ceil(len(seconds) / seg_size)
         segments = pd.Series(np.arange(1, n_seg + 1))
-        n_expected = seconds.groupby(
-            seconds.index // seg_size)['Mean HR'].median()
+        n_expected = (
+                seconds.groupby(seconds.index // seg_size)['Mean HR'].median() * (seg_size / 60)
+        ).astype(int)
         n_detected = seconds.groupby(
             seconds.index // seg_size)['N Beats'].sum()
         n_missing = (n_expected - n_detected).clip(lower = 0)
