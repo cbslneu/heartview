@@ -53,7 +53,7 @@ class Filters:
         signal : array_like
             An array containing the input PPG signal to be filtered.
         window_len : int
-            The size of the moving average window.
+            The size of the moving average window, in seconds.
 
         Returns
         -------
@@ -64,7 +64,8 @@ class Filters:
         filtered = np.convolve(signal, kernel, mode = 'same')
         return filtered
 
-    def filter_signal(self, signal, lowcut = 0.5, highcut = 10, order = 4):
+    def filter_signal(self, signal, lowcut = 0.5, highcut = 10, order = 4, 
+                      window_len = 0.5):
         """
         Filter out baseline drift, motion artifact, and powerline
         interference from PPG data and smooth out the signal for further
@@ -85,6 +86,8 @@ class Filters:
         order : int
             The filter order, i.e., the number of samples required to
             produce the desired filtered output; by default, 4.
+        window_len : int
+            The size of the moving average window, in seconds.
 
         Returns
         -------
@@ -101,7 +104,7 @@ class Filters:
         high = highcut / nyquist
         b, a = cheby2(order, 20, Wn = [low, high], btype = 'bandpass')
         filtered = filtfilt(b, a, signal)
-        filtered_smoothed = self.moving_average(filtered, int(self.fs * 0.25))
+        filtered_smoothed = self.moving_average(filtered, int(self.fs * window_len))
         return filtered_smoothed
 
 # ======================= PPG Beat Detection Methods =========================
@@ -202,6 +205,7 @@ class BeatDetectors:
                     peaksx[peakedges[i] + y_values.index(max(y_values))])
             except:
                 pass
+        ppg_beats = np.asarray(ppg_beats).astype(int)
         return ppg_beats
 
     def erma(self, signal, W1 = 0.111, W2 = 0.667, offset = 0.02,
