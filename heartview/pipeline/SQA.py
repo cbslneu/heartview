@@ -502,7 +502,7 @@ class Cardio:
             artifacts_ix = identify_artifacts_cbd(
                 beats_ix, neighbors, tol)
         elif method == 'both':
-            initial_hr = initial_hr if initial_hr is not None else 80
+            initial_hr = initial_hr if initial_hr is not None else 'auto'
             prev_n = prev_n if prev_n is not None else 6
             neighbors = neighbors if neighbors is not None else 5
             tol = tol if tol is not None else 1
