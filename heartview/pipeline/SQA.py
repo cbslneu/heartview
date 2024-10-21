@@ -186,7 +186,7 @@ class Cardio:
                 metrics = pd.merge(missing, artifacts,
                                    on = ['Segment', 'Timestamp'])
                 metrics['Invalid'] = metrics['N Detected'].apply(
-                    lambda n: 1 if n < min_hr or n > 220 else np.nan)
+                    lambda n: 1 if n < int(min_hr * (seg_size/60)) or n > 220 else np.nan)
             else:
                 missing = self.get_missing(
                     df, beats_ix, seg_size, show_progress = show_progress)
@@ -195,7 +195,7 @@ class Cardio:
                 metrics = pd.merge(missing, artifacts, on = ['Segment'])
 
         metrics['Invalid'] = metrics['N Detected'].apply(
-            lambda x: 1 if x < min_hr or x > 220 else np.nan)
+            lambda x: 1 if x < int(min_hr * (seg_size/60)) or x > 220 else np.nan)
 
         return metrics
 
