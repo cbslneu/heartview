@@ -25,6 +25,3 @@ formats:
 python:
    install:
      - requirements: requirements.txt  # Project-specific dependencies
-
-commands:
-   - pip install furo  # Command to install Furo theme
