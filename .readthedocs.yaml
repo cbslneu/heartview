@@ -25,5 +25,5 @@ formats:
 python:
    install:
      - requirements: requirements.txt  # Project-specific dependencies
-     - pip:  # Documentation-specific dependencies
+     - pip_install:
          - furo
