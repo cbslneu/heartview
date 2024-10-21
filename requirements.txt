@@ -9,6 +9,7 @@ diskcache
 matplotlib
 multiprocess
 numpy==1.26.4
+openpyxl
 packaging==21.3
 pandas
 plotly
