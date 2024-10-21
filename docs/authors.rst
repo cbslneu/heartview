@@ -12,6 +12,6 @@ Authors
 
 .. |Contributors| raw:: html
 
-    <div style="font-weight: bold; color: #47555e; font-size: 16pt; margin-top: 16pt">
+    <div style="font-weight: bold; font-size: 16pt; margin-top: 16pt">
         <img src="_static/heart-icon.png" width=20> Contributors <img src="_static/heart-icon.png" width=20>
     </div>

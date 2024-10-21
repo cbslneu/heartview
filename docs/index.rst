@@ -27,7 +27,9 @@ Contents
    examples
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: HeartView Dashboard
 
-   dashboard
+   dashboard-gettingstarted
+   dashboard-runningqa
+   dashboard-configs

@@ -1,8 +1,9 @@
+=============
 API Reference
 =============
 
 Data Pre-Processing
--------------------
+===================
 
 ECG
 ...
@@ -23,13 +24,23 @@ ACC
    :members:
 
 Signal Quality Assessment
--------------------------
+=========================
 
 .. automodule:: heartview.pipeline.SQA
    :members:
 
-Other Useful Functions
-----------------------
+Devices
+=======
+Actiwave Cardio
+...............
 
-.. automodule:: heartview.heartview
+.. autoclass:: heartview.heartview.Actiwave
     :members:
+    :undoc-members:
+
+Empatica E4
+...........
+
+.. autoclass:: heartview.heartview.Empatica
+    :members:
+    :undoc-members:

@@ -24,10 +24,15 @@ Contents
    :caption: HeartView Pipeline
 
    api
+   api#module-heartview.pipeline.ECG
+   heartview.pipeline.PPG
+   heartview.pipeline.SQA
    examples
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: HeartView Dashboard
 
-   dashboard
+   dashboard-gettingstarted
+   dashboard-runningqa
+   dashboard-configs
