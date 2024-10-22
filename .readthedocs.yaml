@@ -24,4 +24,5 @@ formats:
 # Project dependencies
 python:
    install:
+     - requirements: docs/requirements.txt  # Documentation-specific dependencies
      - requirements: requirements.txt  # Project-specific dependencies
