@@ -24,9 +24,6 @@ Contents
    :caption: HeartView Pipeline
 
    api
-   api#module-heartview.pipeline.ECG
-   heartview.pipeline.PPG
-   heartview.pipeline.SQA
    examples
 
 .. toctree::
