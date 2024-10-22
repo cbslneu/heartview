@@ -4,6 +4,9 @@ Welcome to HeartView
 .. image:: https://badgen.net/badge/python/3.9+/cyan
 .. image:: https://badgen.net/badge/license/GPL-3.0/orange
 .. image:: https://badgen.net/badge/contributions/welcome/green
+.. image:: https://readthedocs.org/projects/heartview/badge/?version=latest
+    :target: https://heartview.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
 About
 -----
