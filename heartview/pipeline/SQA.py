@@ -649,8 +649,9 @@ class Cardio:
         """
 
         df = data.copy()
+        temp_beat = '_temp_beat'
         df.index = df.index.astype(int)
-        df.loc[beats_ix, 'Beat'] = 1
+        df.loc[beats_ix, temp_beat] = 1
 
         interval_data = []
 
@@ -668,8 +669,8 @@ class Cardio:
                 window = df.iloc[(i - self.fs):(min(i + self.fs, len(df)))]
 
             # Get mean IBI and HR values from the detected beats
-            current_beats = current_sec[current_sec['Beat'] == 1].index.values
-            window_beats = window[window['Beat'] == 1].index.values
+            current_beats = current_sec[current_sec[temp_beat] == 1].index.values
+            window_beats = window[window[temp_beat] == 1].index.values
             ibis = np.diff(window_beats) / self.fs * 1000
             if len(ibis) == 0:
                 mean_ibi = np.nan
