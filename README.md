@@ -32,6 +32,8 @@ Currently, HeartView works with data collected from the Actiwave Cardio, Empatic
 <br>View and interact with our signal quality assessment chart and ECG/PPG, interbeat interval (IBI), and acceleration signal plots by segment.
 * **Signal Quality Metrics**
 <br>Generate segment-by-segment information about missing and invalid data.
+* **Manual Beat Editor**
+<br>Ability to update an existing beat and manually inputting beat(s) 
 
 ## Citation
 If you use this software in your research, please cite [this paper](https://link.springer.com/chapter/10.1007/978-3-031-59717-6_8). :yellow_heart:
@@ -106,7 +108,24 @@ venv\Scripts\activate
 ```
 pip3 install -r requirements.txt
 ```
-
+### Installation for Manual Beat Editor
+**Manual Beat Editor requires Node (v20.x.x +), please be sure to install before proceeding with the installation below**
+1. Go to the `beat-editor` directory
+```
+cd heartview/beat-editor
+```
+2. Install the required modules for beat-editor
+```
+npm install
+```
+3. Go to the `server` folder
+```
+cd server
+```
+4. Install the required modules for beat-editor's backend
+```
+npm install
+```
 ## HeartView Dashboard
 ### Executing
 1. Within the activated virtual environment 
@@ -115,6 +134,16 @@ pip3 install -r requirements.txt
 python3 app.py
 ```
 2. Open your web browser and go to: http://127.0.0.1:8050/
+### Executing Manual Beat Editor
+1. Navigate to the `server` directory
+```
+cd server
+```
+2. Run the following line to start the backend
+```
+npm run
+```
+3. Open up another terminal tab or window and navigate back to `beat-editor`, once there run the line from the step above to start the frontend code.
 
 ### Terminating
 1. Kill the dashboard program: press `CTRL`+`c`.
