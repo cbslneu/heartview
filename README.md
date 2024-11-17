@@ -110,9 +110,16 @@ pip3 install -r requirements.txt
 ```
 ### Installation for Manual Beat Editor
 **Manual Beat Editor requires Node (v20.x.x +), please be sure to install before proceeding with the installation below**
+<br>
+<br> *Run the following code below to check if Node is installed on your machine:*
+```
+node --version
+```
+If an error occurs, please refer to this link to install Node on your machine: https://nodejs.org/en/download/package-manager
+
 1. Go to the `beat-editor` directory
 ```
-cd heartview/beat-editor
+cd beat-editor
 ```
 2. Install the required modules for beat-editor
 ```
