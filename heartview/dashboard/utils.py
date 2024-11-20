@@ -5,6 +5,7 @@ from shutil import rmtree
 from zipfile import ZipFile
 from scipy.signal import resample as scipy_resample
 from heartview.heartview import compute_ibis
+from requests import get as http_get
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 import pandas as pd
@@ -14,14 +15,17 @@ import json
 
 sep = '\\' if os_name == 'nt' else '/'
 
-# ====================== HeartView Dashboard Functions =======================
+# ============================= Startup Functions ============================
+def _make_subdirs():
+    makedirs(f'.{sep}temp', exist_ok = True)
+    makedirs(f'.{sep}beat-editor{sep}data', exist_ok = True)
+    makedirs(f'.{sep}beat-editor{sep}export', exist_ok = True)
+
 def _clear_temp():
     temp = f'.{sep}temp'
-    temp_contents = [f for f in listdir(temp) if
-                     not f.startswith('.') and f != '00.txt']
+    temp_contents = [f for f in listdir(temp) if not f.startswith('.')]
     if len(temp_contents) > 0:
-        files = [f for f in temp_contents if
-                 not path.isdir(f'{temp}{sep}{f}') and f != '00.txt']
+        files = [f for f in temp_contents if not path.isdir(f'{temp}{sep}{f}')]
         for f in files:
             remove(temp + sep + f)
         subdirs = [s for s in temp_contents if path.isdir(f'{temp}{sep}{s}')]
@@ -30,6 +34,15 @@ def _clear_temp():
                 rmtree(temp + sep + s)
     return None
 
+def _clear_beat_editor_data():
+    beat_editor_data = f'.{sep}beat-editor{sep}data'
+    beat_editor_data_contents = [f for f in listdir(beat_editor_data) if
+                                 not f.startswith('.')]
+    if len(beat_editor_data_contents) > 0:
+        for f in beat_editor_data_contents:
+            remove(beat_editor_data + sep + f)
+
+# ====================== HeartView Dashboard Functions =======================
 def _check_edf(edf):
     """Check whether the EDF uploaded is a valid Actiwave Cardio file."""
     f = pyedflib.EdfReader(edf)
@@ -41,8 +54,7 @@ def _check_edf(edf):
 
 def _get_configs():
     cfg_dir = f'.{sep}configs'
-    cfgs = [f for f in listdir(cfg_dir) if
-            not f.startswith('.') and f != '00.txt']
+    cfgs = [f for f in listdir(cfg_dir) if not f.startswith('.')]
     if len(cfgs) > 0:
         return cfgs
     else:
@@ -240,3 +252,24 @@ def _blank_table():
         striped = False,
         hover = False,
         bordered = False)
+
+def _check_beat_editor_status():
+    """Check whether the beat editor app is running."""
+    try:
+        response = http_get('http://localhost:3000', timeout = 5)
+        return response.status_code == 200
+    except:
+        return False
+
+def _create_beat_editor_file(data, filename):
+    """Create a beat editor JSON file."""
+    if 'Timestamp' in data.columns:
+        data['Timestamp'] = pd.to_datetime(data['Timestamp'])
+    for col in ["PPG", "BVP", "ECG"]:
+        if col in data.columns:
+            data.rename(columns = {col: 'Signal'}, inplace = True)
+            break
+    root_dir = '/'.join(path.dirname(path.abspath(__file__)).split('/')[:-2])
+    target_dir = path.join(root_dir, 'beat-editor', 'data')
+    file_path = path.join(target_dir, f"{filename}_edit.json")
+    data.to_json(file_path, orient = 'records', lines = False)

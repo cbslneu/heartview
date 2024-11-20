@@ -3,6 +3,9 @@ from tqdm import tqdm
 from scipy.signal import resample as scipy_resample
 from plotly.subplots import make_subplots
 from heartview.pipeline.ACC import compute_magnitude
+from heartview.pipeline.SQA import Cardio, EDA
+from heartview.pipeline.PPG import BeatDetectors
+from heartview.pipeline.EDA import Filters as edaFilters
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -147,16 +150,24 @@ class Actiwave:
         finally:
             f.close()
 
-# ======================== Empatica E4 Pre-Processing ========================
+# ==================== Empatica E4 Pre-Processing and SQA ====================
 class Empatica:
     """
-    A class to conveniently pre-process data from Empatica devices.
+    A class to conveniently pre-process and assess quality of PPG and EDA data
+    from Empatica E4 devices.
 
-    Parameters/Attributes
-    ---------------------
+    Attributes
+    ----------
     file : str
         The path of the Empatica archive file with a '.zip' extension.
     """
+
+    class Data:
+        """A class to store pre-processed data variables."""
+
+        def __init__(self, **kwargs):
+            for key, value in kwargs.items():
+                setattr(self, key, value)
 
     def __init__(self, file):
         """
@@ -187,49 +198,49 @@ class Empatica:
 
         Returns
         -------
-        dict
-            A dictionary containing the recording start time, sampling
-            rates, and DataFrames pre-processed from the Empatica E4.
+        data : Empatica.Data object
+            An `Empatica.Data` object with the following attributes and
+            corresponding pre-processed data:
 
             If `time_aligned` is False:
-                'acc' : pandas.DataFrame
+                acc : pandas.DataFrame
                     A DataFrame containing the pre-processed ACC data with
                     corresponding timestamps.
-                'bvp' : pandas.DataFrame
+                bvp : pandas.DataFrame
                     A DataFrame containing the pre-processed BVP data with
                     corresponding timestamps.
-                'eda' : pandas.DataFrame
+                eda : pandas.DataFrame
                     A DataFrame containing the pre-processed EDA data with
                     corresponding timestamps.
-                'hr' : pandas.DataFrame
+                hr : pandas.DataFrame
                     A DataFrame containing the pre-processed HR data with
                     corresponding timestamps.
-                'ibi' : pandas.DataFrame
+                ibi : pandas.DataFrame
                     A DataFrame containing the pre-processed IBI data with
                     corresponding timestamps and seconds elapsed since the
                     start time of the IBI recording.
-                'temp' : pandas.DataFrame
+                temp : pandas.DataFrame
                     A DataFrame containing the pre-processed temperature
                     data with corresponding timestamps.
-                'start_time' : float
+                start_time : float
                     The Unix-formatted start time of the E4 recording.
-                'bvp_fs' : float
+                bvp_fs : float
                     The sampling rate of the BVP recording.
-                'eda_fs' : float
+                eda_fs : float
                     The sampling rate of the EDA recording.
 
             If `time_aligned` is True:
-                'hrv' : pandas.DataFrame
+                hrv : pandas.DataFrame
                     A DataFrame containing time-synced BVP, HR, IBI,
                     and acceleration data.
-                'eda' : pandas.DataFrame
+                eda : pandas.DataFrame
                     A DataFrame containing time-synced EDA, temperature,
                     and acceleration data.
-                'start_time' : float
+                start_time : float
                     The Unix-formatted start time of the E4 recording.
-                'bvp_fs' : float
+                bvp_fs : float
                     The sampling rate of the BVP recording.
-                'eda_fs' : float
+                eda_fs : float
                     The sampling rate of the EDA recording.
 
         Examples
@@ -244,22 +255,26 @@ class Empatica:
             for file in e4_files:
                 if 'ACC' in file:
                     with archive.open(file) as acc_file:
-                        acc_data, _, _ = self.get_acc()
+                        acc_data = self.get_acc().acc
                 if 'BVP' in file:
                     with archive.open(file) as bvp_file:
-                        bvp_data, start_time, bvp_fs = self.get_bvp()
+                        bvp_data = self.get_bvp().bvp
+                        start_time = self.get_bvp().start
+                        bvp_fs = self.get_bvp().fs
                 if 'EDA' in file:
                     with archive.open(file) as eda_file:
-                        eda_data, start_time, eda_fs = self.get_eda()
+                        eda_data = self.get_eda().eda
+                        start_time = self.get_eda().start
+                        eda_fs = self.get_eda().fs
                 if 'HR' in file:
                     with archive.open(file) as hr_file:
-                        hr_data, _, _ = self.get_hr()
+                        hr_data = self.get_hr().hr
                 if 'IBI' in file:
                     with archive.open(file) as ibi_file:
-                        ibi_data, _ = self.get_ibi()
+                        ibi_data = self.get_ibi().ibi
                 if 'TEMP' in file:
                     with archive.open(file) as temp_file:
-                        temp_data, _, _ = self.get_temp()
+                        temp_data = self.get_temp().temp
 
         if time_aligned:
             # Merge IBI and HR values into BVP data frame
@@ -289,24 +304,27 @@ class Empatica:
                     full_hrv = pd.merge(full_hrv, acc_rs,
                                         left_index = True, right_index = True)
                 else:
-                    full_eda = pd.merge(eda_data, acc_rs,
+                    full_eda = pd.merge(eda_data, temp_data,
+                                        on = 'Timestamp', how = 'inner')
+                    full_eda = pd.merge(full_eda, acc_rs,
                                         left_index = True, right_index = True)
-            return {'hrv': full_hrv,
-                    'eda': full_eda,
-                    'start_time': start_time,
-                    'bvp_fs': bvp_fs,
-                    'eda_fs': eda_fs}
+            data = self.Data(**{'hrv': full_hrv,
+                                'eda': full_eda,
+                                'start': start_time,
+                                'bvp_fs': bvp_fs,
+                                'eda_fs': eda_fs})
 
         else:
-            return {'acc': acc_data,
-                    'bvp': bvp_data,
-                    'eda': eda_data,
-                    'hr': hr_data,
-                    'ibi': ibi_data,
-                    'temp': temp_data,
-                    'start_time': start_time,
-                    'bvp_fs': bvp_fs,
-                    'eda_fs': eda_fs}
+            data = self.Data(**{'acc': acc_data,
+                                'bvp': bvp_data,
+                                'eda': eda_data,
+                                'hr': hr_data,
+                                'ibi': ibi_data,
+                                'temp': temp_data,
+                                'start': start_time,
+                                'bvp_fs': bvp_fs,
+                                'eda_fs': eda_fs})
+        return data
 
     def get_acc(self):
         """
@@ -315,16 +333,16 @@ class Empatica:
 
         Returns
         -------
-        tuple
-            A tuple containing the pre-processed blood volume pulse (BVP)
-            data and its corresponding start time and sampling rate.
+        acc_data : Empatica.Data object
+            An `Empatica.Data` object with the following attributes and
+            corresponding accelerometer data variables:
 
             acc : pandas.DataFrame
                 A DataFrame containing the pre-processed BVP data with
                 corresponding timestamps.
-            acc_start : float
+            start : float
                 The Unix-formatted start time of the BVP recording.
-            acc_fs : int
+            fs : int
                 The sampling rate of the BVP data.
         """
         with ZipFile(self.file, 'r') as archive:
@@ -343,25 +361,28 @@ class Empatica:
                                 if x.name != 'Timestamp' else x)
                 acc['Magnitude'] = compute_magnitude(
                     acc['X'], acc['Y'], acc['Z'])
-            return acc, acc_start, acc_fs
+            acc_data = self.Data(**{'acc': acc,
+                                    'start': acc_start,
+                                    'fs': acc_fs})
+            return acc_data
 
     def get_bvp(self):
         """
-        Get the raw BVP data and its start time and sampling rate from the
-        Empatica E4.
+        Get the raw blood volume pulse (BVP) data and its start time and
+        sampling rate from the Empatica E4.
 
         Returns
         -------
-        tuple
-            A tuple containing the pre-processed blood volume pulse (BVP)
-            data and its corresponding start time and sampling rate.
+        bvp_data : Empatica.Data object
+            An `Empatica.Data` object with the following attributes and
+            corresponding BVP data variables:
 
             bvp : pandas.DataFrame
                 A DataFrame containing the pre-processed BVP data with
                 corresponding timestamps.
-            bvp_start : float
+            start : float
                 The Unix-formatted start time of the BVP recording.
-            bvp_fs : int
+            fs : int
                 The sampling rate of the BVP data.
         """
         with ZipFile(self.file, 'r') as archive:
@@ -376,25 +397,28 @@ class Empatica:
             with archive.open(bvp_file) as bvp_file:
                 bvp, bvp_start, bvp_fs = self._get_e4_data(
                     bvp_file, name = 'BVP')
-            return bvp, bvp_start, bvp_fs
+            bvp_data = self.Data(**{'bvp': bvp,
+                                    'start': bvp_start,
+                                    'fs': bvp_fs})
+            return bvp_data
 
     def get_eda(self):
         """
-        Get the pre-processed electrodermal activity (EDA) data and its
-        recording start time and sampling rate from the Empatica E4.
+        Get the raw electrodermal activity (EDA) data and its recording
+        start time and sampling rate from the Empatica E4.
 
         Returns
         -------
-        tuple
-            A tuple containing the pre-processed EDA data and its
-            corresponding start time and sampling rate.
+        eda_data : Empatica.Data object
+            An `Empatica.Data` object with the following attributes and
+            corresponding EDA data variables:
 
             eda : pandas.DataFrame
                 A DataFrame containing the pre-processed EDA data with
                 corresponding timestamps.
-            eda_start : float
+            start : float
                 The Unix-formatted start time of the EDA recording.
-            eda_fs : int
+            fs : int
                 The sampling rate of the EDA data.
         """
         with ZipFile(self.file, 'r') as archive:
@@ -409,7 +433,10 @@ class Empatica:
             with archive.open(eda_file) as eda_file:
                 eda, eda_start, eda_fs = self._get_e4_data(
                     eda_file, name = 'EDA')
-            return eda, eda_start, eda_fs
+            eda_data = self.Data(**{'eda': eda,
+                                    'start': eda_start,
+                                    'fs': eda_fs})
+            return eda_data
 
     def get_hr(self):
         """
@@ -418,13 +445,17 @@ class Empatica:
 
         Returns
         -------
-        hr : pandas.DataFrame
-            A DataFrame containing the pre-processed HR data with
-            corresponding timestamps.
-        hr_start : float
-            The Unix-formatted start time of the HR measurements.
-        hr_fs : int
-            The sampling rate of the BVP data.
+        hr_data : Empatica.Data object
+            An `Empatica.Data` object with the following attributes and
+            corresponding HR data variables:
+
+            hr : pandas.DataFrame
+                A DataFrame containing the pre-processed HR data with
+                corresponding timestamps.
+            start : float
+                The Unix-formatted start time of the HR measurements.
+            fs : int
+                The sampling rate of the BVP data.
         """
         with ZipFile(self.file, 'r') as archive:
             e4_files = archive.namelist()
@@ -438,7 +469,10 @@ class Empatica:
             with archive.open(file) as hr_file:
                 hr, hr_start, hr_fs = self._get_e4_data(
                     hr_file, name = 'HR')
-            return hr, hr_start, hr_fs
+            hr_data = self.Data(**{'hr': hr,
+                                   'start': hr_start,
+                                   'fs': hr_fs})
+            return hr_data
 
     def get_ibi(self):
         """
@@ -447,11 +481,15 @@ class Empatica:
 
         Returns
         -------
-        ibi : pandas.DataFrame
-            A DataFrame containing the pre-processed IBI data with
-            corresponding timestamps.
-        ibi_start : int
-            The Unix-formatted start time of the IBI data.
+        ibi_data : Empatica.Data object
+            An `Empatica.Data` object with the following attributes and
+            corresponding IBI data variables:
+
+            ibi : pandas.DataFrame
+                A DataFrame containing the pre-processed IBI data with
+                corresponding timestamps.
+            start : int
+                The Unix-formatted start time of the IBI data.
         """
         with ZipFile(self.file, 'r') as archive:
             e4_files = archive.namelist()
@@ -471,7 +509,8 @@ class Empatica:
                 ibi.insert(
                     0, 'Timestamp', (ibi['Seconds'] + ibi_start).apply(
                         lambda t: dt.datetime.utcfromtimestamp(t)))
-            return ibi, ibi_start
+            ibi_data = self.Data(**{'ibi': ibi, 'start': ibi_start})
+            return ibi_data
 
     def get_temp(self):
         """
@@ -480,16 +519,16 @@ class Empatica:
 
         Returns
         -------
-        tuple
-            A tuple containing the pre-processed skin temperature data and its
-            corresponding start time and sampling rate.
+        temp_data : Empatica.Data object
+            An `Empatica.Data` object with the following attributes and
+            corresponding temperature data variables:
 
             temp : pandas.DataFrame
                 A DataFrame containing the pre-processed temperature data with
                 corresponding timestamps.
-            temp_start : float
+            start : float
                 The Unix-formatted start time of the temperature recording.
-            temp_fs : int
+            fs : int
                 The sampling rate of the temperature data.
         """
         with ZipFile(self.file, 'r') as archive:
@@ -504,7 +543,10 @@ class Empatica:
             with archive.open(temp_file) as temp_file:
                 temp, temp_start, temp_fs = self._get_e4_data(
                     temp_file, name = 'Temp')
-            return temp, temp_start, temp_fs
+            temp_data = self.Data(**{'temp': temp,
+                                     'start': temp_start,
+                                     'fs': temp_fs})
+            return temp_data
 
     def get_e4_beats(self, bvp_data, ibi_data, start_time,
                      show_progress = True):
@@ -545,8 +587,211 @@ class Empatica:
             e4_beats.append(closest_ix)
         return e4_beats
 
+    def compute_sqa(self, kind, seg_size = 60, initial_hr = 'auto',
+                    min_hr = 40, min_eda = 0.05, max_eda = 40,
+                    rolling_window = None, rolling_step = 15,
+                    show_progress = True):
+        """
+        Compute signal quality assessment metrics (SQA) for PPG and/or EDA
+        data from Empatica E4 devices.
+
+        Parameters
+        ----------
+        kind : str
+            The kind of data whose SQA to compute. This value must be a string
+            variation of 'all', 'eda', or 'ppg'.
+        seg_size : int
+            The segment size in seconds; by default, 60.
+        initial_hr : int, float, or 'auto', optional
+            The heart rate value for the first interbeat interval (IBI) to be
+            validated against; by default, 'auto' for automatic calculation
+            using the mean heart rate value obtained from six consecutive
+            IBIs with the smallest average successive difference.
+        min_hr : int, float
+            The minimum acceptable heart rate against which the number of
+            beats in the last partial segment will be compared; by default, 40.
+        min_eda : float, optional
+            The minimum acceptable value for EDA data in microsiemens; by
+            default, 0.05 uS.
+        max_eda : float, optional
+            The maximum acceptable value for EDA data in microsiemens; by
+            default, 40 uS.
+        rolling_window : int, optional
+            The size, in seconds, of the sliding window across which to
+            compute the SQA metrics; by default, None.
+        rolling_step : int, optional
+            The step size, in seconds, of the sliding windows; by default, 15.
+        show_progress : bool, optional
+            Whether to display a progress bar while the function runs; by
+            default, True.
+
+        Returns
+        -------
+        metrics : pandas.DataFrame
+            A DataFrame with all computed SQA metrics per segment.
+
+        Notes
+        -----
+        If a value is given in the `rolling_window` parameter, the rolling
+        window approach will override the segmented approach, ignoring any
+        `seg_size` value.
+        """
+
+        if kind.lower() not in ('all', 'eda', 'ppg'):
+            raise ValueError('The `kind` parameter must take a string value '
+                             '\'all\', \'eda\', or \'ppg\'.')
+        else:
+            if kind == 'all':
+                kind = ('eda', 'ppg')
+
+            ppg_metrics, eda_metrics = None, None
+
+            if 'ppg' in kind:
+                bvp = self.get_bvp().bvp
+                bvp_start = self.get_bvp().start
+                fs = self.get_bvp().fs
+                ibi = self.get_ibi().ibi
+                ppg_beats = BeatDetectors(fs, False).adaptive_threshold(
+                    bvp['BVP'])
+                sqa = Cardio(fs)
+                artifact_beats = sqa.identify_artifacts(
+                    ppg_beats, 'both', initial_hr, 6, 5, 1)
+                ppg_metrics = sqa.compute_metrics(
+                    bvp, ppg_beats, artifact_beats, 'Timestamp', seg_size,
+                    min_hr, rolling_window, rolling_step, show_progress)
+            if 'eda' in kind:
+                eda = self.get_eda().eda
+                eda_start = self.get_eda().start
+                fs = self.get_eda().fs
+                eda['EDA'] = edaFilters(fs).gaussian(
+                    eda['EDA'], window = int(0.5 * fs))
+                temp = self.get_temp().temp
+                sqa = EDA(fs, eda_min = min_eda, eda_max = max_eda)
+                eda_metrics = sqa.compute_metrics(
+                    eda['EDA'], temp['Temp'], eda['Timestamp'],
+                    preprocessed = True, seg_size = 60,
+                    rolling_window = rolling_window,
+                    rolling_step = rolling_step)
+        if ppg_metrics is not None and eda_metrics is not None:
+            return ppg_metrics, eda_metrics
+        else:
+            if ppg_metrics is not None:
+                return ppg_metrics
+            if eda_metrics is not None:
+                return eda_metrics
+
+    def plot_signals(self, segment = 1, seg_size = 60, interactive = True):
+        """
+        Display a plot of a segment of signals recorded with the Empatica E4
+        device.
+
+        Parameters
+        ----------
+        segment : int, optional
+            The number of the position of the segment to plot; by default, 1.
+        seg_size : int, optional
+            The segment size in seconds; by default, 60.
+        interactive : bool, optional
+            Whether to plot an interactive visualization; by default, True.
+
+        Returns
+        -------
+        fig : plotly.graph_objects.Figure or None
+            If `interactive` is True, displays and returns an interactive
+            Plotly figure containing the plotted signals. If `interactive`
+            is False, displays a static figure and returns None.
+        """
+        data = self.preprocess()
+        dtypes = ('acc', 'bvp', 'eda', 'temp')
+        if interactive:
+            fig = make_subplots(
+                rows = 4, cols = 1,
+                shared_xaxes = True,
+                vertical_spacing = 0.02,
+                row_heights = [0.2, 0.3, 0.3, 0.2])
+            for n in range(len(dtypes)):
+                if dtypes[n] in ('acc', 'bvp'):
+                    fs = data.bvp_fs
+                    seg_start = int((segment - 1) * fs * seg_size)
+                    seg_end = seg_start + int(fs * seg_size)
+                    signal_name = 'ACC' if dtypes[n] == 'acc' else 'BVP'
+                    color = 'forestgreen' if dtypes[n] == 'acc' else '#3562bd'
+                    ylabel = 'm/s²' if dtypes[n] == 'acc' else ''
+                    if dtypes[n] == 'acc':
+                        x = data.acc['Timestamp'].iloc[seg_start:seg_end]
+                        y = data.acc['Magnitude'].iloc[seg_start:seg_end]
+                    else:
+                        x = data.bvp['Timestamp'].iloc[seg_start:seg_end]
+                        y = data.bvp['BVP'].iloc[seg_start:seg_end]
+                else:
+                    fs = data.eda_fs
+                    seg_start = int((segment - 1) * fs * seg_size)
+                    seg_end = seg_start + int(fs * seg_size)
+                    signal_name = 'EDA' if dtypes[n] == 'eda' else 'Temperature'
+                    color = '#43c9de' if dtypes[n] == 'eda' else '#8b3ac9'
+                    ylabel = 'uS' if dtypes[n] == 'eda' else '°C'
+                    if dtypes[n] == 'eda':
+                        x = data.eda['Timestamp'].iloc[seg_start:seg_end]
+                        y = data.eda['EDA'].iloc[seg_start:seg_end]
+                    else:
+                        x = data.temp['Timestamp'].iloc[seg_start:seg_end]
+                        y = data.temp['Temp'].iloc[seg_start:seg_end]
+                fig.add_trace(
+                    go.Scatter(
+                        x = x, y = y,
+                        name = signal_name,
+                        line = dict(color = color, width = 1.5),
+                        hovertemplate = f'<b>{signal_name}</b>: %{{y:.2f}} '
+                                        f'{ylabel}<extra></extra>'),
+                    row = n+1, col = 1)
+                fig.update_yaxes(
+                    title_text = ylabel,
+                    row = 1, col = 1,
+                    showgrid = True,
+                    gridwidth = 0.5,
+                    gridcolor = 'lightgrey',
+                    griddash = 'dot',
+                    tickcolor = 'grey',
+                    linecolor = 'grey')
+            fig.show()
+            return fig
+        else:
+            fig, axs = plt.subplots(4, 1, figsize = (10, 8))
+            for n in range(len(dtypes)):
+                fs = data.eda_fs
+                seg_start = int((segment - 1) * fs * seg_size)
+                seg_end = seg_start + int(fs * seg_size)
+                if dtypes[n] in ('acc', 'bvp'):
+                    signal_name = 'ACC' if dtypes[n] == 'acc' else 'BVP'
+                    color = 'forestgreen' if dtypes[n] == 'acc' else '#3562bd'
+                    ylabel = 'm/s²' if dtypes[n] == 'acc' else 'BVP'
+                    if dtypes[n] == 'acc':
+                        x = data.acc['Timestamp'].iloc[seg_start:seg_end]
+                        y = data.acc['Magnitude'].iloc[seg_start:seg_end]
+                    else:
+                        x = data.bvp['Timestamp'].iloc[seg_start:seg_end]
+                        y = data.bvp['BVP'].iloc[seg_start:seg_end]
+                else:
+                    signal_name = 'EDA' if dtypes[n] == 'eda' else 'Temperature'
+                    color = '#43c9de' if dtypes[n] == 'eda' else '#8b3ac9'
+                    ylabel = 'uS' if dtypes[n] == 'eda' else '°C'
+                    if dtypes[n] == 'eda':
+                        x = data.eda['Timestamp'].iloc[seg_start:seg_end]
+                        y = data.eda['EDA'].iloc[seg_start:seg_end]
+                    else:
+                        x = data.temp['Timestamp'].iloc[seg_start:seg_end]
+                        y = data.temp['Temp'].iloc[seg_start:seg_end]
+                for ax in axs:
+                    ax.plot(x, y, label = signal_name, color = color, lw = 1.2)
+                    ax.set_xlabel('Timestamp')
+                    ax.set_ylabel(ylabel)
+                    ax.legend(frameon = False)
+            plt.tight_layout()
+            plt.show()
+            return fig, axs
+
     def _get_e4_data(self, file, name):
-        """Get pre-processed data from an Empatica E4 file."""
+        """Extract data from an Empatica E4 file."""
         if not isinstance(name, list) and not isinstance(name, str):
             raise ValueError('The `name` parameter must take either a string '
                              'or a list of strings.')

@@ -4,6 +4,8 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from tqdm import tqdm
 from math import ceil
+from scipy.interpolate import interp1d
+
 
 # ============================== CARDIOVASCULAR ==============================
 class Cardio:
@@ -890,3 +892,374 @@ class Cardio:
         iqr = self._get_iqr(data)
         QD = iqr * 0.5
         return QD
+
+
+# =================================== EDA ====================================
+class EDA:
+    """
+    A class for signal quality assessment on electrodermal activity (EDA)
+    data.
+
+    Parameters/Attributes
+    ---------------------
+    fs : int
+        The sampling rate of the EDA data.
+    eda_min : float, optional
+        The minimum acceptable value for EDA data in microsiemens; by
+        default, 0.05 uS.
+    eda_max : float, optional
+        The maximum acceptable value for EDA data in microsiemens; by
+        default, 60 uS.
+    eda_max_slope : float, optional
+        The maximum slope of EDA data in microsiemens per second; by
+        default, 5 uS/sec.
+    temp_min : float, optional
+        The minimum acceptable temperature in degrees Celsius; by
+        default, 20.
+    temp_max : float, optional
+        The maximum acceptable temperature in degrees Celsius; by
+        default, 40.
+    invalid_spread_dur : float, optional
+        The transition radius for artifacts in seconds; by default, 2.
+    """
+
+    def __init__(self, fs, eda_min = 0.2, eda_max = 40, eda_max_slope = 5,
+                 temp_min = 20, temp_max = 40, invalid_spread_dur = 2):
+        """
+        Initialize the EDA object.
+
+        Parameters
+        ----------
+        fs : int
+            The sampling rate of the ECG or PPG recording.
+        eda_min : float, optional
+            The minimum acceptable value for EDA data in microsiemens; by
+            default, 0.05 uS.
+        eda_max : float, optional
+            The maximum acceptable value for EDA data in microsiemens; by
+            default, 60 uS.
+        eda_max_slope : float, optional
+            The maximum slope of EDA data in microsiemens per second; by
+            default, 5 uS/sec.
+        temp_min : float, optional
+            The minimum acceptable temperature in degrees Celsius; by
+            default, 20.
+        temp_max : float, optional
+            The maximum acceptable temperature in degrees Celsius; by
+            default, 40.
+        invalid_spread_dur : float, optional
+            The transition radius for artifacts in seconds; by default, 2.
+        """
+        self.fs = fs
+        self.eda_min = eda_min
+        self.eda_max = eda_max
+        self.eda_max_slope = eda_max_slope
+        self.temp_min = temp_min
+        self.temp_max = temp_max
+        self.invalid_spread_dur = invalid_spread_dur
+
+    def compute_metrics(self, signal, temp, timestamps = None,
+                        preprocessed = True, seg_size = 60,
+                        rolling_window = None, rolling_step = None):
+        """
+        Summarize the number and proportion of valid and invalid data points
+        in an electrodermal activity (EDA) signal per segment or across sliding
+        windows.
+
+        Parameters
+        ----------
+        signal : array_like
+            An array containing the EDA signal in microsiemens.
+        temp : array_like, optional
+            An array containing temperature data in Celsius; by default, None.
+        timestamps : array_like, optional
+            An array containing timestamps corresponding to the EDA data
+            points; by default, None.
+        preprocessed : boolean, optional
+            Whether filtered EDA data is being inputted; by default, True.
+        seg_size : int
+            The segment size in seconds; by default, 60.
+        rolling_window : int, optional
+            The size, in seconds, of the sliding window across which to
+            compute the EDA SQA metrics; by default, None.
+        rolling_step : int, optional
+            The step size, in seconds, of the sliding windows; by default, 15.
+
+        Returns
+        -------
+        metrics : pandas.DataFrame
+            A DataFrame containing quality assessment metrics per segment.
+
+        Notes
+        -----
+        If a value is given in the `rolling_window` parameter, the rolling
+        window approach will override the segmented approach, ignoring any
+        `seg_size` value.
+
+        See Also
+        --------
+        SQA.EDA.assess_eda_quality :
+            Identify locations of invalid and valid EDA data points.
+        """
+        eda_min = self.eda_min
+        eda_max = self.eda_max
+        eda_max_slope = self.eda_max_slope
+        temp_min = self.temp_min
+        temp_max = self.temp_max
+        invalid_spread_dur = self.invalid_spread_dur
+
+        if seg_size < 0 or \
+                (rolling_window is not None and rolling_window < 0):
+            raise ValueError('Window size must be set to a positive integer.')
+
+        metrics = pd.DataFrame()
+        seg_name = 'Moving Window' if rolling_window is not None else 'Segment'
+
+        # Assess EDA quality
+        edaqa = self.assess_eda_quality(
+            signal, temp, preprocessed, seg_size, rolling_window, rolling_step)
+
+        # Summarize EDA QA results
+        for segment, qa in edaqa.items():
+            metrics = pd.concat([metrics, pd.DataFrame.from_records([{
+                seg_name: segment,
+                'N Valid': len(qa['valid']),
+                '% Valid': round(
+                    (len(qa['valid']) / qa['length']) * 100, 2),
+                'N Invalid': len(qa['invalid']),
+                '% Invalid': round(
+                    (len(qa['invalid']) / qa['length']) * 100, 2)
+            }])], ignore_index = True)
+        if timestamps is not None:
+            if rolling_window is not None:
+                metrics.insert(1, 'Timestamp', np.array(
+                    timestamps[::int(rolling_step * self.fs)]))
+            else:
+                metrics.insert(1, 'Timestamp', np.array(
+                    timestamps[::int(seg_size * self.fs)]))
+        return metrics
+
+    def assess_eda_quality(self, signal, temp = None, preprocessed = True,
+                           seg_size = 60, rolling_window = None,
+                           rolling_step = 15):
+        """
+        Identifies valid and invalid data points in electrodermal activity
+        using the automated quality assessment procedure by Kleckner et al.
+        (2017) by segment or across sliding windows.
+
+        Parameters
+        ----------
+        signal : array_like
+            An array containing the EDA signal in microsiemens.
+        temp : array_like
+            An array containing temperature data in Celsius; by default, None.
+        preprocessed : boolean, optional
+            Whether filtered EDA data is being inputted; by default, True.
+        seg_size : int
+            The segment size in seconds; by default, 60.
+        rolling_window : int, optional
+            The size, in seconds, of the sliding window across which to
+            compute the EDA SQA metrics; by default, None.
+        rolling_step : int, optional
+            The step size, in seconds, of the sliding windows; by default, 15.
+
+        Returns
+        -------
+        edaqa : dict
+            A dictionary containing key-value pairs of segment or rolling
+            window numbers and their corresponding dictionaries of valid and
+            invalid EDA indices and lengths. Keys of nested dictionaries are
+            'valid', 'invalid', and 'length'.
+
+        References
+        ----------
+        Kleckner, I. R., Jones, R. M., Wilder-Smith, O., Wormwood, J. B.,
+        Akcakaya, M., Quigley, K. S., ... & Goodwin, M. S. (2017). Simple,
+        transparent, and flexible automated quality assessment procedures for
+        ambulatory electrodermal activity data. IEEE Transactions on Biomedical
+        Engineering, 65(7), 1460-1467.
+        """
+        eda_min = self.eda_min
+        eda_max = self.eda_max
+        eda_max_slope = self.eda_max_slope
+        temp_min = self.temp_min
+        temp_max = self.temp_max
+        invalid_spread_dur = self.invalid_spread_dur
+
+        # Check inputs
+        if eda_min >= eda_max:
+            raise ValueError("`eda_min` must be smaller than `eda_max`.")
+        if temp_min >= temp_max:
+            raise ValueError("`temp_min` must be smaller than `temp_max`.")
+
+        # Get the sampling interval
+        sampling_interval = 1 / self.fs
+
+        # Filter data based on the methods in Kleckner et al. (2017)
+        if not preprocessed:
+            try:
+                window = int(2 * self.fs)
+                b = np.ones(window) / window
+                signal = np.convolve(signal, b, mode = 'same')
+                signal = self._filter_data(signal, window = 2)
+            except ValueError:
+                pass
+
+        # Filter temperature data
+        if temp is not None:
+            window = int(2 * self.fs)
+            b = np.ones(window) / window
+            temp = np.convolve(temp, b, mode = 'same')
+            temp = self._filter_data(temp, window = 2)
+
+        def _edaqa(signal):
+            """Evaluate the input signal against the automated EDA QA rules in
+            Kleckner et al. (2017)."""
+            nonlocal eda_min, eda_max, eda_max_slope, temp, temp_min, \
+                temp_max, sampling_interval
+
+            slopes = np.concatenate([[0], np.diff(signal) / sampling_interval])
+            if temp is not None:
+                # Handle unequal lengths of EDA and temp arrays
+                if len(signal) != len(temp):
+                    temp = self._equalize_temp(signal, temp)
+                invalid_checks = (
+                        (signal < eda_min) | (signal > eda_max) |  # Rule 1
+                        (np.abs(slopes) > eda_max_slope) |  # Rule 2
+                        (temp < temp_min) | (temp > temp_max)  # Rule 3
+                )
+            else:
+                invalid_checks = (
+                        (signal < eda_min) | (signal > eda_max) |  # Rule 1
+                        (np.abs(slopes) > eda_max_slope)  # Rule 2
+                )
+
+            # Determine number of data points to spread for Rule 4
+            invalid_spread_length = int(
+                invalid_spread_dur / sampling_interval)
+
+            # Rule #4
+            invalid_data = np.zeros_like(signal, dtype = bool)
+            for d in range(len(invalid_checks)):
+                if invalid_checks[d]:
+                    start_idx = max(d - invalid_spread_length + 1, 0)
+                    end_idx = min(d + invalid_spread_length,
+                                  len(invalid_checks))
+                    invalid_data[start_idx:end_idx] = True
+            valid_ix = np.where(~invalid_data)[0]
+            invalid_ix = np.where(invalid_data)[0]
+            return valid_ix, invalid_ix
+
+        # Quality assessment of EDA data
+        edaqa = {}
+        if rolling_window is not None:
+            w = 1
+            for n in range(0, len(signal), rolling_step):
+                window = np.array(signal[n:n + int(self.fs * rolling_window)])
+                valid_ix, invalid_ix = _edaqa(window)
+                edaqa[w] = {'valid': valid_ix,
+                            'invalid': invalid_ix,
+                            'length': len(window)}
+                w += 1
+        else:
+            s = 1
+            for n in range(0, len(signal), int(self.fs * seg_size)):
+                segment = np.array(signal[n:n + int(self.fs * seg_size)])
+                valid_ix, invalid_ix = _edaqa(segment)
+                edaqa[s] = {'valid': valid_ix,
+                            'invalid': invalid_ix,
+                            'length': len(segment)}
+                s += 1
+        return edaqa
+
+    def plot_edaqa(self, metrics, title = None):
+        """
+        Plot percentages of valid and invalid EDA data.
+
+        Parameters
+        ----------
+        metrics : pandas.DataFrame()
+            The DataFrame outputted from `SQA.EDA.compute_metrics()`
+            that contains EDA QA metrics per segment or sliding window.
+        title : str, optional
+
+        Returns
+        -------
+        fig : plotly.graph_objects.Figure
+            A figure containing a bar chart of percentages of invalid and
+            valid EDA data points by segment or sliding window.
+
+        See Also
+        --------
+        SQA.EDA.compute_metrics :
+            Summarize EDA QA metrics by segment or sliding window.
+        """
+
+        def colormap(value):
+            if value <= 25:
+                return '#139253'  # green
+            elif (value > 25) & (value <= 90):
+                return '#f2ac42'  # yellow
+            else:
+                return '#f25847'  # red
+
+        colors = [colormap(value) for value in metrics['% Invalid']]
+
+        fig = go.Figure(
+            data = [
+                go.Bar(
+                    x = metrics['Segment'],
+                    y = [100] * len(metrics),  # Height of 100% for each bar
+                    opacity = 0.3,  # Set opacity to make them light grey
+                    hoverinfo = 'none',
+                    showlegend = False,
+                    marker = dict(color = 'lightgrey')),
+                go.Bar(
+                    x = metrics['Segment'],
+                    y = metrics['% Invalid'],
+                    name = 'Invalid',
+                    marker = dict(color = colors),
+                    showlegend = False,
+                    hovertemplate = '<b>Segment %{x}:</b> %{y:.1f}% '
+                                    'invalid<extra></extra>')
+            ]
+        )
+        fig.update_layout(
+            xaxis_title = 'Segment Number',
+            xaxis = dict(tickmode = 'linear', dtick = 1),
+            yaxis = dict(
+                title = '% Invalid',
+                range = [0, 100],
+                dtick = 20),
+            font = dict(family = 'Poppins', size = 13),
+            height = 289,
+            margin = dict(t = 70, r = 20, l = 40, b = 65),
+            barmode = 'overlay',
+            template = 'simple_white',
+        )
+        if title is not None:
+            fig.update_layout(
+                title = title
+            )
+        return fig
+
+    def _equalize_temp(self, eda, temp):
+        """Interpolate or truncate data in the temperature array to match the
+        length of the EDA data array."""
+        eda_ix = np.arange(len(eda))
+        temp_ix = np.arange(len(temp))
+        if len(temp) < len(eda):
+            interp_func = interp1d(temp_ix, temp, kind = 'linear',
+                                   fill_value = 'extrapolate')
+            temp = interp_func(eda_ix)
+        if len(temp) > len(eda):
+            temp = temp[:len(eda)]
+        return temp
+
+    def _filter_data(self, data, window):
+        """Filter EDA and temperature data based on the approach in
+        Kleckner et al. (2017)."""
+        window = int(window * self.fs)
+        b = np.ones(window) / window
+        filtered = np.convolve(data, b, mode = 'same')
+        return filtered

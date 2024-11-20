@@ -1,5 +1,7 @@
-temp/00.txt
-configs/00.txt
+temp/
+configs/
+beat-editor/data/
+beat-edtiro/export/
 cache/
 .ipynb_checkpoints/
 **/__pycache__/

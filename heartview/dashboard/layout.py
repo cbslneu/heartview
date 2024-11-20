@@ -14,10 +14,10 @@ layout = html.Div(id = 'main', children = [
         dcc.Store(id = 'config-download-memory', storage_type = 'memory'),
         dcc.Store(id = 'memory-db', storage_type = 'memory'),
         html.Span(className = 'h5',
-                  children = ['Welcome to HeartView']),
+                  children = ['Welcome to PhysioView']),
         html.P(children = [
-            'Explore signal quality metrics for ambulatory cardiovascular '
-            'data collected with devices such as the Empatica E4 and Actiwave '
+            'Explore signal quality metrics for ambulatory physiological '
+            'data collected with devices such as the Empatica E4 or Actiwave '
             'Cardio.']),
         html.H4(children = [
             'Load Data',
@@ -70,7 +70,7 @@ layout = html.Div(id = 'main', children = [
                     options = [
                         {'label': 'ECG', 'value': 'ECG'},
                         {'label': 'PPG', 'value': 'PPG'},
-                        # {'label': 'EDA', 'value': 'EDA'}
+                        {'label': 'EDA', 'value': 'EDA'}
                     ],
                     inline = True
                 )]
@@ -78,6 +78,7 @@ layout = html.Div(id = 'main', children = [
             html.Span('Sampling Rate: '),
             dcc.Input(id = 'sampling-rate', value = 500, type = 'number',
                       style = {'display': 'inline', 'marginLeft': '3px'}),
+            # ========================== TO DO ===============================
             html.Div(id = 'resample', hidden = True, children = [
                 daq.BooleanSwitch(
                     id = 'toggle-resample',
@@ -89,6 +90,7 @@ layout = html.Div(id = 'main', children = [
                 dcc.Input(id = 'resampling-rate', value = 64,
                           type = 'number', disabled = True)
             ]),
+            # ================================================================
             html.Div(id = 'data-variables', children = [
                 html.P('Variables:', className = 'variables'),
                 dbc.Row([
@@ -119,27 +121,6 @@ layout = html.Div(id = 'main', children = [
         ]),
         html.Div(id = 'preprocess-data', hidden = True, children = [
             html.H4('Preprocess Data'),
-            html.Div(id = 'segment-data', children = [
-                html.Span('Segment Size (sec):'),
-                dcc.Input(id = 'seg-size', value = 60, type = 'number'),
-                html.I(className = 'fa-regular fa-circle-question',
-                       id = 'seg-data-help'),
-                dbc.Tooltip(
-                    'This sets the size of the windows into which your data '
-                    'will be segmented; by default, 60 seconds.',
-                    target = 'seg-data-help')
-            ]),
-            html.Div(id = 'artifact-params', children = [
-                html.Span('Artifact Identification Tolerance:'),
-                dcc.Input(id = 'artifact-tol', value = 1, type = 'number',
-                          min = 0.1, max = 2, step = 0.1),
-                html.I(className = 'fa-regular fa-circle-question',
-                       id = 'artifact-tol-help'),
-                dbc.Tooltip(
-                    'This sets the tolerance level of the artifact detection '
-                    'algorithm. Lower tolerance flags more artifacts.',
-                    target = 'artifact-tol-help')
-            ]),
             html.Div(id = 'filter-data', children = [
                 daq.BooleanSwitch(
                     id = 'toggle-filter',
@@ -153,7 +134,52 @@ layout = html.Div(id = 'main', children = [
                             'noise, including baseline drift, powerline '
                             'interference, and muscle activity.',
                             target = 'filter-help')
-            ])
+            ]),
+            html.Div(id = 'cardio-preprocessing', hidden = True, children = [
+                html.Div(id = 'artifact-params', children = [
+                    html.Div(children = [
+                        html.Span('Artifact Identification Method:'),
+                        html.Button(
+                            html.I(className = 'fa-regular fa-circle-question'),
+                            id = 'artifact-method-help', n_clicks = 0),
+                        dcc.Dropdown(
+                            id = 'artifact-method',
+                            options = [
+                                {'label': 'Berntson et al. (1990)',
+                                 'value': 'cbd'},
+                                {'label': 'Hegarty-Craver et al. (2018)',
+                                 'value': 'hegarty'}
+                            ],
+                            value = 'cbd', clearable = False)
+                    ]),
+                    html.Div(children = [
+                        html.Span('Artifact Identification Tolerance:'),
+                        dcc.Input(id = 'artifact-tol', value = 1, type = 'number',
+                                  min = 0.1, max = 2, step = 0.1),
+                        html.I(className = 'fa-regular fa-circle-question',
+                               id = 'artifact-tol-help'),
+                        dbc.Tooltip(
+                            'This sets the tolerance level of the artifact '
+                            'detection algorithm. A lower tolerance will lead '
+                            'to more artifacts flagged.', target = 'artifact-tol-help')
+                    ], style = {'display': 'flex', 'alignItems': 'center'})
+                ]),
+                html.Div(id = 'select-beat-detector', children = [
+                    html.Span('Beat Detector:'),
+                    dcc.Dropdown(id = 'beat-detectors',
+                                 options = [])
+                ]),
+            ]),
+            html.Div(id = 'segment-data', children = [
+                html.Span('Segment Size (sec):'),
+                dcc.Input(id = 'seg-size', value = 60, type = 'number'),
+                html.I(className = 'fa-regular fa-circle-question',
+                       id = 'seg-data-help'),
+                dbc.Tooltip(
+                    'This sets the size of the windows into which your data '
+                    'will be segmented; by default, 60 seconds.',
+                    target = 'seg-data-help')
+            ]),
         ]),
         html.Div(id = 'run-save-buttons', children = [
             html.Button('Run', n_clicks = 0, id = 'run-data', disabled = True),
@@ -196,6 +222,42 @@ layout = html.Div(id = 'main', children = [
         ], className = 'validation-error-modal',
             id = 'dtype-validator', is_open = False, centered = True),
 
+        # Artifact Identification Method Information
+        dbc.Modal([
+            dbc.ModalBody([
+                html.Div(className = 'information-content', children = [
+                    html.I(className = 'fa-regular fa-circle-question',
+                           style = {'color': '#333333'}),
+                    html.Div(className = 'artifact-method-info', children = [
+                        html.H5('Artifact Identification Methods'),
+                        html.P(children = [
+                            html.Span('Berntson et al. (1990)',
+                                      style = {'fontWeight': 600}),
+                            html.Span('This criterion beat difference '
+                                      'approach detects artifacts by '
+                                      'flagging heartbeats that deviate '
+                                      'significantly from nearby intervals, '
+                                      'using a threshold based on the '
+                                      'variability of surrounding beats.')]),
+                        html.P(children = [
+                            html.Span('Hegarty-Craver et al. (2018)',
+                                      style = {'fontWeight': 600}),
+                            html.Span('This approach detects artifacts by '
+                                      'comparing each interbeat interval to '
+                                      'an estimate based on nearby intervals, '
+                                      'flagging beats as artifacts if they '
+                                      'fall outside a predefined acceptable '
+                                      'range.')])
+                    ]),
+                    html.Button(
+                        html.I(className = 'fa-solid fa-xmark'),
+                        id = 'close-artifact-method-info')
+                ])
+            ])
+        ], className = 'validation-error-modal',
+            id = 'artifact-identification-modal', is_open = False,
+            centered = True),
+
         # Configuration File Exporter
         dbc.Modal(id = 'config-modal', is_open = False, children = [
             dbc.ModalHeader(dbc.ModalTitle('Export Configuration')),
@@ -235,7 +297,7 @@ layout = html.Div(id = 'main', children = [
     # NAVIGATION BAR
     html.Div(className = 'banner', children = [
        dbc.Row(children = [
-           dbc.Col(html.Img(src = 'assets/heartview-logo.png',
+           dbc.Col(html.Img(src = './assets/heartview-logo.png',
                             className = 'logo')),
            dbc.Col(html.Div(html.A(
                'Documentation',
@@ -317,7 +379,9 @@ layout = html.Div(id = 'main', children = [
                             dbc.ModalFooter(children = [
                                 html.Div(id = 'export-modal-btns',
                                          children = [
-                                             html.Button('OK', n_clicks = 0, id = 'ok-export'),
+                                             html.Button('OK', n_clicks = 0,
+                                                         id = 'ok-export',
+                                                         disabled = True),
                                              dcc.Download(id = 'download-summary'),
                                              dbc.Button('Cancel', n_clicks = 0, id = 'close-export'),]),
                                 html.Div(id = 'export-close-btn',
@@ -361,6 +425,17 @@ layout = html.Div(id = 'main', children = [
             html.Div(className = 'graph-settings', children = [
                 html.H4('Signal View', style = {'float': 'left'}),
                 html.Div(className = 'segment-view', children = [
+                    html.Button(children = [
+                        html.I(className = 'fa-solid fa-wand-magic-sparkles'),
+                        html.Span('Correct Beats')
+                    ], id = 'beat-correction'),
+                    html.Span('|', className = 'separator'),
+                    # Beat Editor
+                    html.Button(children = [
+                        html.I(className = 'fa-solid fa-arrow-up-right-from-square'),
+                        html.Span('Beat Editor')
+                    ], id = 'open-beat-editor', n_clicks = 0),
+                    html.Span('|', className = 'separator'),
                     html.H5('Segment:'),
                     html.Button(
                         html.I(className = 'fa-solid fa-chevron-left'),
@@ -388,6 +463,16 @@ layout = html.Div(id = 'main', children = [
                 ])
             ])
         ]),
+
+        # Beat Editor Modal
+        dbc.Modal(id = 'beat-editor-modal', children = [
+            dbc.ModalHeader(dbc.ModalTitle('Beat Editor')),
+            dbc.ModalBody(children = [
+                dcc.Loading(type = 'circle', color = '#3a4952', children = [
+                    html.Div(id = 'beat-editor-content')
+                ])
+            ])
+        ], is_open = False, centered = True, backdrop = True)
     ]),
 
     # FOOTER

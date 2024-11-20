@@ -1,7 +1,8 @@
 from os import environ
 from os import name as os_name
 from dash import Dash, DiskcacheManager, CeleryManager
-from heartview.dashboard.utils import _clear_temp
+from heartview.dashboard.utils import _clear_temp, _clear_beat_editor_data, \
+    _make_subdirs
 from heartview.dashboard.layout import layout
 from heartview.dashboard.callbacks import get_callbacks
 import dash_bootstrap_components as dbc
@@ -25,10 +26,13 @@ app = Dash(
     external_stylesheets = [dbc.themes.LUX, dbc.icons.FONT_AWESOME],
     background_callback_manager = background_callback_manager
 )
-app.title = 'HeartView Dashboard'
+app.title = 'PhysioView Dashboard'
 app.layout = layout
+app.server.name = 'PhysioView Dashboard'
 get_callbacks(app)
 
 if __name__ == '__main__':
+    _make_subdirs()
     _clear_temp()
-    app.run_server()
+    _clear_beat_editor_data()
+    app.run_server(debug = True)

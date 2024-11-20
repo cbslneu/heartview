@@ -30,7 +30,7 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
   const isPanningRef = useRef(false); // Tracks if the user is panning the chart
 
   const xAxisKeys = ["Timestamp", "Sample"];
-  const yAxisKeys = ["ECG", "Filtered"];
+  const yAxisKeys = ["Filtered", "Signal"];
   const checkDataType = (fileData, data) => fileData.some(o => o.hasOwnProperty(data));
 
   const dataTypeX = xAxisKeys.filter(data => checkDataType(fileData, data) === true);

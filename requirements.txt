@@ -1,5 +1,6 @@
 blosc2
 celery
+cvxopt
 cython==0.29.21
 dash
 dash_bootstrap_components
