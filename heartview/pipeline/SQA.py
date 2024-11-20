@@ -556,7 +556,7 @@ class Cardio:
         segments = pd.Series(np.arange(1, n_seg + 1))
         n_expected = (
                 seconds.groupby(seconds.index // seg_size)['Mean HR'].median() * (seg_size / 60)
-        ).astype(int)
+        ).fillna(0).astype(int)
         n_detected = seconds.groupby(
             seconds.index // seg_size)['N Beats'].sum()
         n_missing = (n_expected - n_detected).clip(lower = 0)

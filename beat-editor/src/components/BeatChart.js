@@ -140,7 +140,7 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
           },
           labels: {
             formatter: function() {
-              const date = new Date(this.value * 1000);
+              const date = new Date(this.value);
               return date.toLocaleString().split(',')[1];
             },
             style: {

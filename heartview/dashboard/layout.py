@@ -390,7 +390,7 @@ layout = html.Div(id = 'main', children = [
                                          hidden = True)],
                                 style = {'display': 'inline'})
                         ], backdrop = 'static', centered = True)],
-                    style = {'paddingTop': '15px'})
+                    style = {'paddingTop': '13px'})
             ]),
 
             # Panel 2: Data Quality

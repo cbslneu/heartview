@@ -265,10 +265,12 @@ def _create_beat_editor_file(data, filename):
     """Create a beat editor JSON file."""
     if 'Timestamp' in data.columns:
         data['Timestamp'] = pd.to_datetime(data['Timestamp'])
-    for col in ["PPG", "BVP", "ECG"]:
+    for col in ['PPG', 'BVP', 'ECG']:
         if col in data.columns:
             data.rename(columns = {col: 'Signal'}, inplace = True)
             break
+    if 'Filtered' in data.columns:
+        data = data.drop(columns = ['Signal'])
     root_dir = '/'.join(path.dirname(path.abspath(__file__)).split('/')[:-2])
     target_dir = path.join(root_dir, 'beat-editor', 'data')
     file_path = path.join(target_dir, f"{filename}_edit.json")

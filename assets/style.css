@@ -280,6 +280,9 @@ h6 {
 #toggle-filter {
     display: inline-flex;
 }
+#toggle-filter .dlqMgb {
+    transform: translate(18px, 0.5px)
+}
 #toggle-filter label {
     margin-top: 1px;
     margin-left: 5px;
@@ -287,17 +290,22 @@ h6 {
     font-size: 11pt;
     padding-right: 0px;
 }
-#toggle-filter .igrnnx, #toggle-filter .dlqMgb {
+#toggle-filter .dlqMgb, #toggle-config .igrnnx {
     width: 17.5px !important;
     height: 17.5px !important;
 }
-#toggle-filter .dlqMgb, #toggle-config .dlqMgb, #toggle-resample .dlqMgb {
-    transform: translateX(18px);
+#toggle-filter .igrnnx {
+    width: 17.5px !important;
+    height: 17.5px !important;
+    transform: translate(-0.5px, 0.5px);
+}
+#toggle-config .dlqMgb, #toggle-resample .dlqMgb {
+    transform: translate(18px);
 }
 .sc-bxivhb {
     width: 40px !important;    /* toggler size */
 }
-#toggle-config .igrnnx, #toggle-config .dlqMgb {
+#toggle-config .dlqMgb {
     width: 17.5px !important;
     height: 17.5px !important;
 }
