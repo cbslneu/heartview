@@ -1,0 +1,7 @@
+# CODEOWNERS
+# This file defines ownership rules for the repository.
+# Owners are automatically requested for reviews on pull requests affecting the
+# files or directories they own.
+
+# Ownerships
+/beat-editor/   @tchen94
