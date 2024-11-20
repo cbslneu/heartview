@@ -148,9 +148,9 @@ cd server
 ```
 2. Run the following line to start the backend
 ```
-npm run
+npm start
 ```
-3. Open up another terminal tab or window and navigate back to `beat-editor`, once there run the line from the step above to start the frontend code.
+3. Open up another terminal tab or window and navigate back to `beat-editor`. Once there, run `npm start` again to start the frontend.
 
 ### Terminating
 1. Kill the dashboard program: press `CTRL`+`c`.
