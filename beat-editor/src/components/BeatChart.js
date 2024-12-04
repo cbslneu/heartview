@@ -1,133 +1,130 @@
 import React, { useEffect, useState, useRef } from "react";
-import Highcharts from 'highcharts';
+import Highcharts from "highcharts";
+import HighchartsMore from "highcharts/highcharts-more";
 import HighchartsReact from "highcharts-react-official";
 import _ from "lodash";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import JSONExporterBackEndSupported from './JSONExporterBackEndSupported'
-// import JSONExporter from "./JSONExporter"; For non-backend use cases
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import JSONSaver from "./JSONSaver";
 
-import './styles.scss';
-import '@fortawesome/fontawesome-free/css/all.min.css';
+import "./styles.scss";
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
 Highcharts.SVGRenderer.prototype.symbols.cross = function (x, y, w, h) {
-  return ['M', x, y, 'L', x + w, y + h, 'M', x + w, y, 'L', x, y + h, 'z'];
+  return ["M", x, y, "L", x + w, y + h, "M", x + w, y, "L", x, y + h, "z"];
 };
 
-const BeatChart = ({ fileData, fileName, segmentOptions }) => {
+HighchartsMore(Highcharts);
+
+const BeatChart = ({
+  fileData,
+  fileName,
+  segmentOptions,
+  addBeats = [],
+  deleteBeats = [],
+  unusableBeats = [],
+}) => {
   const [chartOptions, setChartOptions] = useState(null);
   const [ecgData, setECGData] = useState([]);
   const [beatData, setBeatData] = useState([]);
   const [beatArtifactData, setBeatArtifactData] = useState([]);
   const [isAddMode, setIsAddMode] = useState(false);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [isMarkingUnusableMode, setIsMarkingUnusableMode] = useState(false);
   const [addModeCoordinates, setAddModeCoordinates] = useState([]);
   const [deleteModeCoordinates, setDeleteModeCoordinates] = useState([]);
+  const [unusableSegments, setUnusableSegments] = useState([]);
   const [selectedSegment, setSelectedSegment] = useState("1");
 
+  useEffect(() => {
+    setAddModeCoordinates(addBeats);
+    setDeleteModeCoordinates(deleteBeats);
+    setUnusableSegments(unusableBeats);
+  }, [addBeats, deleteBeats, unusableBeats]);
+
   const chartRef = useRef(null);
+  const dragStartRef = useRef(null);
+  const dragPlotBandRef = useRef(null);
   const isDraggingRef = useRef(false); // Tracks drag during panning
   const isPanningRef = useRef(false); // Tracks if the user is panning the chart
+  const lastValidDragEnd = useRef(null);
 
   const xAxisKeys = ["Timestamp", "Sample"];
   const yAxisKeys = ["Filtered", "Signal"];
-  const checkDataType = (fileData, data) => fileData.some(o => o.hasOwnProperty(data));
+  const checkDataType = (fileData, data) =>
+    fileData.some((o) => o.hasOwnProperty(data));
 
-  const dataTypeX = xAxisKeys.filter(data => checkDataType(fileData, data) === true);
-  const dataTypeY = yAxisKeys.filter(data => checkDataType(fileData, data) === true);
+  const dataTypeX = xAxisKeys.filter(
+    (data) => checkDataType(fileData, data) === true
+  );
+  const dataTypeY = yAxisKeys.filter(
+    (data) => checkDataType(fileData, data) === true
+  );
 
   useEffect(() => {
     if (fileData) {
       // Filter the data by the selected segment from the dropdown
-      const segmentFilteredData = selectedSegment ? _.filter(fileData, o => o.Segment.toString() === selectedSegment) : fileData;
-      const beatAnnotatedData = _.filter(segmentFilteredData, o => o.Beat === 1);
-      const correctedAnnotatedData = _.filter(segmentFilteredData, o => o.Corrected === 1);
-      const artifactData = _.filter(segmentFilteredData, o => o.Artifact === 1);
-      
+      const segmentFilteredData = selectedSegment
+        ? _.filter(fileData, (o) => o.Segment.toString() === selectedSegment)
+        : fileData;
+      const beatAnnotatedData = _.filter(
+        segmentFilteredData,
+        (o) => o.Beat === 1
+      );
+      const correctedAnnotatedData = _.filter(
+        segmentFilteredData,
+        (o) => o.Corrected === 1
+      );
+      const artifactData = _.filter(
+        segmentFilteredData,
+        (o) => o.Artifact === 1
+      );
+
       const xAxisData = segmentFilteredData.map((o) => o[dataTypeX]);
       const yAxisData = segmentFilteredData.map((o) => o[dataTypeY]);
-      const beatAnnotatedX = beatAnnotatedData.map(o => o[dataTypeX]);
-      const beatAnnotatedY = beatAnnotatedData.map(o => o[dataTypeY]);
-      const correctedAnnotatedX = correctedAnnotatedData.map(o => o[dataTypeX]);
-      const correctedAnnotatedY = correctedAnnotatedData.map(o => o[dataTypeY]);
-      const artifactX = artifactData.map(o => o[dataTypeX]);
-      const artifactY = artifactData.map(o => o[dataTypeY]);
+
+      const artifactX = artifactData.map((o) => o[dataTypeX]);
+      const artifactY = artifactData.map((o) => o[dataTypeY]);
 
       const initECGsData = xAxisData.map((dataType, index) => ({
         x: dataType,
         y: yAxisData[index],
       }));
 
-      let initBeats;
+      const initBeats =
+        correctedAnnotatedData.length > 0
+          ? correctedAnnotatedData.map((o) => ({
+              x: o.Timestamp,
+              y: o.Filtered,
+            }))
+          : beatAnnotatedData.map((o) => ({ x: o.Timestamp, y: o.Filtered }));
 
-      if (correctedAnnotatedData.length > 0) {
-        initBeats = correctedAnnotatedX.map(
-          (correctedTimestamp, index) => ({
-            x: correctedTimestamp,
-            y: correctedAnnotatedY[index],
-          })
-        );
-      } else {
-        initBeats = beatAnnotatedX.map((beatTimeStamp, index) => ({
-          x: beatTimeStamp,
-          y: beatAnnotatedY[index],
-        }));
-      }
-      
       const initArtifacts = artifactX.map((artifactX, index) => ({
         x: artifactX,
-        y: artifactY[index]
+        y: artifactY[index],
       }));
 
       setChartOptions({
         chart: {
           type: "line",
-          zoomType: "xy",
-          panning: true,       // Enable panning
-          panKey: 'shift',     // Optional: Hold Shift to pan
+          zoomType: isMarkingUnusableMode ? null : "x",
+          panning: !isMarkingUnusableMode, // Enable panning
+          panKey: "shift", // Optional: Hold Shift to pan
           events: {
-            load: function() {
-              const chart = this;
-            
-              const handleMouseDown = (event) => {
-                if (event.shiftKey) {
-                  isPanningRef.current = true;
-                  isDraggingRef.current = false;
-                }
-              };
-            
-              const handleMouseMove = (event) => {
-                if (isPanningRef.current) {
-                  isDraggingRef.current = true;
-                }
-              };
-            
-              const handleMouseUp = (event) => {
-                // Check if Shift key was down during the pan, otherwise reset panning state
-                if (event.shiftKey) {
-                  isPanningRef.current = true; // Still panning
-                } else {
-                  isPanningRef.current = false;
-                  isDraggingRef.current = false; 
-                }
-              };
-            
-              chart.container.addEventListener('mousedown', handleMouseDown);
-              chart.container.addEventListener('mousemove', handleMouseMove);
-              chart.container.addEventListener('mouseup', handleMouseUp);
+            pan: (event) => {
+              if (event.shiftKey) {
+                isPanningRef.current = true;
+              }
             },
-            click: function(event) {
-              // Prevent coordinate plotting during or after panning
-              if (isPanningRef.current || isDraggingRef.current) {
-                return;
-              } else if (isAddMode || isDeleteMode) {
+            click: function (event) {
+              if ((isAddMode || isDeleteMode) && !event.shiftKey) {
                 handleChartClick(event);
-              } 
-            }
+              }
+            },
           },
           style: {
             fontFamily: "'Poppins', sans-serif",
-            fontSize: '20px'
+            fontSize: "20px",
           },
           animation: false,
         },
@@ -139,27 +136,30 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
             text: dataTypeX,
           },
           labels: {
-            formatter: function() {
+            formatter: function () {
               const date = new Date(this.value);
-              return date.toLocaleString().split(',')[1];
+              return date.toUTCString().split(" ")[4];
             },
             style: {
-              fontSize: '13px'
+              fontSize: "13px",
             },
           },
           allowDecimals: true,
+          plotBands: unusableSegments,
         },
         yAxis: {
           title: {
-            text: "mV",
+            text: "Signal",
           },
           allowDecimals: true,
         },
         tooltip: {
-          formatter: function() {
-            const date = new Date(this.x * 1000);
-            return `<b>${this.series.name}</b><br/>Time: ${date.toLocaleString().split(',')[1]} <br/>Amplitude: ${this.y.toFixed(3)} mV`;
-          }
+          formatter: function () {
+            const date = new Date(this.x);
+            return `<b>${this.series.name}</b><br/>Time: ${
+              date.toUTCString().split(" ")[4]
+            } <br/>Amplitude: ${this.y.toFixed(3)} mV`;
+          },
         },
         series: [
           {
@@ -177,9 +177,9 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
             },
             point: {
               events: {
-                click: isAddMode || isDeleteMode ? handleChartClick : ""
-              }
-            }
+                click: isAddMode || isDeleteMode ? handleChartClick : "",
+              },
+            },
           },
           {
             name: "Beat",
@@ -200,8 +200,8 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
             },
             point: {
               events: {
-                click: isAddMode || isDeleteMode ? handleChartClick : ""
-              }
+                click: isAddMode || isDeleteMode ? handleChartClick : "",
+              },
             },
           },
           {
@@ -210,9 +210,9 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
             type: "scatter",
             color: "red",
             marker: {
-              symbol: "circle"
+              symbol: "circle",
             },
-            visible: initArtifacts.length > 0, 
+            visible: initArtifacts.length > 0,
             showInLegend: initArtifacts.length > 0, // prevents it from showing in the legend
             turboThreshold: 0,
             states: {
@@ -222,20 +222,26 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
             },
             point: {
               events: {
-                click: isAddMode || isDeleteMode ? handleChartClick : ""
-              }
+                click: isAddMode || isDeleteMode ? handleChartClick : "",
+              },
             },
           },
           {
             name: "Added Beats",
-            data: addModeCoordinates.filter(o => o.segment === selectedSegment),
+            data: addModeCoordinates.filter(
+              (o) => o.segment === selectedSegment
+            ),
             type: "scatter",
             color: "#02E337",
             marker: {
               symbol: "circle",
             },
-            visible: addModeCoordinates.some(o => o.segment === selectedSegment), // Show if there are coordinates
-            showInLegend: addModeCoordinates.some(o => o.segment === selectedSegment),
+            visible: addModeCoordinates.some(
+              (o) => o.segment === selectedSegment
+            ), // Show if there are coordinates
+            showInLegend: addModeCoordinates.some(
+              (o) => o.segment === selectedSegment
+            ),
             turboThreshold: 0,
             states: {
               hover: {
@@ -247,13 +253,15 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
             },
             point: {
               events: {
-                click: handleChartClick
-              }
+                click: handleChartClick,
+              },
             },
           },
           {
             name: "Deleted Beats",
-            data: deleteModeCoordinates.filter(o => o.segment === selectedSegment),
+            data: deleteModeCoordinates.filter(
+              (o) => o.segment === selectedSegment
+            ),
             type: "scatter",
             color: "red",
             marker: {
@@ -261,8 +269,12 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
               lineColor: null,
               lineWidth: 2,
             },
-            visible: deleteModeCoordinates.some(o => o.segment === selectedSegment), // Show if there are coordinates
-            showInLegend: deleteModeCoordinates.some(o => o.segment === selectedSegment),
+            visible: deleteModeCoordinates.some(
+              (o) => o.segment === selectedSegment
+            ), // Show if there are coordinates
+            showInLegend: deleteModeCoordinates.some(
+              (o) => o.segment === selectedSegment
+            ),
             turboThreshold: 0,
             states: {
               hover: {
@@ -274,8 +286,8 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
             },
             point: {
               events: {
-                click: handleChartClick
-              }
+                click: handleChartClick,
+              },
             },
           },
         ],
@@ -285,7 +297,112 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
       setBeatData(initBeats);
       setBeatArtifactData(initArtifacts);
     }
-  }, [fileData, isAddMode, isDeleteMode, addModeCoordinates, deleteModeCoordinates, selectedSegment]);
+  }, [
+    fileData,
+    isAddMode,
+    isDeleteMode,
+    addModeCoordinates,
+    deleteModeCoordinates,
+    selectedSegment,
+    unusableSegments,
+    isMarkingUnusableMode,
+  ]);
+
+  useEffect(() => {
+    if (chartRef.current && chartRef.current.chart && isMarkingUnusableMode) {
+      const chart = chartRef.current.chart;
+
+      const handleMouseDown = (event) => {
+        if (isMarkingUnusableMode) {
+          event.preventDefault();
+          dragStartRef.current = chart.xAxis[0].toValue(event.chartX);
+          isDraggingRef.current = true;
+        }
+      };
+
+      const handleMouseMove = (event) => {
+        if (
+          isMarkingUnusableMode &&
+          isDraggingRef.current 
+        ) {
+          const dragEnd = chart.xAxis[0].toValue(event.chartX);
+
+          // Remove previous temporary plot band
+          if (dragPlotBandRef.current) {
+            chart.xAxis[0].removePlotBand("draggingPlotBand");
+          }
+
+          lastValidDragEnd.current = dragEnd;
+
+          // Add new temporary plot band while dragging
+          dragPlotBandRef.current = {
+            id: "draggingPlotBand",
+            from: Math.min(dragStartRef.current, dragEnd),
+            to: Math.max(dragStartRef.current, dragEnd),
+            color: "rgba(255, 0, 0, 0.2)",
+          };
+          chart.xAxis[0].addPlotBand(dragPlotBandRef.current);
+        }
+
+        // Check if the Shift key is pressed to determine panning
+        if (event.shiftKey) {
+          isPanningRef.current = true;
+        } else {
+          isPanningRef.current = false;
+        }
+      };
+
+      const handleMouseUp = (event) => {
+        if (
+          isMarkingUnusableMode &&
+          isDraggingRef.current 
+        ) {
+          // Try to get the drag end value from the event or fallback to the last valid value
+          let dragEnd = event.chartX ? chart.xAxis[0].toValue(event.chartX) : lastValidDragEnd.current;;
+ 
+          if (dragEnd !== null && dragStartRef.current !== null) {
+            // Add the final unusable segment to state
+            const newSegment = {
+              segment: selectedSegment,
+              from: Math.min(dragStartRef.current, dragEnd),
+              to: Math.max(dragStartRef.current, dragEnd),
+              editType: "UNUSABLE",
+              color: "rgba(255, 0, 0, 0.3)",
+            };
+            setUnusableSegments((prevSegments) => [
+              ...prevSegments,
+              newSegment,
+            ]);
+
+            // Remove the dragging plot band
+            if (dragPlotBandRef.current) {
+              chart.xAxis[0].removePlotBand("draggingPlotBand");
+              dragPlotBandRef.current = null;
+            }
+
+            // Reset drag start
+            dragStartRef.current = null;
+            isDraggingRef.current = false;
+          }
+        }
+
+        // Reset the panning state after mouse up
+        isPanningRef.current = false;
+      };
+
+      // Attach event listeners to the chart container
+      chart.container.addEventListener("mousedown", handleMouseDown);
+      chart.container.addEventListener("mousemove", handleMouseMove);
+      chart.container.addEventListener("mouseup", handleMouseUp);
+
+      // Clean up event listeners when component is unmounted or dependencies change
+      return () => {
+        chart.container.removeEventListener("mousedown", handleMouseDown);
+        chart.container.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp);
+      };
+    }
+  }, [isMarkingUnusableMode]);
 
   const handleChartClick = (event) => {
     // Prevents coordinates from plotting when hitting `Reset Zoom`
@@ -317,11 +434,15 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
 
     // In Add Mode, prevent adding points that already exist in ecgData
     if (isPanningRef.current && isAddMode && isECGCoordinate) {
-      console.log(isPanningRef.current);
       return;
     }
     // In Delete Mode, prevent deleting points that don't exist in beatData or are artifacts
-    if (isPanningRef.current && isDeleteMode && !isBeatCoordinate && !isArtifactCoordinate) {
+    if (
+      isPanningRef.current &&
+      isDeleteMode &&
+      !isBeatCoordinate &&
+      !isArtifactCoordinate
+    ) {
       return;
     }
 
@@ -333,11 +454,7 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
       setAddModeCoordinates((prevCoordinates) => {
         const updateCoordinates = [
           ...prevCoordinates,
-          { x: newX, 
-            y: newY,
-            segment: selectedSegment, 
-            editType: "ADD",
-          },
+          { x: newX, y: newY, segment: selectedSegment, editType: "ADD" },
         ];
         return updateCoordinates;
       });
@@ -346,11 +463,7 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
         setDeleteModeCoordinates((prevCoordinates) => {
           const updateCoordinates = [
             ...prevCoordinates,
-            { x: newX, 
-              y: newY,
-              segment: selectedSegment, 
-              editType: "DELETE",
-            },
+            { x: newX, y: newY, segment: selectedSegment, editType: "DELETE" },
           ];
           return updateCoordinates;
         });
@@ -364,14 +477,33 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
     setBeatArtifactData(updateArtifactData);
   };
 
+  // Reset all drag and interaction states when toggling modes
+  const resetInteractionState = () => {
+    dragStartRef.current = null;
+    isDraggingRef.current = false;
+    isPanningRef.current = false;
+    lastValidDragEnd.current = null;
+  };
+
   const toggleAddMode = () => {
-    setIsAddMode(true);
+    resetInteractionState();
+    setIsAddMode((prev) => !prev);
     setIsDeleteMode(false);
+    setIsMarkingUnusableMode(false);
   };
 
   const toggleDeleteMode = () => {
+    resetInteractionState();
     setIsAddMode(false);
-    setIsDeleteMode(true);
+    setIsDeleteMode((prev) => !prev);
+    setIsMarkingUnusableMode(false);
+  };
+
+  const toggleMarkUnusableMode = () => {
+    resetInteractionState();
+    setIsMarkingUnusableMode((prev) => !prev);
+    setIsAddMode(false);
+    setIsDeleteMode(false);
   };
 
   const undoLastCoordinate = () => {
@@ -385,6 +517,11 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
         const updatedCoordinates = prevCoordinates.slice(0, -1);
         return updatedCoordinates;
       });
+    } else if (isMarkingUnusableMode && unusableSegments.length > 0) {
+      setUnusableSegments((prevCoordinates) => {
+        const updateCoordinates = prevCoordinates.slice(0, -1);
+        return updateCoordinates;
+      });
     }
   };
 
@@ -394,74 +531,78 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
       if (chartRef.current) {
         const chart = chartRef.current.chart;
         event.preventDefault();
-  
+
         const zoomFactor = event.deltaY < 0 ? 0.9 : 1.05; // Smoother zooming
         const xAxis = chart.xAxis[0];
         const yAxis = chart.yAxis[0];
-  
+
         // Get the current extremes (current view range)
         const minX = xAxis.min;
         const maxX = xAxis.max;
         const minY = yAxis.min;
         const maxY = yAxis.max;
-  
+
         // Get the data's full range across all series (ECG, Beats, Artifacts)
         let allXValues = [];
         let allYValues = [];
-  
-        chart.series.forEach(series => {
-          series.data.forEach(point => {
+
+        chart.series.forEach((series) => {
+          series.data.forEach((point) => {
             allXValues.push(point.x);
             allYValues.push(point.y);
           });
         });
-  
+
         const originalMinX = Math.min(...allXValues);
         const originalMaxX = Math.max(...allXValues);
         const originalMinY = Math.min(...allYValues);
         const originalMaxY = Math.max(...allYValues);
-  
+
         // Calculate the current range for X and Y axes
         const rangeX = maxX - minX;
         const rangeY = maxY - minY;
-  
+
         // Calculate the new range based on the zoom factor
         const newRangeX = rangeX * zoomFactor;
         const newRangeY = rangeY * zoomFactor;
-  
+
         // Find the center of the current view
         const centerX = (minX + maxX) / 2;
         const centerY = (minY + maxY) / 2;
-  
+
         // Calculate new min and max values, ensuring we don't zoom out beyond the original data range
         const newMinX = Math.max(centerX - newRangeX / 2, originalMinX);
         const newMaxX = Math.min(centerX + newRangeX / 2, originalMaxX);
         const newMinY = Math.max(centerY - newRangeY / 2, originalMinY);
         const newMaxY = Math.min(centerY + newRangeY / 2, originalMaxY);
-  
+
         // Set the new extremes for X and Y axes
         xAxis.setExtremes(newMinX, newMaxX);
         yAxis.setExtremes(newMinY, newMaxY);
       }
     };
-  
-    const chartContainer = document.querySelector('.highcharts-container');
+
+    const chartContainer = document.querySelector(".highcharts-container");
     if (chartContainer) {
-      chartContainer.addEventListener('wheel', handleScrollZoom);
+      chartContainer.addEventListener("wheel", handleScrollZoom);
     }
-  
+
     return () => {
       if (chartContainer) {
-        chartContainer.removeEventListener('wheel', handleScrollZoom);
+        chartContainer.removeEventListener("wheel", handleScrollZoom);
       }
     };
   }, [chartOptions]);
 
   const handleKeyDown = (event) => {
-    if (event.key === 'A' || event.key === 'a') {
+    if (event.key === "A" || event.key === "a") {
       toggleAddMode();
-    } else if (event.key === 'D' || event.key === 'd') {
+    } else if (event.key === "D" || event.key === "d") {
       toggleDeleteMode();
+    } else if (event.key === "U" || event.key === "u") {
+      toggleMarkUnusableMode();
+    } else if (event.ctrlKey && event.key === "z") {
+      undoLastCoordinate();
     }
   };
 
@@ -473,7 +614,7 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   });
-  
+
   return (
     <div className="beat-chart-container">
       <div className="chart-buttons-wrapper">
@@ -483,11 +624,13 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
             value={selectedSegment}
             onChange={(e) => {
               setSelectedSegment(e.target.value);
+              resetInteractionState();
 
               if (chartRef.current && chartRef.current.chart) {
                 if (isAddMode || isDeleteMode) {
                   setIsAddMode(false);
                   setIsDeleteMode(false);
+                  setIsMarkingUnusableMode(false);
                 }
                 chartRef.current.chart.zoomOut();
               }
@@ -514,13 +657,21 @@ const BeatChart = ({ fileData, fileName, segmentOptions }) => {
           >
             <i className="fa-solid fa-minus"></i>Delete Beat
           </button>
+          <button
+            className={`${isMarkingUnusableMode ? "mark-unusable-active" : ""}`}
+            onClick={toggleMarkUnusableMode}
+          >
+            <i className="fa-solid fa-marker" />
+            Mark Unusable
+          </button>
           <button className="undo-beat-entry" onClick={undoLastCoordinate}>
             <i className="fa-solid fa-rotate-left"></i>Undo
           </button>
-          <JSONExporterBackEndSupported
+          <JSONSaver
             fileName={fileName}
             addModeCoordinates={addModeCoordinates}
             deleteModeCoordinates={deleteModeCoordinates}
+            unusableSegments={unusableSegments}
           />
         </div>
         <div className="chart-info">
