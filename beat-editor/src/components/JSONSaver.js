@@ -11,8 +11,8 @@ const JSONSaver = ({ fileName, addModeCoordinates, deleteModeCoordinates, unusab
         data: { addModeCoordinates, deleteModeCoordinates, unusableSegments },
       });
       if (
-        addModeCoordinates.length !== 0 &&
-        deleteModeCoordinates.length !== 0 &&
+        addModeCoordinates.length !== 0 ||
+        deleteModeCoordinates.length !== 0 ||
         unusableSegments.length !== 0
       ) {
         toast.success(`${fileName}_edited.json has been saved`, {
