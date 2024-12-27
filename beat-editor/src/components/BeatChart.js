@@ -6,6 +6,11 @@ import _ from "lodash";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import JSONSaver from "./JSONSaver";
+import { EDIT_TYPE_ADD, EDIT_TYPE_DELETE } from "../constants/constants";
+
+// Custom Hooks
+import useChartZoom from "../hooks/useChartZoom";
+import useMarkingUnusableMode from "../hooks/useMarkingUnusableMode";
 
 import "./styles.scss";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -35,12 +40,6 @@ const BeatChart = ({
   const [deleteModeCoordinates, setDeleteModeCoordinates] = useState([]);
   const [unusableSegments, setUnusableSegments] = useState([]);
   const [selectedSegment, setSelectedSegment] = useState("1");
-
-  useEffect(() => {
-    setAddModeCoordinates(addBeats);
-    setDeleteModeCoordinates(deleteBeats);
-    setUnusableSegments(unusableBeats);
-  }, [addBeats, deleteBeats, unusableBeats]);
 
   const chartRef = useRef(null);
   const dragStartRef = useRef(null);
@@ -309,100 +308,23 @@ const BeatChart = ({
   ]);
 
   useEffect(() => {
-    if (chartRef.current && chartRef.current.chart && isMarkingUnusableMode) {
-      const chart = chartRef.current.chart;
+    setAddModeCoordinates(addBeats);
+    setDeleteModeCoordinates(deleteBeats);
+    setUnusableSegments(unusableBeats);
+  }, [addBeats, deleteBeats, unusableBeats]);
 
-      const handleMouseDown = (event) => {
-        if (isMarkingUnusableMode) {
-          event.preventDefault();
-          dragStartRef.current = chart.xAxis[0].toValue(event.chartX);
-          isDraggingRef.current = true;
-        }
-      };
+  useMarkingUnusableMode(
+    isMarkingUnusableMode,
+    chartRef,
+    setUnusableSegments,
+    selectedSegment,
+    dragStartRef,
+    isDraggingRef,
+    dragPlotBandRef,
+    lastValidDragEnd
+  );
 
-      const handleMouseMove = (event) => {
-        if (
-          isMarkingUnusableMode &&
-          isDraggingRef.current 
-        ) {
-          const dragEnd = chart.xAxis[0].toValue(event.chartX);
-
-          // Remove previous temporary plot band
-          if (dragPlotBandRef.current) {
-            chart.xAxis[0].removePlotBand("draggingPlotBand");
-          }
-
-          lastValidDragEnd.current = dragEnd;
-
-          // Add new temporary plot band while dragging
-          dragPlotBandRef.current = {
-            id: "draggingPlotBand",
-            from: Math.min(dragStartRef.current, dragEnd),
-            to: Math.max(dragStartRef.current, dragEnd),
-            color: "rgba(255, 0, 0, 0.2)",
-          };
-          chart.xAxis[0].addPlotBand(dragPlotBandRef.current);
-        }
-
-        // Check if the Shift key is pressed to determine panning
-        if (event.shiftKey) {
-          isPanningRef.current = true;
-        } else {
-          isPanningRef.current = false;
-        }
-      };
-
-      const handleMouseUp = (event) => {
-        if (
-          isMarkingUnusableMode &&
-          isDraggingRef.current 
-        ) {
-          // Try to get the drag end value from the event or fallback to the last valid value
-          let dragEnd = event.chartX ? chart.xAxis[0].toValue(event.chartX) : lastValidDragEnd.current;;
- 
-          if (dragEnd !== null && dragStartRef.current !== null) {
-            // Add the final unusable segment to state
-            const newSegment = {
-              segment: selectedSegment,
-              from: Math.min(dragStartRef.current, dragEnd),
-              to: Math.max(dragStartRef.current, dragEnd),
-              editType: "UNUSABLE",
-              color: "rgba(255, 0, 0, 0.3)",
-            };
-            setUnusableSegments((prevSegments) => [
-              ...prevSegments,
-              newSegment,
-            ]);
-
-            // Remove the dragging plot band
-            if (dragPlotBandRef.current) {
-              chart.xAxis[0].removePlotBand("draggingPlotBand");
-              dragPlotBandRef.current = null;
-            }
-
-            // Reset drag start
-            dragStartRef.current = null;
-            isDraggingRef.current = false;
-          }
-        }
-
-        // Reset the panning state after mouse up
-        isPanningRef.current = false;
-      };
-
-      // Attach event listeners to the chart container
-      chart.container.addEventListener("mousedown", handleMouseDown);
-      chart.container.addEventListener("mousemove", handleMouseMove);
-      chart.container.addEventListener("mouseup", handleMouseUp);
-
-      // Clean up event listeners when component is unmounted or dependencies change
-      return () => {
-        chart.container.removeEventListener("mousedown", handleMouseDown);
-        chart.container.removeEventListener("mousemove", handleMouseMove);
-        window.removeEventListener("mouseup", handleMouseUp);
-      };
-    }
-  }, [isMarkingUnusableMode]);
+  useChartZoom(chartRef, chartOptions);
 
   const handleChartClick = (event) => {
     // Prevents coordinates from plotting when hitting `Reset Zoom`
@@ -454,7 +376,7 @@ const BeatChart = ({
       setAddModeCoordinates((prevCoordinates) => {
         const updateCoordinates = [
           ...prevCoordinates,
-          { x: newX, y: newY, segment: selectedSegment, editType: "ADD" },
+          { x: newX, y: newY, segment: selectedSegment, editType: EDIT_TYPE_ADD },
         ];
         return updateCoordinates;
       });
@@ -463,7 +385,7 @@ const BeatChart = ({
         setDeleteModeCoordinates((prevCoordinates) => {
           const updateCoordinates = [
             ...prevCoordinates,
-            { x: newX, y: newY, segment: selectedSegment, editType: "DELETE" },
+            { x: newX, y: newY, segment: selectedSegment, editType: EDIT_TYPE_DELETE },
           ];
           return updateCoordinates;
         });
@@ -524,75 +446,6 @@ const BeatChart = ({
       });
     }
   };
-
-  // Chart zoom functionality
-  useEffect(() => {
-    const handleScrollZoom = (event) => {
-      if (chartRef.current) {
-        const chart = chartRef.current.chart;
-        event.preventDefault();
-
-        const zoomFactor = event.deltaY < 0 ? 0.9 : 1.05; // Smoother zooming
-        const xAxis = chart.xAxis[0];
-        const yAxis = chart.yAxis[0];
-
-        // Get the current extremes (current view range)
-        const minX = xAxis.min;
-        const maxX = xAxis.max;
-        const minY = yAxis.min;
-        const maxY = yAxis.max;
-
-        // Get the data's full range across all series (ECG, Beats, Artifacts)
-        let allXValues = [];
-        let allYValues = [];
-
-        chart.series.forEach((series) => {
-          series.data.forEach((point) => {
-            allXValues.push(point.x);
-            allYValues.push(point.y);
-          });
-        });
-
-        const originalMinX = Math.min(...allXValues);
-        const originalMaxX = Math.max(...allXValues);
-        const originalMinY = Math.min(...allYValues);
-        const originalMaxY = Math.max(...allYValues);
-
-        // Calculate the current range for X and Y axes
-        const rangeX = maxX - minX;
-        const rangeY = maxY - minY;
-
-        // Calculate the new range based on the zoom factor
-        const newRangeX = rangeX * zoomFactor;
-        const newRangeY = rangeY * zoomFactor;
-
-        // Find the center of the current view
-        const centerX = (minX + maxX) / 2;
-        const centerY = (minY + maxY) / 2;
-
-        // Calculate new min and max values, ensuring we don't zoom out beyond the original data range
-        const newMinX = Math.max(centerX - newRangeX / 2, originalMinX);
-        const newMaxX = Math.min(centerX + newRangeX / 2, originalMaxX);
-        const newMinY = Math.max(centerY - newRangeY / 2, originalMinY);
-        const newMaxY = Math.min(centerY + newRangeY / 2, originalMaxY);
-
-        // Set the new extremes for X and Y axes
-        xAxis.setExtremes(newMinX, newMaxX);
-        yAxis.setExtremes(newMinY, newMaxY);
-      }
-    };
-
-    const chartContainer = document.querySelector(".highcharts-container");
-    if (chartContainer) {
-      chartContainer.addEventListener("wheel", handleScrollZoom);
-    }
-
-    return () => {
-      if (chartContainer) {
-        chartContainer.removeEventListener("wheel", handleScrollZoom);
-      }
-    };
-  }, [chartOptions]);
 
   const handleKeyDown = (event) => {
     if (event.key === "A" || event.key === "a") {
