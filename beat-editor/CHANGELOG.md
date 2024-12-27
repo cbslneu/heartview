@@ -1,3 +1,8 @@
+# Updat v1.0.4 - 12/26/2024
+* Some fixes needed for current implementation of Mark Unusable
+* Refactored some of the code
+* Keyboard Shortcut menu available for current shortcuts
+
 # Update v1.0.3 - 10/10/2024
 Small update to change the timestamp x-axis to reflect local timezone times
 
