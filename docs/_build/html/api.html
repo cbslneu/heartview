@@ -816,32 +816,6 @@ window approach will override the segmented approach, ignoring any
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="heartview.pipeline.ACC.filter_signal">
-<span class="sig-prename descclassname"><span class="pre">heartview.pipeline.ACC.</span></span><span class="sig-name descname"><span class="pre">filter_signal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ma'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/heartview/pipeline/ACC.html#filter_signal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#heartview.pipeline.ACC.filter_signal" title="Link to this definition">¶</a></dt>
-<dd><p>Filter an acceleration signal.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>signal</strong> (<em>array_like</em>) – An array containing the acceleration signal.</p></li>
-<li><p><strong>fs</strong> (<em>int</em><em>, </em><em>float</em>) – The sampling rate of the acceleration signal.</p></li>
-<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – The filtering method (i.e., ‘ma’ for a moving average or
-‘lowpass’ for a lowpass filter); by default, ‘ma’.</p></li>
-<li><p><strong>window_size</strong> (<em>int</em>) – The window size (in seconds) for the moving average filter; by
-default, 5 seconds.</p></li>
-<li><p><strong>cutoff</strong> (<em>float</em>) – The cut-off frequency above with all frequencies in the signal will
-be attenuated; by default, 0.3 Hz.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>filtered</strong> – An array containing the filtered acceleration signal.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>array_like</p>
-</dd>
-</dl>
-</dd></dl>
-
 </section>
 </section>
 <section id="module-heartview.pipeline.SQA">
@@ -1523,7 +1497,6 @@ and acceleration data.</p>
 <li><a class="reference internal" href="#heartview.pipeline.ACC.compute_auc"><code class="docutils literal notranslate"><span class="pre">compute_auc()</span></code></a></li>
 <li><a class="reference internal" href="#heartview.pipeline.ACC.compute_magnitude"><code class="docutils literal notranslate"><span class="pre">compute_magnitude()</span></code></a></li>
 <li><a class="reference internal" href="#heartview.pipeline.ACC.convert_acc"><code class="docutils literal notranslate"><span class="pre">convert_acc()</span></code></a></li>
-<li><a class="reference internal" href="#heartview.pipeline.ACC.filter_signal"><code class="docutils literal notranslate"><span class="pre">filter_signal()</span></code></a></li>
 </ul>
 </li>
 </ul>
