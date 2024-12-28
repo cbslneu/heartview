@@ -2,18 +2,26 @@ import React, { useEffect, useState, useRef } from "react";
 import Highcharts from "highcharts";
 import HighchartsMore from "highcharts/highcharts-more";
 import HighchartsReact from "highcharts-react-official";
-import _ from "lodash";
+import _, { create } from "lodash";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import "@fortawesome/fontawesome-free/css/all.min.css";
+
+// Components
+import createChartOptions from "./ChartOptions";
 import JSONSaver from "./JSONSaver";
+
+// Constants
 import { EDIT_TYPE_ADD, EDIT_TYPE_DELETE } from "../constants/constants";
 
 // Custom Hooks
 import useChartZoom from "../hooks/useChartZoom";
 import useMarkingUnusableMode from "../hooks/useMarkingUnusableMode";
 
+// Helper + Utils
+import useKeyboardShortcuts from "../utils/key-input-utils";
+
 import "./styles.scss";
-import "@fortawesome/fontawesome-free/css/all.min.css";
 
 Highcharts.SVGRenderer.prototype.symbols.cross = function (x, y, w, h) {
   return ["M", x, y, "L", x + w, y + h, "M", x + w, y, "L", x, y + h, "z"];
@@ -60,6 +68,11 @@ const BeatChart = ({
     (data) => checkDataType(fileData, data) === true
   );
 
+  let segmentBoundaries = {
+    from: null,
+    to: null,
+  };
+
   useEffect(() => {
     if (fileData) {
       // Filter the data by the selected segment from the dropdown
@@ -103,194 +116,24 @@ const BeatChart = ({
         y: artifactY[index],
       }));
 
-      setChartOptions({
-        chart: {
-          type: "line",
-          zoomType: isMarkingUnusableMode ? null : "x",
-          panning: !isMarkingUnusableMode, // Enable panning
-          panKey: "shift", // Optional: Hold Shift to pan
-          events: {
-            pan: (event) => {
-              if (event.shiftKey) {
-                isPanningRef.current = true;
-              }
-            },
-            click: function (event) {
-              if ((isAddMode || isDeleteMode) && !event.shiftKey) {
-                handleChartClick(event);
-              }
-            },
-          },
-          style: {
-            fontFamily: "'Poppins', sans-serif",
-            fontSize: "20px",
-          },
-          animation: false,
-        },
-        title: {
-          text: "",
-        },
-        xAxis: {
-          title: {
-            text: dataTypeX,
-          },
-          labels: {
-            formatter: function () {
-              const date = new Date(this.value);
-              return date.toUTCString().split(" ")[4];
-            },
-            style: {
-              fontSize: "13px",
-            },
-          },
-          allowDecimals: true,
-          plotBands: unusableSegments,
-        },
-        yAxis: {
-          title: {
-            text: "Signal",
-          },
-          allowDecimals: true,
-        },
-        tooltip: {
-          formatter: function () {
-            const date = new Date(this.x);
-            return `<b>${this.series.name}</b><br/>Time: ${
-              date.toUTCString().split(" ")[4]
-            } <br/>Amplitude: ${this.y.toFixed(3)} mV`;
-          },
-        },
-        series: [
-          {
-            name: "ECG",
-            data: initECGsData,
-            color: "#3562BD",
-            turboThreshold: 0,
-            states: {
-              hover: {
-                enabled: false,
-              },
-              inactive: {
-                enabled: false,
-              },
-            },
-            point: {
-              events: {
-                click: isAddMode || isDeleteMode ? handleChartClick : "",
-              },
-            },
-          },
-          {
-            name: "Beat",
-            data: initBeats,
-            type: "scatter",
-            color: "#F9C669",
-            marker: {
-              symbol: "circle",
-            },
-            turboThreshold: 0,
-            states: {
-              hover: {
-                enabled: false,
-              },
-              inactive: {
-                enabled: false,
-              },
-            },
-            point: {
-              events: {
-                click: isAddMode || isDeleteMode ? handleChartClick : "",
-              },
-            },
-          },
-          {
-            name: "Artifact",
-            data: initArtifacts,
-            type: "scatter",
-            color: "red",
-            marker: {
-              symbol: "circle",
-            },
-            visible: initArtifacts.length > 0,
-            showInLegend: initArtifacts.length > 0, // prevents it from showing in the legend
-            turboThreshold: 0,
-            states: {
-              hover: {
-                enabled: false,
-              },
-            },
-            point: {
-              events: {
-                click: isAddMode || isDeleteMode ? handleChartClick : "",
-              },
-            },
-          },
-          {
-            name: "Added Beats",
-            data: addModeCoordinates.filter(
-              (o) => o.segment === selectedSegment
-            ),
-            type: "scatter",
-            color: "#02E337",
-            marker: {
-              symbol: "circle",
-            },
-            visible: addModeCoordinates.some(
-              (o) => o.segment === selectedSegment
-            ), // Show if there are coordinates
-            showInLegend: addModeCoordinates.some(
-              (o) => o.segment === selectedSegment
-            ),
-            turboThreshold: 0,
-            states: {
-              hover: {
-                enabled: false,
-              },
-              inactive: {
-                enabled: false,
-              },
-            },
-            point: {
-              events: {
-                click: handleChartClick,
-              },
-            },
-          },
-          {
-            name: "Deleted Beats",
-            data: deleteModeCoordinates.filter(
-              (o) => o.segment === selectedSegment
-            ),
-            type: "scatter",
-            color: "red",
-            marker: {
-              symbol: "cross",
-              lineColor: null,
-              lineWidth: 2,
-            },
-            visible: deleteModeCoordinates.some(
-              (o) => o.segment === selectedSegment
-            ), // Show if there are coordinates
-            showInLegend: deleteModeCoordinates.some(
-              (o) => o.segment === selectedSegment
-            ),
-            turboThreshold: 0,
-            states: {
-              hover: {
-                enabled: false,
-              },
-              inactive: {
-                enabled: false,
-              },
-            },
-            point: {
-              events: {
-                click: handleChartClick,
-              },
-            },
-          },
-        ],
+      const chartParams = createChartOptions({
+        xAxisData: segmentFilteredData.map((o) => o.Timestamp),
+        initECGsData,
+        initBeats,
+        initArtifacts,
+        addModeCoordinates,
+        deleteModeCoordinates,
+        selectedSegment,
+        unusableSegments,
+        isAddMode,
+        isDeleteMode,
+        isMarkingUnusableMode,
+        handleChartClick,
+        dataTypeX,
+        isPanningRef
       });
+
+      setChartOptions(chartParams);
 
       setECGData(initECGsData);
       setBeatData(initBeats);
@@ -307,24 +150,8 @@ const BeatChart = ({
     isMarkingUnusableMode,
   ]);
 
-  useEffect(() => {
-    setAddModeCoordinates(addBeats);
-    setDeleteModeCoordinates(deleteBeats);
-    setUnusableSegments(unusableBeats);
-  }, [addBeats, deleteBeats, unusableBeats]);
-
-  useMarkingUnusableMode(
-    isMarkingUnusableMode,
-    chartRef,
-    setUnusableSegments,
-    selectedSegment,
-    dragStartRef,
-    isDraggingRef,
-    dragPlotBandRef,
-    lastValidDragEnd
-  );
-
-  useChartZoom(chartRef, chartOptions);
+  segmentBoundaries.from = ecgData[0];
+  segmentBoundaries.to = ecgData[ecgData.length - 1];
 
   const handleChartClick = (event) => {
     // Prevents coordinates from plotting when hitting `Reset Zoom`
@@ -399,12 +226,23 @@ const BeatChart = ({
     setBeatArtifactData(updateArtifactData);
   };
 
-  // Reset all drag and interaction states when toggling modes
-  const resetInteractionState = () => {
-    dragStartRef.current = null;
-    isDraggingRef.current = false;
-    isPanningRef.current = false;
-    lastValidDragEnd.current = null;
+  const undoLastCoordinate = () => {
+    if (isAddMode && addModeCoordinates.length > 0) {
+      setAddModeCoordinates((prevCoordinates) => {
+        const updatedCoordinates = prevCoordinates.slice(0, -1);
+        return updatedCoordinates;
+      });
+    } else if (isDeleteMode && deleteModeCoordinates.length > 0) {
+      setDeleteModeCoordinates((prevCoordinates) => {
+        const updatedCoordinates = prevCoordinates.slice(0, -1);
+        return updatedCoordinates;
+      });
+    } else if (isMarkingUnusableMode && unusableSegments.length > 0) {
+      setUnusableSegments((prevCoordinates) => {
+        const updateCoordinates = prevCoordinates.slice(0, -1);
+        return updateCoordinates;
+      });
+    }
   };
 
   const toggleAddMode = () => {
@@ -428,45 +266,40 @@ const BeatChart = ({
     setIsDeleteMode(false);
   };
 
-  const undoLastCoordinate = () => {
-    if (isAddMode && addModeCoordinates.length > 0) {
-      setAddModeCoordinates((prevCoordinates) => {
-        const updatedCoordinates = prevCoordinates.slice(0, -1);
-        return updatedCoordinates;
-      });
-    } else if (isDeleteMode && deleteModeCoordinates.length > 0) {
-      setDeleteModeCoordinates((prevCoordinates) => {
-        const updatedCoordinates = prevCoordinates.slice(0, -1);
-        return updatedCoordinates;
-      });
-    } else if (isMarkingUnusableMode && unusableSegments.length > 0) {
-      setUnusableSegments((prevCoordinates) => {
-        const updateCoordinates = prevCoordinates.slice(0, -1);
-        return updateCoordinates;
-      });
-    }
-  };
-
-  const handleKeyDown = (event) => {
-    if (event.key === "A" || event.key === "a") {
-      toggleAddMode();
-    } else if (event.key === "D" || event.key === "d") {
-      toggleDeleteMode();
-    } else if (event.key === "U" || event.key === "u") {
-      toggleMarkUnusableMode();
-    } else if (event.ctrlKey && event.key === "z") {
-      undoLastCoordinate();
-    }
-  };
+    // Reset all drag and interaction states when toggling modes
+    const resetInteractionState = () => {
+      dragStartRef.current = null;
+      isDraggingRef.current = false;
+      isPanningRef.current = false;
+      lastValidDragEnd.current = null;
+    };
 
   useEffect(() => {
-    // Checks for key presses
-    window.addEventListener("keydown", handleKeyDown);
+    setAddModeCoordinates(addBeats);
+    setDeleteModeCoordinates(deleteBeats);
+    setUnusableSegments(unusableBeats);
+  }, [addBeats, deleteBeats, unusableBeats]);
 
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
+  useKeyboardShortcuts({
+    toggleAddMode,
+    toggleDeleteMode,
+    toggleMarkUnusableMode,
+    undoLastCoordinate,
   });
+
+  useMarkingUnusableMode(
+    isMarkingUnusableMode,
+    chartRef,
+    setUnusableSegments,
+    selectedSegment,
+    dragStartRef,
+    isDraggingRef,
+    dragPlotBandRef,
+    lastValidDragEnd,
+    segmentBoundaries
+  );
+
+  useChartZoom(chartRef, chartOptions);
 
   return (
     <div className="beat-chart-container">
