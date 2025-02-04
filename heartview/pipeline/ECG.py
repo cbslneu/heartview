@@ -442,7 +442,7 @@ class BeatDetectors:
         for n in idx:
             lows = np.arange(n - search_window_half, n)
             highs = np.arange(n + 1, (n + search_window_half + 1))
-            if highs[-1] > len(signal):
+            if highs[-1] >= len(signal):
                 highs = np.delete(
                     highs, np.arange(
                         np.where(highs == len(signal))[0], len(highs)))
