@@ -13,7 +13,10 @@ const useKeyboardShortcuts = ({
           toggleDeleteMode();
         } else if (event.key === "U" || event.key === "u") {
           toggleMarkUnusableMode();
-        } else if (event.ctrlKey && event.key === "z") {
+        } else if (
+          (event.ctrlKey && event.key === "z") ||
+          (event.metaKey && event.key === "z")
+        ) {
           undoLastCoordinate();
         }
       };
