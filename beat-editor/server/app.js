@@ -20,13 +20,10 @@ app.get('/fetch-file', async (req, res) => {
     const savedDir = path.join(__dirname, '..', 'saved');
     try {
         const dataFiles = await fs.promises.readdir(dataDir);
+        const savedFiles = await fs.promises.readdir(savedDir);
+
         const fileDirJsonFiles = dataFiles.filter(file => file.endsWith('_edit.json'));
-        
-        // Skip the /saved folder if it doesn't exist
-        const savedFiles = fs.existsSync(savedDir) ? await fs.promises.readdir(savedDir): [];
-        const savedDirJsonFiles = fs.existsSync(savedDir)
-          ? savedFiles.filter((file) => file.endsWith("_edited.json"))
-          : [];
+        const savedDirJsonFiles = savedFiles.filter(file => file.endsWith('_edited.json'));
 
         if (dataFiles.length === 0) {
             return res.status(404).send("No JSON files found.");
@@ -64,12 +61,6 @@ app.get('/fetch-file', async (req, res) => {
 // Endpoint for saving JSON file
 app.post('/saved', async (req, res) => {
     const { fileName, data } = req.body;
-    const savedFilePath = path.join(__dirname, "..", "saved");
-    // Checks if /saved exists, if not make it
-    if (!fs.existsSync(savedFilePath)) {
-        fs.mkdirSync(savedFilePath);
-    }
-
     const filePath = path.join(__dirname, '..', 'saved', `${fileName}_edited.json`);
 
     try {
