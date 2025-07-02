@@ -6,6 +6,7 @@ from heartview.pipeline.ACC import compute_magnitude
 from heartview.pipeline.SQA import Cardio, EDA
 from heartview.pipeline.PPG import BeatDetectors
 from heartview.pipeline.EDA import Filters as edaFilters
+import warnings
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -1380,3 +1381,134 @@ def plot_ibi_from_ecg(df, x, y, segment, n_segments):
     fig.update_yaxes(
         title_standoff = 10)
     return fig
+
+def write_beat_editor_file(data, fs, signal_col, beats_col, ts_col = None,
+                           filename = None):
+    """
+    Create a JSON file for input to the Beat Editor.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        A DataFrame containing the cardiac data. Must contain at least
+        the following columns:
+          - Cardiac signal
+          - Beat occurrences labeled as 1
+        Optionally, `data` can include:
+          - A timestamp column (specified by `ts_col`). If not provided,
+            sample indices are used.
+          - An "Artifact" column, where artifact occurrences are labeled as 1.
+            This allows the Beat Editor to visualize artifactual beat
+            locations.
+    fs : int
+        The sampling frequency of the signal.
+    signal_col : str
+        The name of the column in `data` containing the cardiac signal.
+    beats_col : str
+        The name of the column in `data` containing beat occurrences.
+    ts_col : str, optional
+        The name of the column in `data` containing the timestamps. If not
+        provided, timestamps are assumed to correspond to the DataFrame index.
+    filename : str, optional
+        The name of the JSON file to write. If no filename is provided,
+        the default filename 'heartview_edit.json' is used.
+
+    Returns
+    -------
+    None
+    """
+    from pathlib import Path
+
+    # Set the output JSON filename
+    if filename is None:
+        json_filename = 'heartview_edit.json'
+    else:
+        json_filename = filename + '_edit.json'
+
+    # Check required columns
+    required_cols = [('signal_col', signal_col), ('beats_col', beats_col)]
+    if ts_col is not None:
+        required_cols.append(('ts_col', ts_col))
+    for name, col in required_cols:
+        if col not in data.columns:
+            raise ValueError(f'`{name}` not found in input data.')
+
+    # Check if there are any beats
+    if data[beats_col].sum() == 0:
+        warnings.warn('No beat occurrences found in input data.', UserWarning)
+
+    # Convert to `datetime` format if provided
+    if ts_col is not None:
+        data[ts_col] = pd.to_datetime(data[ts_col])
+        data.rename(columns = {ts_col: 'Timestamp'}, inplace = True)
+    else:
+        data.insert(0, 'Sample', data.index + 1)
+
+    # Format columns for JSON keys and save as JSON
+    if 'Segment' not in data.columns:
+        data.insert(0, 'Segment', (data.index // (fs * 60)) + 1)
+    data.rename(columns = {signal_col: 'Signal', beats_col: 'Beat'},
+                inplace = True)
+    root = Path(__file__).resolve().parents[1]
+    data_dir = root / 'beat-editor' / 'data'
+    data_dir.mkdir(parents = True, exist_ok = True)
+    json_path = data_dir / json_filename
+    data.to_json(json_path, orient = 'records', date_format = 'epoch',
+                 lines = False)
+    print(f'Beat Editor JSON file written to {json_path}')
+
+def process_beat_edits(orig_data, edits):
+    """
+    Apply beat insertion and deletion edits from the Beat Editor output to
+    original data. Edits are aligned either by sample index or timestamp,
+    depending on the structure of `orig_data`.
+
+    Parameters
+    ----------
+    orig_data : pd.DataFrame
+        A DataFrame containing the original cardiac data inputted to the Beat
+        Editor. Must contain a 'Beat' column and either:
+        - 'Timestamp' column (datetime), or
+        - 'Sample' column (integer sample indices)
+    edits : pd.DataFrame
+        A DataFrame of edit instructions parsed from a Beat Editor
+        `_edited.json` file. Must contain the following columns:
+        - 'x': the location of each edit, in the same unit as either
+          `orig_data['Timestamp']` (datetime) or `orig_data['Sample']`
+          (integer)
+        - 'editType': type of edit, with values 'ADD' or 'DELETE'
+
+    Returns
+    -------
+    processed : pd.DataFrame
+        A copy of `orig_data` with the following additional columns:
+        - 'Deletion': 1 where beats were deleted, otherwise NaN
+        - 'Addition': 1 where beats were added, otherwise NaN
+        - 'Edited': 1 where all final beats are, otherwise NaN
+
+    """
+    processed = orig_data.copy()
+
+    # Determine whether to align edits by sample or timestamp
+    if 'Timestamp' not in orig_data.columns:
+        edits['Sample'] = edits['x'].apply(
+            lambda x: (orig_data['Sample'] - x).abs().idxmin())
+    else:
+        processed['Timestamp'] = pd.to_datetime(processed['Timestamp'])
+        edits['x'] = pd.to_datetime(edits['x'], unit = 'ms')
+        edits['Sample'] = edits['x'].apply(
+            lambda x: (processed['Timestamp'] - x).abs().idxmin())
+
+    # Identify rows for beat deletion and addition
+    deletions = edits.loc[edits.editType == 'DELETE', 'Sample'].values
+    additions = edits.loc[edits.editType == 'ADD', 'Sample'].values
+
+    # Flag deletions and additions in the processed DataFrame
+    processed.loc[deletions, 'Deletion'] = 1
+    processed.loc[additions, 'Addition'] = 1
+
+    # Add the corrected beat column
+    processed['Edited'] = processed.Beat.copy()
+    processed.loc[processed.Deletion == 1, 'Edited'] = np.nan
+    processed.loc[processed.Addition == 1, 'Edited'] = 1
+    return processed
