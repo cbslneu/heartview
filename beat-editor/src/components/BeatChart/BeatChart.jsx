@@ -1,27 +1,19 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import Highcharts from "highcharts";
 import HighchartsMore from "highcharts/highcharts-more";
 import HighchartsReact from "highcharts-react-official";
-import _, { create } from "lodash";
+import _ from "lodash";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
-// Components
-import createChartOptions from "./ChartOptions";
-import JSONSaver from "./JSONSaver";
-
-// Constants
-import { EDIT_TYPE_ADD, EDIT_TYPE_DELETE } from "../constants/constants";
-
-// Custom Hooks
-import useChartZoom from "../hooks/useChartZoom";
-import useMarkingUnusableMode from "../hooks/useMarkingUnusableMode";
-
-// Helper + Utils
-import useKeyboardShortcuts from "../utils/key-input-utils";
-
-import "./styles.scss";
+import SaveButton from "../SaveButton/SaveButton";
+import createChartOptions from "../../utils/CreateChartOptions";
+import { EDIT_TYPE_ADD, EDIT_TYPE_DELETE } from "../../constants/constants";
+import useChartZoom from "../../hooks/useChartZoom";
+import useMarkingUnusableMode from "../../hooks/useMarkingUnusableMode";
+import useKeyboardShortcuts from "../../utils/key-input-utils";
+import "../../styles.scss";
 
 Highcharts.SVGRenderer.prototype.symbols.cross = function (x, y, w, h) {
   return ["M", x, y, "L", x + w, y + h, "M", x + w, y, "L", x, y + h, "z"];
@@ -56,18 +48,6 @@ const BeatChart = ({
   const isPanningRef = useRef(false); // Tracks if the user is panning the chart
   const lastValidDragEnd = useRef(null);
 
-  const xAxisKeys = ["Timestamp", "Sample"];
-  const yAxisKeys = ["Filtered", "Signal"];
-  const checkDataType = (fileData, data) =>
-    fileData.some((o) => o.hasOwnProperty(data));
-
-  const dataTypeX = xAxisKeys.filter(
-    (data) => checkDataType(fileData, data) === true
-  );
-  const dataTypeY = yAxisKeys.filter(
-    (data) => checkDataType(fileData, data) === true
-  );
-
   let segmentBoundaries = {
     from: null,
     to: null,
@@ -75,6 +55,18 @@ const BeatChart = ({
 
   useEffect(() => {
     if (fileData) {
+      const xAxisKeys = ["Timestamp", "Sample"];
+      const yAxisKeys = ["Filtered", "Signal"];
+      const checkDataType = (fileData, data) =>
+        fileData.some((o) => o.hasOwnProperty(data));
+
+      const dataTypeX = xAxisKeys.filter(
+        (data) => checkDataType(fileData, data) === true
+      );
+      const dataTypeY = yAxisKeys.filter(
+        (data) => checkDataType(fileData, data) === true
+      );
+
       // Filter the data by the selected segment from the dropdown
       const segmentFilteredData = selectedSegment
         ? _.filter(fileData, (o) => o.Segment.toString() === selectedSegment)
@@ -136,7 +128,7 @@ const BeatChart = ({
         isMarkingUnusableMode,
         handleChartClick,
         dataTypeX,
-        isPanningRef
+        isPanningRef,
       });
 
       setChartOptions(chartParams);
@@ -209,7 +201,12 @@ const BeatChart = ({
       setAddModeCoordinates((prevCoordinates) => {
         const updateCoordinates = [
           ...prevCoordinates,
-          { x: newX, y: newY, segment: selectedSegment, editType: EDIT_TYPE_ADD },
+          {
+            x: newX,
+            y: newY,
+            segment: selectedSegment,
+            editType: EDIT_TYPE_ADD,
+          },
         ];
         return updateCoordinates;
       });
@@ -218,7 +215,12 @@ const BeatChart = ({
         setDeleteModeCoordinates((prevCoordinates) => {
           const updateCoordinates = [
             ...prevCoordinates,
-            { x: newX, y: newY, segment: selectedSegment, editType: EDIT_TYPE_DELETE },
+            {
+              x: newX,
+              y: newY,
+              segment: selectedSegment,
+              editType: EDIT_TYPE_DELETE,
+            },
           ];
           return updateCoordinates;
         });
@@ -272,13 +274,13 @@ const BeatChart = ({
     setIsDeleteMode(false);
   };
 
-    // Reset all drag and interaction states when toggling modes
-    const resetInteractionState = () => {
-      dragStartRef.current = null;
-      isDraggingRef.current = false;
-      isPanningRef.current = false;
-      lastValidDragEnd.current = null;
-    };
+  // Reset all drag and interaction states when toggling modes
+  const resetInteractionState = () => {
+    dragStartRef.current = null;
+    isDraggingRef.current = false;
+    isPanningRef.current = false;
+    lastValidDragEnd.current = null;
+  };
 
   useEffect(() => {
     setAddModeCoordinates(addBeats);
@@ -359,7 +361,7 @@ const BeatChart = ({
           <button className="undo-beat-entry" onClick={undoLastCoordinate}>
             <i className="fa-solid fa-rotate-left"></i>Undo
           </button>
-          <JSONSaver
+          <SaveButton
             fileName={fileName}
             addModeCoordinates={addModeCoordinates}
             deleteModeCoordinates={deleteModeCoordinates}
