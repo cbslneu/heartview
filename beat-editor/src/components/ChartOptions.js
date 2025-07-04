@@ -1,6 +1,6 @@
 const createChartOptions = ({
     xAxisData,
-    initECGsData,
+    initCardiacData,
     initBeats,
     initArtifacts,
     addModeCoordinates,
@@ -75,8 +75,8 @@ const createChartOptions = ({
       },
       series: [
         {
-          name: "ECG",
-          data: initECGsData,
+          name: "Signal",
+          data: initCardiacData,
           color: "#3562BD",
           turboThreshold: 0,
           states: {
@@ -131,6 +131,9 @@ const createChartOptions = ({
             hover: {
               enabled: false,
             },
+            inactive: {
+              enabled: false,
+            }
           },
           point: {
             events: {
