@@ -1,9 +1,8 @@
-blosc2
-celery
+cvxopt
 cython==0.29.21
-dash
-dash_bootstrap_components
-dash_daq
+dash==2.17.1
+dash_bootstrap_components==1.6.0
+dash_daq==0.5.0
 dash_uploader
 diskcache
 matplotlib
