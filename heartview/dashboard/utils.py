@@ -1,5 +1,3 @@
-from os import listdir, path, remove, makedirs
-from os import name as os_name
 from pathlib import Path
 from shutil import rmtree
 from zipfile import ZipFile
@@ -12,24 +10,30 @@ import numpy as np
 import pyedflib
 import json
 
-sep = '\\' if os_name == 'nt' else '/'
+# ============================= Startup Functions ============================
+def _make_subdirs():
+    (Path('.') / 'temp').mkdir(
+        parents = True, exist_ok = True)
+    (Path('.') / 'beat-editor' / 'data').mkdir(
+        parents = True, exist_ok = True)
+    (Path('.') / 'beat-editor' / 'export').mkdir(
+        parents = True, exist_ok = True)
 
-# ====================== HeartView Dashboard Functions =======================
 def _clear_temp():
-    temp = f'.{sep}temp'
-    temp_contents = [f for f in listdir(temp) if
-                     not f.startswith('.') and f != '00.txt']
-    if len(temp_contents) > 0:
-        files = [f for f in temp_contents if
-                 not path.isdir(f'{temp}{sep}{f}') and f != '00.txt']
-        for f in files:
-            remove(temp + sep + f)
-        subdirs = [s for s in temp_contents if path.isdir(f'{temp}{sep}{s}')]
-        for s in subdirs:
-            if path.isdir(temp + sep + s):
-                rmtree(temp + sep + s)
+    temp = Path('.') / 'temp'
+    if not temp.exists():
+        return None
+
+    for item in temp.iterdir():
+        if item.name.startswith('.'):
+            continue
+        if item.is_file():
+            item.unlink()
+        elif item.is_dir():
+            rmtree(item)
     return None
 
+# ====================== HeartView Dashboard Functions =======================
 def _check_edf(edf):
     """Check whether the EDF uploaded is a valid Actiwave Cardio file."""
     f = pyedflib.EdfReader(edf)
@@ -40,15 +44,16 @@ def _check_edf(edf):
         return 'invalid'
 
 def _get_configs():
-    cfg_dir = f'.{sep}configs'
-    cfgs = [f for f in listdir(cfg_dir) if
-            not f.startswith('.') and f != '00.txt']
+    cfg_dir = Path('.') / 'configs'
+    cfgs = [f.name for f in cfg_dir.iterdir() if f.is_file() and
+            not f.name.startswith('.')]
     if len(cfgs) > 0:
         return cfgs
     else:
         return []
 
-def _create_configs(device, dtype, fs, seg_size, filter_on, headers):
+def _create_configs(device, dtype, fs, seg_size, artifact_method, artifact_tol,
+                    filter_on, headers):
     """Create a JSON-formatted configuration file of user SQA parameters.
 
     Parameters
@@ -74,6 +79,8 @@ def _create_configs(device, dtype, fs, seg_size, filter_on, headers):
                "sampling rate": fs,
                "segment size": seg_size,
                "filters": filter_on,
+               "artifact identification method": artifact_method,
+               "artifact tolerance": artifact_tol,
                "headers": headers}
 
     # Serialize JSON
@@ -89,36 +96,47 @@ def _load_config(filename):
 
 def _export_sqa(file, data_type, type: str):
     """Export the SQA summary data in Zip or Excel format."""
-    files = [f'.{sep}temp{sep}{file}_SQA.csv']
+    temp_dir = Path('temp')
+    downloads_dir = Path('downloads')
+    downloads_dir.mkdir(parents = True, exist_ok = True)
+
+    files = [temp_dir / f'{file}_SQA.csv']
+    # files = [f'.{sep}temp{sep}{file}_SQA.csv']
+
     if data_type == 'E4':
-        files.append(f'.{sep}temp{sep}{file}_BVP.csv')
-        files.append(f'.{sep}temp{sep}{file}_ACC.csv')
-        files.append(f'.{sep}temp{sep}{file}_IBI.csv')
-        files.append(f'.{sep}temp{sep}{file}_EDA.csv')
-    else:
-        if data_type == 'Actiwave':
-            files.append(f'.{sep}temp{sep}{file}_ECG.csv')
-            files.append(f'.{sep}temp{sep}{file}_ACC.csv')
-            files.append(f'.{sep}temp{sep}{file}_IBI.csv')
-        else:
-            files.append(f'.{sep}temp{sep}{file}_ECG.csv')
-            files.append(f'.{sep}temp{sep}{file}_IBI.csv')
-            if f'{file}_ACC.csv' in listdir(f'.{sep}temp'):
-                files.append(f'.{sep}temp{sep}{file}_ACC.csv')
-    if not path.exists(f'.{sep}downloads{sep}'):
-        makedirs(f'.{sep}downloads')
-    else:
-        pass
+        files += [
+            temp_dir / f'{file}_BVP.csv',
+            temp_dir / f'{file}_ACC.csv',
+            temp_dir / f'{file}_IBI.csv',
+            temp_dir / f'{file}_EDA.csv'
+        ]
+    elif data_type == 'Actiwave':
+        files += [
+            temp_dir / f'{file}_ECG.csv',
+            temp_dir / f'{file}_ACC.csv',
+            temp_dir / f'{file}_IBI.csv'
+        ]
+    else:  # Generic PPG or CSV input
+        files += [
+            temp_dir / f'{file}_ECG.csv',
+            temp_dir / f'{file}_IBI.csv'
+        ]
+        acc_file = temp_dir / f'{file}_ACC.csv'
+        if acc_file.exists():
+            files.append(acc_file)
+
     if type == 'zip':
-        with ZipFile(f'.{sep}downloads{sep}{file}_sqa_summary.zip', 'w') as archive:
+        zip_path = downloads_dir / f'{file}_sqa_summary.zip'
+        with ZipFile(zip_path, 'w') as archive:
             for csv in files:
                 archive.write(csv)
-    if type == 'excel':
-        with pd.ExcelWriter(f'.{sep}downloads{sep}{file}_sqa_summary.xlsx') as xlsx:
+    elif type == 'excel':
+        excel_path = downloads_dir / f'{file}_sqa_summary.xlsx'
+        with pd.ExcelWriter(excel_path) as xlsx:
             for csv in files:
                 df = pd.read_csv(csv)
-                fname = Path(csv).stem
-                df.to_excel(xlsx, sheet_name = fname, index = False)
+                sheet_name = csv.stem
+                df.to_excel(xlsx, sheet_name = sheet_name, index = False)
     return None
 
 def _get_csv_headers(csv):
