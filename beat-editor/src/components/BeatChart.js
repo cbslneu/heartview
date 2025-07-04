@@ -103,13 +103,19 @@ const BeatChart = ({
         y: yAxisData[index],
       }));
 
+      // Checks if correctedAnnotatedData or beatAnnotatedData has the key 'Filtered'
+      const hasFilteredKey = (data) => "Filtered" in data;
+
       const initBeats =
         correctedAnnotatedData.length > 0
           ? correctedAnnotatedData.map((o) => ({
               x: o.Timestamp,
-              y: o.Filtered,
+              y: hasFilteredKey(o) ? o.Filtered : o.Signal,
             }))
-          : beatAnnotatedData.map((o) => ({ x: o.Timestamp, y: o.Filtered }));
+          : beatAnnotatedData.map((o) => ({
+              x: o.Timestamp,
+              y: hasFilteredKey(o) ? o.Filtered : o.Signal,
+            }));
 
       const initArtifacts = artifactX.map((artifactX, index) => ({
         x: artifactX,
