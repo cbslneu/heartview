@@ -75,7 +75,7 @@ const createChartOptions = ({
       },
       series: [
         {
-          name: "ECG",
+          name: "Signal",
           data: initECGsData,
           color: "#3562BD",
           turboThreshold: 0,
@@ -131,6 +131,9 @@ const createChartOptions = ({
             hover: {
               enabled: false,
             },
+            inactive: {
+              enabled: false,
+            }
           },
           point: {
             events: {
