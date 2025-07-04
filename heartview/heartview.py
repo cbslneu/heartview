@@ -1331,7 +1331,7 @@ def write_beat_editor_file(data, fs, signal_col, beats_col, ts_col = None,
 
     # Check required columns
     required_cols = [('signal_col', signal_col), ('beats_col', beats_col)]
-    if ts_col is not None:
+    if ts_col:
         required_cols.append(('ts_col', ts_col))
     for name, col in required_cols:
         if col not in data.columns:
@@ -1363,9 +1363,9 @@ def write_beat_editor_file(data, fs, signal_col, beats_col, ts_col = None,
 
 def process_beat_edits(orig_data, edits):
     """
-    Apply beat insertion and deletion edits from the Beat Editor output to
-    original data. Edits are aligned either by sample index or timestamp,
-    depending on the structure of `orig_data`.
+    Apply manual corrections from the Beat Editor output to original data.
+    Edits are aligned either by sample index or timestamp, depending on the
+    structure of `orig_data`.
 
     Parameters
     ----------
@@ -1388,31 +1388,67 @@ def process_beat_edits(orig_data, edits):
         A copy of `orig_data` with the following additional columns:
         - 'Deletion': 1 where beats were deleted, otherwise NaN
         - 'Addition': 1 where beats were added, otherwise NaN
+        - 'Unusable': 1 where segments are marked unusable, otherwise NaN
         - 'Edited': 1 where all final beats are, otherwise NaN
 
     """
-    processed = orig_data.copy()
-
-    # Determine whether to align edits by sample or timestamp
-    if 'Timestamp' not in orig_data.columns:
-        edits['Sample'] = edits['x'].apply(
-            lambda x: (orig_data['Sample'] - x).abs().idxmin())
+    if all(col not in edits.columns for col in ['x', 'from', 'to']):
+        raise ValueError('Input edits missing necessary columns.')
     else:
-        processed['Timestamp'] = pd.to_datetime(processed['Timestamp'])
-        edits['x'] = pd.to_datetime(edits['x'], unit = 'ms')
-        edits['Sample'] = edits['x'].apply(
-            lambda x: (processed['Timestamp'] - x).abs().idxmin())
+        processed = orig_data.copy()
 
-    # Identify rows for beat deletion and addition
-    deletions = edits.loc[edits.editType == 'DELETE', 'Sample'].values
-    additions = edits.loc[edits.editType == 'ADD', 'Sample'].values
+        # Handle beat insertions/deletions
+        if 'x' in edits.columns:
+            mask_x = edits['x'].notna()
+            if 'Timestamp' in processed.columns:
+                edits.loc[mask_x, 'x'] = pd.to_datetime(
+                    edits.loc[mask_x, 'x'], unit = 'ms', errors = 'coerce')
+            edits.loc[mask_x, 'Sample'] = edits.loc[mask_x, 'x'].apply(
+                lambda x: (processed['Timestamp'] - x).abs().idxmin()
+                if 'Timestamp' in processed.columns else
+                (processed['Sample'] - x).abs().idxmin()
+            )
 
-    # Flag deletions and additions in the processed DataFrame
-    processed.loc[deletions, 'Deletion'] = 1
-    processed.loc[additions, 'Addition'] = 1
+        # Handle unusable markings
+        if all(col in edits.columns for col in ['from', 'to']):
+            mask_from = edits['from'].notna()
+            mask_to = edits['to'].notna()
+            if 'Timestamp' in processed.columns:
+                edits.loc[mask_from, 'from'] = pd.to_datetime(
+                    edits.loc[mask_from, 'from'], unit = 'ms',
+                    errors = 'coerce')
+                edits.loc[mask_to, 'to'] = pd.to_datetime(
+                    edits.loc[mask_to, 'to'], unit = 'ms', errors = 'coerce')
 
-    # Add the corrected beat column
-    processed['Edited'] = processed.Beat.copy()
-    processed.loc[processed.Deletion == 1, 'Edited'] = np.nan
-    processed.loc[processed.Addition == 1, 'Edited'] = 1
-    return processed
+            # Store aligned sample indices
+            edits.loc[mask_from, 'Sample_from'] = edits.loc[
+                mask_from, 'from'].apply(
+                lambda x: (processed['Timestamp'] - x).abs().idxmin()
+                if 'Timestamp' in processed.columns else
+                (processed['Sample'] - x).abs().idxmin()
+            )
+            edits.loc[mask_to, 'Sample_to'] = edits.loc[mask_to, 'to'].apply(
+                lambda x: (processed['Timestamp'] - x).abs().idxmin()
+                if 'Timestamp' in processed.columns else
+                (processed['Sample'] - x).abs().idxmin()
+            )
+
+        # Identify rows for beat deletion and addition
+        deletions = edits.loc[edits.editType == 'DELETE', 'Sample'].values
+        additions = edits.loc[edits.editType == 'ADD', 'Sample'].values
+
+        # Flag deletions and additions in the processed DataFrame
+        processed.loc[deletions, 'Deletion'] = 1
+        processed.loc[additions, 'Addition'] = 1
+
+        # Add 'unusable' labels
+        for start, end in zip(edits.Sample_from, edits.Sample_to):
+            if pd.notna(start) and pd.notna(end):
+                processed.loc[int(start):int(end), 'Unusable'] = 1
+
+        # Add the corrected beat column
+        processed['Edited'] = processed.Beat.copy()
+        processed.loc[processed.Unusable == 1, 'Edited'] = np.nan
+        processed.loc[processed.Deletion == 1, 'Edited'] = np.nan
+        processed.loc[processed.Addition == 1, 'Edited'] = 1
+        return processed
