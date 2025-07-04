@@ -14,9 +14,9 @@ layout = html.Div(id = 'main', children = [
         dcc.Store(id = 'config-download-memory', storage_type = 'memory'),
         dcc.Store(id = 'memory-db', storage_type = 'memory'),
         html.Span(className = 'h5',
-                  children = ['Welcome to PhysioView']),
+                  children = ['Welcome to HeartView']),
         html.P(children = [
-            'Explore signal quality metrics for ambulatory physiological '
+            'Explore signal quality metrics for ambulatory cardiac '
             'data collected with devices such as the Empatica E4 or Actiwave '
             'Cardio.']),
         html.H4(children = [
@@ -70,7 +70,6 @@ layout = html.Div(id = 'main', children = [
                     options = [
                         {'label': 'ECG', 'value': 'ECG'},
                         {'label': 'PPG', 'value': 'PPG'},
-                        {'label': 'EDA', 'value': 'EDA'}
                     ],
                     inline = True
                 )]
@@ -348,34 +347,32 @@ layout = html.Div(id = 'main', children = [
                         children = [
                             dbc.ModalHeader(
                                 dbc.ModalTitle('Export Summary')),
-                            dcc.Loading(
-                                type = 'circle',
-                                color = '#3a4952',
-                                children = [
-                                    dbc.ModalBody(children = [
-                                        html.Div(
-                                            id = 'export-description',
-                                            children = [
-                                                html.Div([
-                                                    html.Span('''Download summary data as a Zip archive file (.zip) or Excel (.xlsx) file.'''),
-                                                    html.Span(''' Excel files may take a while to write.''',
-                                                              style = {'fontStyle': 'italic', 'color': '#de7765'})]
-                                                ),
-                                                html.Div(children = [
-                                                    html.I(className = 'fa-solid fa-download fa-bounce'),
-                                                    dcc.RadioItems(
-                                                        ['Zip', 'Excel'],
-                                                        inline = True,
-                                                        id = 'export-type')],
-                                                    style = {'textAlign': 'center'})]),
-                                        html.Div(id = 'export-confirm',
-                                                 children = [
-                                                     html.I(className = 'fa-solid fa-circle-check',
-                                                            style = {'color': '#63e6be', 'fontSize': '26pt'}),
-                                                     html.P('Exported to: heartview/downloads',
-                                                            style = {'marginTop': '5px'})],
-                                                 hidden = True)])
-                                ]),
+                                dbc.ModalBody(children = [
+                                    html.Div(
+                                        id = 'export-description',
+                                        children = [
+                                            html.Div([
+                                                html.Span('''Download summary data as a Zip archive file (.zip) or Excel (.xlsx) file.'''),
+                                                html.Span(''' Excel files may take a while to write.''',
+                                                          style = {'fontStyle': 'italic', 'color': '#de7765'})]
+                                            ),
+                                            html.Div(children = [
+                                                html.I(className = 'fa-solid fa-download fa-bounce'),
+                                                dcc.RadioItems(
+                                                    ['Zip', 'Excel'],
+                                                    inline = True,
+                                                    id = 'export-type')],
+                                                style = {'textAlign': 'center'})]),
+                                    dbc.Progress(id = 'export-progress-bar',
+                                                 animated = True),
+                                    html.Div(id = 'export-confirm',
+                                             children = [
+                                                 html.I(className = 'fa-solid fa-circle-check',
+                                                        style = {'color': '#63e6be', 'fontSize': '26pt'}),
+                                                 html.P('Summary file created.',
+                                                        style = {'marginTop': '5px'})],
+                                             hidden = True)]),
+                                # ]),
                             dbc.ModalFooter(children = [
                                 html.Div(id = 'export-modal-btns',
                                          children = [
@@ -425,17 +422,6 @@ layout = html.Div(id = 'main', children = [
             html.Div(className = 'graph-settings', children = [
                 html.H4('Signal View', style = {'float': 'left'}),
                 html.Div(className = 'segment-view', children = [
-                    html.Button(children = [
-                        html.I(className = 'fa-solid fa-wand-magic-sparkles'),
-                        html.Span('Correct Beats')
-                    ], id = 'beat-correction'),
-                    html.Span('|', className = 'separator'),
-                    # Beat Editor
-                    html.Button(children = [
-                        html.I(className = 'fa-solid fa-arrow-up-right-from-square'),
-                        html.Span('Beat Editor')
-                    ], id = 'open-beat-editor', n_clicks = 0),
-                    html.Span('|', className = 'separator'),
                     html.H5('Segment:'),
                     html.Button(
                         html.I(className = 'fa-solid fa-chevron-left'),
