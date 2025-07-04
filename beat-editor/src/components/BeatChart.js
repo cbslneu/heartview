@@ -38,7 +38,7 @@ const BeatChart = ({
   unusableBeats = [],
 }) => {
   const [chartOptions, setChartOptions] = useState(null);
-  const [ecgData, setECGData] = useState([]);
+  const [cardiacData, setCardiacData] = useState([]);
   const [beatData, setBeatData] = useState([]);
   const [beatArtifactData, setBeatArtifactData] = useState([]);
   const [isAddMode, setIsAddMode] = useState(false);
@@ -98,7 +98,7 @@ const BeatChart = ({
       const artifactX = artifactData.map((o) => o[dataTypeX]);
       const artifactY = artifactData.map((o) => o[dataTypeY]);
 
-      const initECGsData = xAxisData.map((dataType, index) => ({
+      const initCardiacData = xAxisData.map((dataType, index) => ({
         x: dataType,
         y: yAxisData[index],
       }));
@@ -124,7 +124,7 @@ const BeatChart = ({
 
       const chartParams = createChartOptions({
         xAxisData: segmentFilteredData.map((o) => o.Timestamp),
-        initECGsData,
+        initCardiacData,
         initBeats,
         initArtifacts,
         addModeCoordinates,
@@ -141,7 +141,7 @@ const BeatChart = ({
 
       setChartOptions(chartParams);
 
-      setECGData(initECGsData);
+      setCardiacData(initCardiacData);
       setBeatData(initBeats);
       setBeatArtifactData(initArtifacts);
     }
@@ -156,8 +156,8 @@ const BeatChart = ({
     isMarkingUnusableMode,
   ]);
 
-  segmentBoundaries.from = ecgData[0];
-  segmentBoundaries.to = ecgData[ecgData.length - 1];
+  segmentBoundaries.from = cardiacData[0];
+  segmentBoundaries.to = cardiacData[cardiacData.length - 1];
 
   const handleChartClick = (event) => {
     // Prevents coordinates from plotting when hitting `Reset Zoom`
@@ -176,8 +176,8 @@ const BeatChart = ({
       ? event.point.y
       : event.yAxis[0].value;
 
-    // Check if the point already exists in ecgData (for Add Mode) or beatData (for Delete Mode)
-    const isECGCoordinate = ecgData.some(
+    // Check if the point already exists in cardiacData (for Add Mode) or beatData (for Delete Mode)
+    const isSignal = cardiacData.some(
       (point) => point.x === newX && point.y === newY
     );
     const isBeatCoordinate = beatData.some(
@@ -187,8 +187,8 @@ const BeatChart = ({
       (point) => point.x === newX && point.y === newY
     );
 
-    // In Add Mode, prevent adding points that already exist in ecgData
-    if (isPanningRef.current && isAddMode && isECGCoordinate) {
+    // In Add Mode, prevent adding points that already exist in cardiacData
+    if (isPanningRef.current && isAddMode && isSignal) {
       return;
     }
     // In Delete Mode, prevent deleting points that don't exist in beatData or are artifacts
@@ -201,7 +201,7 @@ const BeatChart = ({
       return;
     }
 
-    const updatedECGData = [...ecgData, { x: newX, y: newY }];
+    const updatedCardiacData = [...cardiacData, { x: newX, y: newY }];
     const updatedBeatData = [...beatData];
     const updateArtifactData = [...beatArtifactData];
 
@@ -227,7 +227,7 @@ const BeatChart = ({
       }
     }
 
-    setECGData(updatedECGData);
+    setCardiacData(updatedCardiacData);
     setBeatData(updatedBeatData);
     setBeatArtifactData(updateArtifactData);
   };

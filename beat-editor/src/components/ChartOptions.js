@@ -1,6 +1,6 @@
 const createChartOptions = ({
     xAxisData,
-    initECGsData,
+    initCardiacData,
     initBeats,
     initArtifacts,
     addModeCoordinates,
@@ -76,7 +76,7 @@ const createChartOptions = ({
       series: [
         {
           name: "Signal",
-          data: initECGsData,
+          data: initCardiacData,
           color: "#3562BD",
           turboThreshold: 0,
           states: {
