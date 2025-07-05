@@ -17,7 +17,7 @@ const useChartZoom = (chartRef, chartOptions) => {
         const minY = yAxis.min;
         const maxY = yAxis.max;
 
-        // Get the data's full range across all series (Signal, Beats, Artifacts)
+        // Get the data's full range across all series (ECG, Beats, Artifacts)
         let allXValues = [];
         let allYValues = [];
 

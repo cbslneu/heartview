@@ -1,9 +1,4 @@
-# Update v1.0.5 🔧 - 7/4/2025
-* Refactored the project structure
-* Changed "ECG" in the chart legend to "Signal"
-* Refactored `PlotBeatSegment.js` to `BeatChartContainer.jsx`
-
-# Update v1.0.4 🔧 - 12/26/2024
+# Updat v1.0.4 - 12/26/2024
 * Some fixes needed for current implementation of Mark Unusable
 * Refactored some of the code
 * Keyboard Shortcut menu available for current shortcuts
