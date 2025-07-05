@@ -33,3 +33,10 @@ Contents
    dashboard-gettingstarted
    dashboard-runningqa
    dashboard-configs
+
+.. toctree::
+   :maxdepth: 2
+   :caption: HeartView Beat Editor
+
+   beat-editor-getting-started
+   beat-editor-quick-guide
