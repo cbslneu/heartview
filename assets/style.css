@@ -339,6 +339,13 @@ input[type="checkbox"] {
     background-color: transparent;
     border-radius: 5px;
 }
+#export-progress-bar {
+    margin-top: 5px;
+    height: 15px;
+    background: transparent;
+    border-radius: 5px;
+    visibility: hidden;
+}
 
 /* =============================== TOOLTIPS =============================== */
 .tooltip-inner {
@@ -541,8 +548,8 @@ label {
     padding: 0;
     position: relative;
     color: #372e27;
-    margin-left: 75px;
-    margin-top: -35px;
+    margin-top: -60px;
+    margin-right: 5px;
 }
 .validation-error-modal button:hover {
     background: none !important;

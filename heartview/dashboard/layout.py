@@ -193,8 +193,8 @@ layout = html.Div(id = 'main', children = [
                     html.I(className = 'fa-solid fa-circle-xmark'),
                     html.Div(className = 'validation-error', children = [
                         html.H5('Missing variable mappings'),
-                        html.P('Please ensure all variables are mapped to '
-                               'your data.')]),
+                        html.P('Please ensure at least both \'Time/Sample\' '
+                               'and \'Signal\' are mapped to your data.')]),
                     html.Button(
                         html.I(className = 'fa-solid fa-xmark'),
                         id = 'close-mapping-validator')
