@@ -741,21 +741,30 @@ class Cardio:
         )
         fig.data[0].update(customdata = df['N Missing'])
 
-        # Annotate invalid segments
-        invalid = []
-        for i, (segment_num, n_detected) in enumerate(
-                zip(df['Segment'], df['N Detected'])):
+        # Get invalid segment data points
+        invalid_x = []
+        invalid_y = []
+        invalid_text = []
+        for segment_num, n_detected in zip(df['Segment'], df['N Detected']):
             if n_detected < invalid_thresh:
-                annotation = dict(
-                    x = segment_num,
-                    y = n_detected,
-                    text = '<b>!</b>',
-                    showarrow = False,
-                    font = dict(color = '#db0f0f', size = 20),
-                    yshift = 10,
-                )
-                invalid.append(annotation)
-        if invalid:
+                invalid_x.append(segment_num)
+                invalid_y.append(
+                    n_detected + 3)
+                invalid_text.append('<b>!</b>')
+
+        # Add scatter trace for invalid markers
+        if invalid_x:
+            fig.add_trace(go.Scatter(
+                x = invalid_x,
+                y = invalid_y,
+                mode = 'text',
+                text = invalid_text,
+                textposition = 'top center',
+                textfont = dict(size = 20, color = '#db0f0f'),
+                showlegend = False,
+                hoverinfo = 'skip'    # disable tooltips
+            ))
+        if invalid_x:
             fig.add_annotation(
                 text = '<span style="color: #db0f0f"><b>!</b></span>  '
                        'Invalid Number of Beats ',
@@ -768,7 +777,11 @@ class Cardio:
 
         fig.update_layout(
             xaxis_title = 'Segment Number',
-            xaxis = dict(tickmode = 'linear', dtick = 1),
+            xaxis = dict(
+                tickmode = 'linear',
+                dtick = 1,
+                range = [df['Segment'].min() - 0.5,
+                         df['Segment'].max() + 0.5]),
             yaxis = dict(
                 title = 'Number of Beats',
                 range = [0, max_beats],
@@ -779,7 +792,6 @@ class Cardio:
                 y = 1.0,
                 xanchor = 'right',
                 x = 1.0),
-            annotations = invalid,
             font = dict(family = 'Poppins', size = 13),
             height = 289,
             margin = dict(t = 70, r = 20, l = 40, b = 65),
@@ -828,21 +840,30 @@ class Cardio:
             ],
         )
 
-        # Annotate invalid segments
-        invalid = []
-        for i, (segment_num, n_detected) in enumerate(
-                zip(df['Segment'], df['N Detected'])):
+        # Get invalid segment data points
+        invalid_x = []
+        invalid_y = []
+        invalid_text = []
+        for segment_num, n_detected in zip(df['Segment'], df['N Detected']):
             if n_detected < invalid_thresh:
-                annotation = dict(
-                    x = segment_num,
-                    y = n_detected,
-                    text = '<b>!</b>',
-                    showarrow = False,
-                    font = dict(color = '#db0f0f', size = 20),
-                    yshift = 10,
-                )
-                invalid.append(annotation)
-        if invalid:
+                invalid_x.append(segment_num)
+                invalid_y.append(
+                    n_detected + 3)
+                invalid_text.append('<b>!</b>')
+
+        # Add scatter trace for invalid markers
+        if invalid_x:
+            fig.add_trace(go.Scatter(
+                x = invalid_x,
+                y = invalid_y,
+                mode = 'text',
+                text = invalid_text,
+                textposition = 'top center',
+                textfont = dict(size = 20, color = '#db0f0f'),
+                showlegend = False,
+                hoverinfo = 'skip'    # disable tooltips
+            ))
+        if invalid_x:
             fig.add_annotation(
                 text = '<span style="color: #db0f0f"><b>!</b></span>  '
                        'Invalid Number of Beats ',
@@ -855,7 +876,11 @@ class Cardio:
 
         fig.update_layout(
             xaxis_title = 'Segment Number',
-            xaxis = dict(tickmode = 'linear', dtick = 1),
+            xaxis = dict(
+                tickmode = 'linear',
+                dtick = 1,
+                range = [df['Segment'].min() - 0.5,
+                         df['Segment'].max() + 0.5]),
             yaxis = dict(
                 title = 'Number of Beats',
                 range = [0, max_beats],
@@ -867,7 +892,6 @@ class Cardio:
                 xanchor = 'right',
                 x = 1.0,
                 traceorder = 'reversed'),
-            annotations = invalid,
             font = dict(family = 'Poppins', size = 13),
             height = 289,
             margin = dict(t = 70, r = 20, l = 40, b = 65),
@@ -892,7 +916,6 @@ class Cardio:
         iqr = self._get_iqr(data)
         QD = iqr * 0.5
         return QD
-
 
 # =================================== EDA ====================================
 class EDA:

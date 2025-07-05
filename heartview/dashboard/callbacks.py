@@ -1,12 +1,10 @@
-from conda.exceptions import DirectoryNotFoundError
 from dash import html, Input, Output, State, ctx, callback
 from dash.exceptions import PreventUpdate
 from dash.dcc import send_bytes
 from heartview import heartview
 from heartview.pipeline import ACC, ECG, PPG, SQA
 from heartview.dashboard import utils
-from os import listdir, makedirs, stat, path
-from os import name as os_name
+from os import stat, path
 from pathlib import Path
 from time import sleep
 from io import BytesIO
@@ -14,13 +12,16 @@ import dash_uploader as du
 import zipfile
 import pandas as pd
 
-sep = '\\' if os_name == 'nt' else '/'
-
 def get_callbacks(app):
     """Attach callback functions to the dashboard app."""
 
+    root = Path(__file__).resolve().parents[3]
+    temp_path = root / 'temp'
+    render_dir = temp_path / '_render'
+    render_dir.mkdir(parents = True, exist_ok = True)
+
     # ============================= DATA UPLOAD ===============================
-    du.configure_upload(app, f'.{sep}temp', use_upload_id = True)
+    du.configure_upload(app, str(temp_path), use_upload_id = True)
     @du.callback(
         output = [
             Output('file-check', 'children'),
@@ -33,14 +34,10 @@ def get_callbacks(app):
     def db_get_file_types(filenames):
         """Save the data type to the local memory depending on the file
         type."""
-        temp = f'.{sep}temp'
-        session = [s for s in listdir(temp) if
-                   path.isdir(f'{temp}{sep}{s}') and s != 'cfg'][0]
-        session_path = f'{temp}{sep}{session}'
-        file = sorted(
-            listdir(session_path),
-            key = lambda t: -stat(f'{session_path}{sep}{t}').st_mtime)[0]
-        filename = f'{session_path}{sep}{file}'
+        session_path = Path(filenames[0]).parent
+        latest_file = sorted(
+            session_path.iterdir(), key = lambda f: -stat(f).st_mtime)[0]
+        filename = str(latest_file)
 
         if filenames[0].endswith(('edf', 'EDF')):
             if utils._check_edf(filenames[0]) == 'ECG':
@@ -148,8 +145,8 @@ def get_callbacks(app):
             if dtype == 'PPG':
                 beat_detectors = [
                     {'label': 'Elgendi et al. (2013)', 'value': 'erma'},
-                    {'label': 'Van Gent et al. (2018)', 'value': 'adapthresh'}]
-                default_bd = 'adapthresh'
+                    {'label': 'Van Gent et al. (2018)', 'value': 'adaptive_threshold'}]
+                default_bd = 'adaptive_threshold'
             else:
                 beat_detectors = [
                     {'label': 'Manikandan & Soman (2012)', 'value': 'manikandan'},
@@ -448,11 +445,9 @@ def get_callbacks(app):
 
             total_progress = 6
             filepath = load_data['filename']
-            filename = filepath.split(sep)[-1]
-            file = filepath.split(sep)[-1].split('.')[0]
+            filename = Path(filepath).name  # e.g., "example.csv"
+            file = Path(filepath).stem
             data = {}
-            render_dir = f'.{sep}temp{sep}_render{sep}'
-            makedirs(f'.{sep}temp{sep}_render{sep}', exist_ok = True)
             perc = (1 / total_progress) * 100
             set_progress((perc, f'{perc:.0f}%'))
 
@@ -462,7 +457,7 @@ def get_callbacks(app):
                 if file_type == 'Actiwave':
                     actiwave = heartview.Actiwave(filepath)
                     ecg, acc = actiwave.preprocess()
-                    acc.to_csv(f'.{sep}temp{sep}{file}_ACC.csv', index = False)
+                    acc.to_csv(str(temp_path / f'{file}_ACC.csv'), index = False)
                     fs = actiwave.get_ecg_fs()
                 else:
                     # If no timestamps are provided
@@ -490,8 +485,7 @@ def get_callbacks(app):
                     try:
                         acc['Magnitude'] = ACC.compute_magnitude(
                             acc['X'], acc['Y'], acc['Z'])
-                        acc.to_csv(
-                            f'.{sep}temp{sep}{file}_ACC.csv', index = False)
+                        acc.to_csv(str(temp_path / f'{file}_ACC.csv'), index = False)
                     except:
                         acc = None
 
@@ -504,13 +498,14 @@ def get_callbacks(app):
                     ecg['Filtered'] = filt.filter_signal(ecg['ECG'])
                     perc = (3 / total_progress) * 100
                     set_progress((perc * 100, f'{perc:.0f}%'))
-                    beats_ix = detect_beats.manikandan(ecg['Filtered'])
+                    beats_ix = getattr(detect_beats, beat_detector)(
+                        ecg['Filtered'])
                 else:
                     detect_beats = ECG.BeatDetectors(fs, preprocessed = False)
-                    beats_ix = detect_beats.manikandan(ecg['ECG'])
+                    beats_ix = getattr(detect_beats, beat_detector)(ecg['ECG'])
                 ecg.loc[beats_ix, 'Beat'] = 1
                 ecg.insert(0, 'Segment', ecg.index // (seg_size * fs) + 1)
-                ecg.to_csv(f'.{sep}temp{sep}{file}_ECG.csv', index = False)
+                ecg.to_csv(str(temp_path / f'{file}_ECG.csv'), index = False)
                 perc = (3.5 / total_progress) * 100
                 set_progress((perc * 100, f'{perc:.0f}%'))
 
@@ -520,7 +515,6 @@ def get_callbacks(app):
                     beats_ix, method = artifact_method, tol = artifact_tol,
                     initial_hr = 'auto')
                 ecg.loc[artifacts_ix, 'Artifact'] = 1
-                utils._create_beat_editor_file(ecg, file)
 
                 # Compute IBIs and SQA metrics
                 if ecg.columns[1] == 'Timestamp':
@@ -545,8 +539,8 @@ def get_callbacks(app):
                                                   show_progress = False)
 
                 # Save to 'temp' directory
-                ibi.to_csv(f'.{sep}temp{sep}{file}_IBI.csv', index = False)
-                metrics.to_csv(f'.{sep}temp{sep}{file}_SQA.csv', index = False)
+                ibi.to_csv(str(temp_path / f'{file}_IBI.csv'), index = False)
+                metrics.to_csv(str(temp_path / f'{file}_SQA.csv'), index = False)
 
                 # Downsample ECG data for quicker plot rendering
                 ds_ecg, ds_ibi, ds_acc, ds_fs = utils._downsample_data(
@@ -554,11 +548,10 @@ def get_callbacks(app):
                 fs = ds_fs
                 perc = (5 / total_progress) * 100
                 set_progress((perc * 100, f'{perc:.0f}%'))
-
-                ds_ecg.to_csv(f'{render_dir}signal.csv', index = False)
-                ds_ibi.to_csv(f'{render_dir}ibi.csv', index = False)
+                ds_ecg.to_csv(str(render_dir / 'signal.csv'), index = False)
+                ds_ibi.to_csv(str(render_dir / 'ibi.csv'), index = False)
                 if ds_acc is not None:
-                    ds_acc.to_csv(f'{render_dir}acc.csv', index = False)
+                    ds_acc.to_csv(str(render_dir / 'acc.csv'), index = False)
 
             # Handle PPG CSV files
             if file_type == 'csv' and dtype == 'PPG':
@@ -587,7 +580,7 @@ def get_callbacks(app):
                     acc['Magnitude'] = ACC.compute_magnitude(
                         acc['X'], acc['Y'], acc['Z'])
                     acc.to_csv(
-                        f'.{sep}temp{sep}{file}_ACC.csv', index = False)
+                        str(temp_path / f'{file}_ACC.csv'), index = False)
                 except:
                     acc = None
 
@@ -598,12 +591,13 @@ def get_callbacks(app):
                 if filt_on:
                     filt = PPG.Filters(fs)
                     ppg['Filtered'] = filt.filter_signal(ppg['PPG'])
-                    beats_ix = detect_beats.adaptive_threshold(ppg['Filtered'])
+                    beats_ix = getattr(detect_beats, beat_detector)(ppg['Filtered'])
                 else:
-                    beats_ix = detect_beats.adaptive_threshold(ppg['PPG'])
+                    beats_ix = getattr(detect_beats, beat_detector)(ppg['PPG'])
+
                 ppg.loc[beats_ix, 'Beat'] = 1
                 ppg.insert(0, 'Segment', ppg.index // (seg_size * fs) + 1)
-                ppg.to_csv(f'.{sep}temp{sep}{file}_PPG.csv', index = False)
+                ppg.to_csv(temp_path / f'{file}_PPG.csv', index = False)
                 signal = ppg.copy()
                 artifacts_ix = sqa.identify_artifacts(
                     beats_ix, method = artifact_method, tol = artifact_tol,
@@ -634,18 +628,18 @@ def get_callbacks(app):
                                                   seg_size = seg_size,
                                                   show_progress = False)
 
-                ibi.to_csv(f'.{sep}temp{sep}{file}_IBI.csv', index = False)
-                metrics.to_csv(f'.{sep}temp{sep}{file}_SQA.csv', index = False)
+                ibi.to_csv(str(temp_path / f'{file}_IBI.csv'), index = False)
+                metrics.to_csv(str(temp_path / f'{file}_SQA.csv'), index = False)
 
                 # Downsample PPG data for quicker plot rendering
                 ds_ppg, ds_ibi, ds_acc, ds_fs = utils._downsample_data(
                     ppg, fs, dtype, beats_ix, artifacts_ix, acc)
                 fs = ds_fs
-
-                ds_ppg.to_csv(f'{render_dir}signal.csv', index = False)
-                ds_ibi.to_csv(f'{render_dir}ibi.csv', index = False)
+                ds_ppg.to_csv(str(render_dir / 'signal.csv'), index = False)
+                ds_ibi.to_csv(str(render_dir / 'ibi.csv'), index = False)
                 if ds_acc is not None:
-                    ds_acc.to_csv(f'{render_dir}acc.csv', index = False)
+                    ds_acc.to_csv(str(render_dir / 'acc.csv'), index = False)
+
 
             # Handle Empatica files
             if file_type == 'E4':
@@ -653,11 +647,17 @@ def get_callbacks(app):
                 set_progress((perc * 100, f'{perc:.0f}%'))
                 E4 = heartview.Empatica(filepath)
                 e4_data = E4.preprocess()
+
+                # Accelerometer data
                 acc = e4_data.acc
-                acc.to_csv(f'{render_dir}acc.csv', index = False)
-                acc.to_csv(f'.{sep}temp{sep}{file}_ACC.csv', index = False)
+                acc.to_csv(str(render_dir / 'acc.csv'), index = False)
+                acc.to_csv(str(temp_path / f'{file}_ACC.csv'), index = False)
+
+                # EDA data
                 eda = e4_data.eda
-                eda.to_csv(f'.{sep}temp{sep}{file}_EDA.csv', index = False)
+                eda.to_csv(str(temp_path / f'{file}_EDA.csv'), index = False)
+
+                # BVP data
                 bvp = e4_data.bvp
                 bvp_fs = e4_data.bvp_fs
                 sqa = SQA.Cardio(bvp_fs)
@@ -669,17 +669,19 @@ def get_callbacks(app):
                 e4_beats = detect_beats.adaptive_threshold(bvp['BVP'])
                 ibi = heartview.compute_ibis(
                     bvp, bvp_fs, e4_beats, ts_col = 'Timestamp')
-                ibi.to_csv(f'.{sep}temp{sep}{file}_IBI.csv', index = False)
+                ibi.to_csv(str(temp_path / f'{file}_IBI.csv'), index = False)
                 bvp.loc[e4_beats, 'Beat'] = 1
                 bvp.insert(0, 'Segment', bvp.index // (seg_size * fs) + 1)
-                bvp.to_csv(f'.{sep}temp{sep}{file}_BVP.csv', index = False)
+                bvp.to_csv(str(temp_path / f'{file}_BVP.csv'), index = False)
+
+                # Save render data
                 signal = bvp.copy()
                 artifacts_ix = sqa.identify_artifacts(
                     e4_beats, method = artifact_method, tol = artifact_tol,
                     initial_hr = 'auto')
                 signal.loc[artifacts_ix, 'Artifact'] = 1
-                signal.to_csv(f'{render_dir}signal.csv', index = False)
-                ibi.to_csv(f'{render_dir}ibi.csv', index = False)
+                signal.to_csv(str(render_dir / 'signal.csv'), index = False)
+                ibi.to_csv(str(render_dir / 'ibi.csv'), index = False)
 
                 # Compute SQA metrics
                 perc = (5 / total_progress) * 100
@@ -691,7 +693,7 @@ def get_callbacks(app):
                                               seg_size = seg_size,
                                               show_progress = False)
                 metrics.to_csv(
-                    f'.{sep}temp{sep}{file}_SQA.csv', index = False)
+                    str(temp_path / f'{file}_SQA.csv'), index = False)
 
             # Store data variables in memory
             data['file type'] = file_type
@@ -729,7 +731,7 @@ def get_callbacks(app):
             raise PreventUpdate
 
         file = data['filename'].split('.')[0]
-        sqa = pd.read_csv(f'.{sep}temp{sep}{file}_SQA.csv')
+        sqa = pd.read_csv(str(temp_path / f'{file}_SQA.csv'))
         fs = int(data['fs'])
         sqa_view == 'default'
 
@@ -774,7 +776,7 @@ def get_callbacks(app):
         data_type = data['data type']
         fs = int(data['fs'])
 
-        sqa = pd.read_csv(f'.{sep}temp{sep}{file}_SQA.csv')
+        sqa = pd.read_csv(str(temp_path / f'{file}_SQA.csv'))
         segments = sqa['Segment'].tolist()
 
         # Signal quality metrics
@@ -804,9 +806,8 @@ def get_callbacks(app):
         if data is None:
             raise PreventUpdate
         else:
-            render_dir = f'.{sep}temp{sep}_render{sep}'
             data_type = data['data type']
-            signal = pd.read_csv(f'{render_dir}signal.csv')
+            signal = pd.read_csv(str(render_dir / 'signal.csv'))
             fs = int(data['fs'])
             seg_size = int(segment_size)
 
@@ -816,9 +817,9 @@ def get_callbacks(app):
 
             # If cardiac data was run
             if data_type in ['ECG', 'PPG', 'BVP']:
-                ibi = pd.read_csv(f'{render_dir}ibi.csv')
+                ibi = pd.read_csv(str(render_dir / 'ibi.csv'))
                 try:
-                    acc = pd.read_csv(f'{render_dir}acc.csv')
+                    acc = pd.read_csv(str(render_dir / 'acc.csv'))
                 except FileNotFoundError:
                     acc = None
 
@@ -872,26 +873,6 @@ def get_callbacks(app):
             return is_open
 
     # === Download summary data ===============================================
-    # @app.callback(
-    #     [Output('export-description', 'hidden'),
-    #      Output('export-confirm', 'hidden'),
-    #      Output('export-modal-btns', 'hidden'),
-    #      Output('export-close-btn', 'hidden')],
-    #     Input('ok-export', 'n_clicks'),
-    #     State('export-type', 'value'),
-    #     State('memory-db', 'data')
-    # )
-    # def export_summary(n, file_type, data):
-    #     """Export the SQA summary file and confirm the export."""
-    #     if n == 0:
-    #         raise PreventUpdate
-    #     else:
-    #         file = data['filename'].split('.')[0]
-    #         data_type = data['data type']
-    #         utils._export_sqa(file, data_type, file_type.lower())
-    #         sleep(1.0)
-    #         return [True, False, True, False]
-
     @callback(
         output = [
             Output('export-description', 'hidden'),
@@ -910,12 +891,10 @@ def get_callbacks(app):
         running = [
             (Output('export-progress-bar', 'style'),
              {'visibility': 'visible'}, {'visibility': 'hidden'}),
-            # (Output('stop-export', 'hidden'), False, True),
             (Output('ok-export', 'disabled'), True, False),
         ],
         cancel = [
             Input('close-export', 'n_clicks')],
-            # Input('close-export2', 'n_clicks')],
         progress = [
             Output('export-progress-bar', 'value'),
             Output('export-progress-bar', 'label')
@@ -930,22 +909,24 @@ def get_callbacks(app):
         else:
             file = data['filename'].split('.')[0]
             data_type = data['data type']
-            files = [f'.{sep}temp{sep}{file}_SQA.csv']
+            files = [str(temp_path / f'{file}_SQA.csv')]
             if data_type == 'BVP':  # if data is from the Empatica E4
-                files.extend([f'.{sep}temp{sep}{file}_BVP.csv',
-                              f'.{sep}temp{sep}{file}_IBI.csv',
-                              f'.{sep}temp{sep}{file}_EDA.csv'])
+                files.extend([
+                    temp_path / f'{file}_BVP.csv',
+                    temp_path / f'{file}_IBI.csv',
+                    temp_path / f'{file}_EDA.csv',
+                ])
             elif data_type == 'Actiwave':
-                files.extend([f'.{sep}temp{sep}{file}_ECG.csv',
-                              f'.{sep}temp{sep}{file}_IBI.csv'])
+                files.extend([temp_path / f'{file}_ECG.csv',
+                              temp_path / f'{file}_IBI.csv'])
             elif data_type == 'PPG':
-                files.extend([f'.{sep}temp{sep}{file}_PPG.csv',
-                              f'.{sep}temp{sep}{file}_IBI.csv'])
+                files.extend([temp_path / f'{file}_PPG.csv',
+                              temp_path / f'{file}_IBI.csv'])
             else:  # if data_type == 'csv'
-                files.extend([f'.{sep}temp{sep}{file}_ECG.csv',
-                              f'.{sep}temp{sep}{file}_IBI.csv'])
-            if f'{file}_ACC.csv' in listdir(f'.{sep}temp{sep}'):
-                files.append(f'.{sep}temp{sep}{file}_ACC.csv')
+                files.extend([temp_path / f'{file}_ECG.csv',
+                              temp_path / f'{file}_IBI.csv'])
+            if (temp_path / f'{file}_ACC.csv').exists():
+                files.append(temp_path / f'{file}_ACC.csv')
 
             # Set up progress bar for export process
             increments = len(files)
@@ -971,28 +952,27 @@ def get_callbacks(app):
                                     f'{file}_sqa_summary.zip')
             elif export_type == 'Excel':
                 output_xls = BytesIO()
-                max_rows = 1048576  # Excel's row limit
+                max_rows = 1_000_000  # row limit
                 with pd.ExcelWriter(output_xls) as xlsx:
                     for i, csv in enumerate(files):
                         df = pd.read_csv(csv)
                         fname = Path(csv).stem.split('_')[-1]
-
-                        # Calculate how many sheets are needed for this file
-                        num_sheets = (len(df) // max_rows) + 1
+                        num_sheets = (len(df) + max_rows - 1) // max_rows
 
                         for j in range(num_sheets):
-                            # Get and write data chunk to individual sheet
                             start_row = j * max_rows
-                            end_row = (j + 1) * max_rows
+                            end_row = min((j + 1) * max_rows, len(df))
                             df_chunk = df.iloc[start_row:end_row]
-                            if num_sheets > 1:
-                                sheet_name = f'{fname}_{j + 1}'
-                            else:
-                                sheet_name = fname
-                            df_chunk.to_excel(
-                                xlsx, sheet_name = sheet_name, index = False)
 
-                        # df.to_excel(xlsx, sheet_name = fname, index = False)
+                            # prevent Excel from writing past max row
+                            if df_chunk.empty:
+                                continue
+
+                            sheet_name = f'{fname}_{j + 1}' if num_sheets > 1 else fname
+                            sheet_name = sheet_name[:31]  # sheet name limit
+                            df_chunk.to_excel(xlsx, sheet_name = sheet_name,
+                                              index = False)
+
                         current_progress = (i + 1) / len(files) * 100
                         if (current_progress < 100 or i <= len(files)):
                             perc = next_progress_threshold
@@ -1013,54 +993,3 @@ def get_callbacks(app):
         if export_type is not None:
             return False
         return True
-
-    # === Open beat editor ====================================================
-    # @app.callback(
-    #     Output('beat-editor-modal', 'is_open'),
-    #     Input('open-beat-editor', 'n_clicks'),
-    #     prevent_initial_call = True
-    # )
-    # def open_beat_editor(n):
-    #     return True if n else False
-    #
-    # # === Load beat editor data ===============================================
-    # @app.callback(
-    #     Output('beat-editor-content', 'children'),
-    #     State('beat-editor-modal', 'is_open'),
-    #     prevent_initial_call = True
-    # )
-    # def load_beat_editor(is_open):
-    #     if is_open:
-    #         if len(listdir(f'.{sep}beat-editor{sep}data')) < 1:
-    #             return html.Span('No data available.')
-    #         else:
-    #             return html.Iframe(
-    #                 src = 'http://localhost:3000',
-    #                 style = {'width': '100%',
-    #                          'height': '550px',
-    #                          'border': 'none'})
-
-    @app.callback(
-        [Output('beat-editor-modal', 'is_open'),
-         Output('beat-editor-content', 'children')],
-        Input('open-beat-editor', 'n_clicks'),
-        prevent_initial_call = True
-    )
-    def handle_beat_editor(beat_editor_clicked):
-        if beat_editor_clicked:
-            try:
-                if len(listdir(f'.{sep}beat-editor{sep}data')) < 1:
-                    content = html.Span('No data available.')
-                else:
-                    if utils._check_beat_editor_status():
-                        content = html.Iframe(
-                            src = 'http://localhost:3000',
-                            style = {'width': '100%', 'height': '550px',
-                                     'border': 'none'}
-                        )
-                    else:
-                        content = html.Span('Beat Editor is not running.')
-            except FileNotFoundError:
-                content = html.Span('No data available.')
-            return True, content
-        return False, html.Div()
