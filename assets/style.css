@@ -214,19 +214,56 @@ h6 {
 #data-types {
     margin-left: 10px;
 }
-#segment-data span, #artifact-params span {
+#segment-data span, #artifact-params > span {
     font-weight: 600;
     padding-right: 5px;
 }
-input[type="checkbox"] {
-    padding-top: 3px;
-    margin-right: 8px;
+#artifact-params > div {
+    padding: 8px 0px 0px 0px;
+}
+#artifact-params > div > span {
+    font-weight: 600;
+    padding-right: 5px;
+}
+#artifact-params button {
+    background: none;
+    color: #55595c;
+    font-size: 13pt;
+    width: 20px;
+    height: 20px;
+    padding-inline: 0;
+    display: inline-flex;
+    align-content: center;
+    align-items: center;
+}
+#artifact-params button:hover {
+    background: none !important;
+}
+#artifact-method {
+    height: 34px;
+    margin-top: 5px;
+    font-size: 10pt;
+}
+#select-beat-detector {
+    margin-top: 5px;
+}
+#select-beat-detector > span {
+    font-weight: 600;
+}
+#beat-detectors {
+    font-size: 10pt;
 }
 #data-variables {
     margin-top: 8px;
 }
+.form-check-input[type=radio] {
+    width: 1.05em
+}
+.form-check-input:checked[type=radio] {
+    background: #ffa891;
+}
 
-/* toggle switches */
+/* --- toggle switches -----------------------------------------------------*/
 #toggle-resample {
     display: inline-block;
 }
@@ -238,48 +275,37 @@ input[type="checkbox"] {
     margin-top: 2px;
     margin-left: 5px;
     padding-right: 10px;
-}
-#filter-data {
-    display: flex;
+    font-size: 11pt;
 }
 #toggle-filter {
     display: inline-flex;
-    margin-top: 10px;
+}
+#toggle-filter .dlqMgb {
+    transform: translate(18px, 0.5px)
 }
 #toggle-filter label {
     margin-top: 1px;
     margin-left: 5px;
     font-weight: 600;
-    font-size: 11.5pt;
+    font-size: 11pt;
     padding-right: 0px;
 }
-#filter-help {
-    margin-left: 5px;
-    font-size: 13pt;
-    margin-top: 13px;
-}
-#segment-data, #artifact-params {
-    display: flex;
-    align-items: center;
-    margin-top: 10px;
-}
-#seg-data-help, #artifact-tol-help {
-    margin-left: 5px;
-    padding-right: 10px;
-    font-size: 13pt;
-    margin-top: 1px;
-}
-#toggle-filter .igrnnx, #toggle-filter .dlqMgb {
+#toggle-filter .dlqMgb, #toggle-config .igrnnx {
     width: 17.5px !important;
     height: 17.5px !important;
 }
-#toggle-filter .dlqMgb, #toggle-config .dlqMgb, #toggle-resample .dlqMgb {
-    transform: translateX(18px);
+#toggle-filter .igrnnx {
+    width: 17.5px !important;
+    height: 17.5px !important;
+    transform: translate(-0.5px, 0.5px);
+}
+#toggle-config .dlqMgb, #toggle-resample .dlqMgb {
+    transform: translate(18px);
 }
 .sc-bxivhb {
     width: 40px !important;    /* toggler size */
 }
-#toggle-config .igrnnx, #toggle-config .dlqMgb {
+#toggle-config .dlqMgb {
     width: 17.5px !important;
     height: 17.5px !important;
 }
@@ -295,8 +321,29 @@ input[type="checkbox"] {
     font-weight: 600;
     letter-spacing: 0.5pt;
 }
-/* configuration file uploader */
-#config-uploader {
+/* -------------------------------------------------------------------------*/
+#filter-data {
+    display: flex;
+}
+#segment-data {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+/* --- help icons ----------------------------------------------------------*/
+#filter-help {
+    margin-left: 5px;
+    font-size: 13pt;
+    margin-top: 3px;
+}
+#seg-data-help, #artifact-tol-help {
+    margin-left: 5px;
+    padding-right: 10px;
+    font-size: 13pt;
+    margin-top: 1px;
+}
+/* -------------------------------------------------------------------------*/
+#config-uploader { /* configuration file uploader */
     line-height: 30px !important;
     min-height: 30px !important;
     border-radius: 5px;
@@ -307,12 +354,6 @@ input[type="checkbox"] {
     padding: 5px;
     cursor: pointer;
 }
-/*#config-uploader-padding > label {*/
-/*    margin: 0px !important;*/
-/*}*/
-#header-filter {  /* ECG filters header */
-    padding-top: 15px;
-}
 #file-check {  /* data upload confirmation text */
     font-size: 11px;
     font-style: italic;
@@ -321,7 +362,7 @@ input[type="checkbox"] {
     margin-top: 5px;
 }
 
-/* ================= DATA UPLOAD & PIPELINE PROGRESS BARS ================= */
+/* ====================== DATA UPLOAD & PROGRESS BARS ===================== */
 .progress-bar {
     background-color: #ee8a78 !important;
 }
@@ -471,9 +512,11 @@ button:hover {
 #run-data {  /* run button */
     width: 100px;
     margin-top: 20px;
+    min-width: 90px;
 }
 #stop-run {  /* stop button*/
     width: 100px;
+    min-width: 100px;
     margin-top: 20px;
     margin-left: -100px;
     background-color: #ee8a78;
@@ -522,12 +565,21 @@ label {
     background-color: #fee4e1;
     border-bottom: 5px solid #cf0e22;
 }
+#artifact-identification-modal .modal-content {
+    max-width: 520px;
+    background-color: #fff;
+    border-bottom: 5px solid #ee8a78;
+}
 .validation-error-modal .modal-body{
     padding-right: 0;
 }
 .validation-content {
     display: inline-flex;
     align-items: center;
+}
+.information-content {
+    display: inline-flex;
+    align-items: normal;
 }
 .validation-error h5 {
     margin: 0;
@@ -540,6 +592,10 @@ label {
 }
 .validation-error {
     display: inline;
+}
+.artifact-method-info {
+    display: block;
+    width: 400px;
 }
 .validation-error-modal button {
     background: none;
@@ -554,6 +610,33 @@ label {
 .validation-error-modal button:hover {
     background: none !important;
     color: #ee8a78 !important;
+}
+#artifact-identification-modal button {
+    background: none;
+    width: 20px;
+    height: 30px;
+    padding: 0;
+    position: relative;
+    color: #372e27;
+    margin-left: 0px;
+    margin-top: -3px;
+}
+#artifact-identification-modal button:hover {
+    background: none !important;
+    color: #ee8a78 !important;
+}
+.artifact-method-info h5 {
+    margin: 0;
+    letter-spacing: 2px;
+    display: inline;
+}
+.artifact-method-info p {
+    margin-top: 10px;
+    color: #333333;
+    display: block;
+}
+.artifact-method-info p > span {
+    display: block;
 }
 .validation-error-modal .fa-solid.fa-xmark {
     font-size: 13pt;
@@ -706,6 +789,55 @@ th:first-child {  /* style only first table header */
     color: #313c42;
     font-size: 13pt;
 }
+#beat-correction {
+    width: auto;
+    height: 26px;
+    background: #313c42;
+    font-size: 11pt;
+    display: flex;
+    align-items: center;
+    color: #ffffff;
+    padding: 0px 4px 0px 5px;
+    margin-right: 5px;
+}
+#beat-correction:hover {
+    background: #ee8a78 !important;
+    color: #ffffff !important;
+}
+#beat-correction > i {  /* magic wand icon */
+    transform: rotate(90deg);
+    color: #ffffff;
+    font-size: 10.5pt;
+}
+#beat-correction > span {
+    margin-left: 5px;
+}
+#open-beat-editor {
+    width: auto;
+    height: 26px;
+    background: #313c42;
+    font-size: 11pt;
+    display: flex;
+    align-items: center;
+    color: #ffffff;
+    padding: 0px 4px 0px 5px;
+    margin: 0px 5px 0px 3px;
+}
+#open-beat-editor:hover {
+    background: #ee8a78 !important;
+    color: #ffffff !important;
+}
+#open-beat-editor > i {  /* new window icon */
+    color: #ffffff;
+    font-size: 10pt;
+}
+#open-beat-editor > span {
+    margin-left: 5px;
+}
+.separator {
+    padding: 2px 7px 0px 7px;
+    font-size: 14pt;
+}
 .raw-plots .tab {
     padding: 10px !important;
     font-size: 24px;
@@ -751,4 +883,25 @@ th:first-child {  /* style only first table header */
     text-transform: uppercase;
     color: #313c42;
     margin-left: 15px;
+}
+
+/* ============================= BEAT EDITOR ============================== */
+#beat-editor-modal {
+    min-width: 95%;
+}
+#beat-editor-modal .modal-header {
+    border-radius: 5px;
+}
+#beat-editor-modal .modal-body {
+    padding: 0;
+}
+#beat-editor-modal .modal-title{
+    font-size: 14pt;
+    letter-spacing: 2px;
+}
+#beat-editor-content {
+    height: 550px;
+    text-align: center;
+    align-content: center;
+    font-style: italic;
 }
