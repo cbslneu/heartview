@@ -1,27 +1,19 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import Highcharts from "highcharts";
 import HighchartsMore from "highcharts/highcharts-more";
 import HighchartsReact from "highcharts-react-official";
-import _, { create } from "lodash";
+import _ from "lodash";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
-// Components
-import createChartOptions from "./ChartOptions";
-import JSONSaver from "./JSONSaver";
-
-// Constants
-import { EDIT_TYPE_ADD, EDIT_TYPE_DELETE } from "../constants/constants";
-
-// Custom Hooks
-import useChartZoom from "../hooks/useChartZoom";
-import useMarkingUnusableMode from "../hooks/useMarkingUnusableMode";
-
-// Helper + Utils
-import useKeyboardShortcuts from "../utils/key-input-utils";
-
-import "./styles.scss";
+import SaveButton from "../SaveButton/SaveButton";
+import createChartOptions from "../../utils/CreateChartOptions";
+import { EDIT_TYPE_ADD, EDIT_TYPE_DELETE } from "../../constants/constants";
+import useChartZoom from "../../hooks/useChartZoom";
+import useMarkingUnusableMode from "../../hooks/useMarkingUnusableMode";
+import useKeyboardShortcuts from "../../utils/key-input-utils";
+import "../../styles.scss";
 
 Highcharts.SVGRenderer.prototype.symbols.cross = function (x, y, w, h) {
   return ["M", x, y, "L", x + w, y + h, "M", x + w, y, "L", x, y + h, "z"];
@@ -38,7 +30,7 @@ const BeatChart = ({
   unusableBeats = [],
 }) => {
   const [chartOptions, setChartOptions] = useState(null);
-  const [ecgData, setECGData] = useState([]);
+  const [cardiacData, setCardiacData] = useState([]);
   const [beatData, setBeatData] = useState([]);
   const [beatArtifactData, setBeatArtifactData] = useState([]);
   const [isAddMode, setIsAddMode] = useState(false);
@@ -56,18 +48,6 @@ const BeatChart = ({
   const isPanningRef = useRef(false); // Tracks if the user is panning the chart
   const lastValidDragEnd = useRef(null);
 
-  const xAxisKeys = ["Timestamp", "Sample"];
-  const yAxisKeys = ["Filtered", "Signal"];
-  const checkDataType = (fileData, data) =>
-    fileData.some((o) => o.hasOwnProperty(data));
-
-  const dataTypeX = xAxisKeys.filter(
-    (data) => checkDataType(fileData, data) === true
-  );
-  const dataTypeY = yAxisKeys.filter(
-    (data) => checkDataType(fileData, data) === true
-  );
-
   let segmentBoundaries = {
     from: null,
     to: null,
@@ -75,6 +55,18 @@ const BeatChart = ({
 
   useEffect(() => {
     if (fileData) {
+      const xAxisKeys = ["Timestamp", "Sample"];
+      const yAxisKeys = ["Filtered", "Signal"];
+      const checkDataType = (fileData, data) =>
+        fileData.some((o) => o.hasOwnProperty(data));
+
+      const dataTypeX = xAxisKeys.filter(
+        (data) => checkDataType(fileData, data) === true
+      );
+      const dataTypeY = yAxisKeys.filter(
+        (data) => checkDataType(fileData, data) === true
+      );
+
       // Filter the data by the selected segment from the dropdown
       const segmentFilteredData = selectedSegment
         ? _.filter(fileData, (o) => o.Segment.toString() === selectedSegment)
@@ -98,18 +90,24 @@ const BeatChart = ({
       const artifactX = artifactData.map((o) => o[dataTypeX]);
       const artifactY = artifactData.map((o) => o[dataTypeY]);
 
-      const initECGsData = xAxisData.map((dataType, index) => ({
+      const initCardiacData = xAxisData.map((dataType, index) => ({
         x: dataType,
         y: yAxisData[index],
       }));
+
+      // Checks if correctedAnnotatedData or beatAnnotatedData has the key 'Filtered'
+      const hasFilteredKey = (data) => "Filtered" in data;
 
       const initBeats =
         correctedAnnotatedData.length > 0
           ? correctedAnnotatedData.map((o) => ({
               x: o.Timestamp,
-              y: o.Filtered,
+              y: hasFilteredKey(o) ? o.Filtered : o.Signal,
             }))
-          : beatAnnotatedData.map((o) => ({ x: o.Timestamp, y: o.Filtered }));
+          : beatAnnotatedData.map((o) => ({
+              x: o.Timestamp,
+              y: hasFilteredKey(o) ? o.Filtered : o.Signal,
+            }));
 
       const initArtifacts = artifactX.map((artifactX, index) => ({
         x: artifactX,
@@ -118,7 +116,7 @@ const BeatChart = ({
 
       const chartParams = createChartOptions({
         xAxisData: segmentFilteredData.map((o) => o.Timestamp),
-        initECGsData,
+        initCardiacData,
         initBeats,
         initArtifacts,
         addModeCoordinates,
@@ -130,12 +128,12 @@ const BeatChart = ({
         isMarkingUnusableMode,
         handleChartClick,
         dataTypeX,
-        isPanningRef
+        isPanningRef,
       });
 
       setChartOptions(chartParams);
 
-      setECGData(initECGsData);
+      setCardiacData(initCardiacData);
       setBeatData(initBeats);
       setBeatArtifactData(initArtifacts);
     }
@@ -150,8 +148,8 @@ const BeatChart = ({
     isMarkingUnusableMode,
   ]);
 
-  segmentBoundaries.from = ecgData[0];
-  segmentBoundaries.to = ecgData[ecgData.length - 1];
+  segmentBoundaries.from = cardiacData[0];
+  segmentBoundaries.to = cardiacData[cardiacData.length - 1];
 
   const handleChartClick = (event) => {
     // Prevents coordinates from plotting when hitting `Reset Zoom`
@@ -170,8 +168,8 @@ const BeatChart = ({
       ? event.point.y
       : event.yAxis[0].value;
 
-    // Check if the point already exists in ecgData (for Add Mode) or beatData (for Delete Mode)
-    const isECGCoordinate = ecgData.some(
+    // Check if the point already exists in cardiacData (for Add Mode) or beatData (for Delete Mode)
+    const isSignal = cardiacData.some(
       (point) => point.x === newX && point.y === newY
     );
     const isBeatCoordinate = beatData.some(
@@ -181,8 +179,8 @@ const BeatChart = ({
       (point) => point.x === newX && point.y === newY
     );
 
-    // In Add Mode, prevent adding points that already exist in ecgData
-    if (isPanningRef.current && isAddMode && isECGCoordinate) {
+    // In Add Mode, prevent adding points that already exist in cardiacData
+    if (isPanningRef.current && isAddMode && isSignal) {
       return;
     }
     // In Delete Mode, prevent deleting points that don't exist in beatData or are artifacts
@@ -195,7 +193,7 @@ const BeatChart = ({
       return;
     }
 
-    const updatedECGData = [...ecgData, { x: newX, y: newY }];
+    const updatedCardiacData = [...cardiacData, { x: newX, y: newY }];
     const updatedBeatData = [...beatData];
     const updateArtifactData = [...beatArtifactData];
 
@@ -203,7 +201,12 @@ const BeatChart = ({
       setAddModeCoordinates((prevCoordinates) => {
         const updateCoordinates = [
           ...prevCoordinates,
-          { x: newX, y: newY, segment: selectedSegment, editType: EDIT_TYPE_ADD },
+          {
+            x: newX,
+            y: newY,
+            segment: selectedSegment,
+            editType: EDIT_TYPE_ADD,
+          },
         ];
         return updateCoordinates;
       });
@@ -212,7 +215,12 @@ const BeatChart = ({
         setDeleteModeCoordinates((prevCoordinates) => {
           const updateCoordinates = [
             ...prevCoordinates,
-            { x: newX, y: newY, segment: selectedSegment, editType: EDIT_TYPE_DELETE },
+            {
+              x: newX,
+              y: newY,
+              segment: selectedSegment,
+              editType: EDIT_TYPE_DELETE,
+            },
           ];
           return updateCoordinates;
         });
@@ -221,7 +229,7 @@ const BeatChart = ({
       }
     }
 
-    setECGData(updatedECGData);
+    setCardiacData(updatedCardiacData);
     setBeatData(updatedBeatData);
     setBeatArtifactData(updateArtifactData);
   };
@@ -266,13 +274,13 @@ const BeatChart = ({
     setIsDeleteMode(false);
   };
 
-    // Reset all drag and interaction states when toggling modes
-    const resetInteractionState = () => {
-      dragStartRef.current = null;
-      isDraggingRef.current = false;
-      isPanningRef.current = false;
-      lastValidDragEnd.current = null;
-    };
+  // Reset all drag and interaction states when toggling modes
+  const resetInteractionState = () => {
+    dragStartRef.current = null;
+    isDraggingRef.current = false;
+    isPanningRef.current = false;
+    lastValidDragEnd.current = null;
+  };
 
   useEffect(() => {
     setAddModeCoordinates(addBeats);
@@ -353,7 +361,7 @@ const BeatChart = ({
           <button className="undo-beat-entry" onClick={undoLastCoordinate}>
             <i className="fa-solid fa-rotate-left"></i>Undo
           </button>
-          <JSONSaver
+          <SaveButton
             fileName={fileName}
             addModeCoordinates={addModeCoordinates}
             deleteModeCoordinates={deleteModeCoordinates}

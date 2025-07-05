@@ -3,10 +3,15 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
-const JSONSaver = ({ fileName, addModeCoordinates, deleteModeCoordinates, unusableSegments }) => {
+const SaveButton = ({
+  fileName,
+  addModeCoordinates,
+  deleteModeCoordinates,
+  unusableSegments,
+}) => {
   const saveJSON = async () => {
     try {
-      const response = await axios.post("http://localhost:3001/saved", {
+      await axios.post("http://localhost:3001/saved", {
         fileName,
         data: { addModeCoordinates, deleteModeCoordinates, unusableSegments },
       });
@@ -33,4 +38,4 @@ const JSONSaver = ({ fileName, addModeCoordinates, deleteModeCoordinates, unusab
   );
 };
 
-export default JSONSaver;
+export default SaveButton;
