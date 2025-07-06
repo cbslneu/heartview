@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.abspath('../'))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'HeartView'
-copyright = '2024, Natasha Yamane, Varun Mishra, and Matthew S. Goodwin'
+copyright = '2025, Natasha Yamane, Varun Mishra, and Matthew S. Goodwin'
 author = 'Natasha Yamane, Varun Mishra, and Matthew S. Goodwin'
 release = '2.0.2'
 
@@ -24,6 +24,7 @@ html_logo = '../assets/heartview-logo.png'
 html_favicon = '../assets/favicon.ico'
 html_css_files = [
     'css/custom-furo.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css',
 ]
 html_theme_options = {
     "light_css_variables": {
@@ -78,6 +79,19 @@ html_theme_options = {
         "toc-item-spacing-horizontal": "0.4rem"
     },
     "sidebar_hide_name": True,
+    "source_repository": "https://github.com/cbslneu/heartview/",
+    "source_branch": "main",
+    "source_directory": "docs/",
+    "footer_icons": [
+            {
+                "name": "GitHub",
+                "url": "https://github.com/cbslneu/heartview",
+                "html": """
+                    <i class="fa-brands fa-github fa-lg"></i>
+                """,
+                "class": "",
+            },
+        ],
 }
 
 # -- General configuration ---------------------------------------------------
