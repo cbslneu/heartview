@@ -73,7 +73,7 @@ Submitting a Pull Request
 
 2. Visit the |HeartView Github repo|.
 3. Click the "New Pull Request" button.
-4. Choose your branch and the ``main`` branch.
+4. Choose your branch and the ``dev`` branch.
 5. Provide a clear and detailed description of your changes in the pull request.
 6. Click "Create Pull Request" to submit your contribution.
 

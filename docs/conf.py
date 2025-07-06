@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath('../'))
 project = 'HeartView'
 copyright = '2024, Natasha Yamane, Varun Mishra, and Matthew S. Goodwin'
 author = 'Natasha Yamane, Varun Mishra, and Matthew S. Goodwin'
-release = '2.0.1'
+release = '2.0.2'
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
