@@ -50,6 +50,9 @@ Features
 * **Signal Quality Metrics**: Generate segment-by-segment information about
   missing and artifactual data.
 
+* **Beat Editor**: Perform manual beat correction on cardiac data using an
+  interactive web-based tool.
+
 Citation
 --------
 
@@ -69,23 +72,24 @@ If you use this software in your research, please cite `this paper <https://link
       doi       = {10.1007/978-3-031-59717-6_8},
     }
 
-What's New in Version 2.0.1
+What's New in Version 2.0.2
 ---------------------------
 
 Pipeline Enhancements
 *********************
 
-- Added beat detection algorithms for ECG and PPG pre-processing.
-- Added default filters for ECG, PPG, and ACC.
-- Implemented artifact identification methods.
-- Added progress bars for real-time feedback.
+- Added Beat Editor data reading and writing functions.
 
 Dashboard Improvements
 **********************
-- Enhanced handling of uploaded data files.
-- Added artifactual beats visualization and metrics.
-- Improved segment view selection options.
-- Enabled data downsampling for faster chart rendering.
+- Added dropdown menus for selecting artifact identification methods.
+- Added dropdown menus for selecting beat detection algorithms.
+
+Beat Editor Improvements
+************************
+- Added save functionality to preserve your editing progress and return to
+  where you left off.
+- Added keyboard shortcuts for faster navigation and editing.
 
 For a full list of changes, see the full |changelog|.
 
