@@ -49,6 +49,7 @@ const BeatChart = ({
   const isPanningRef = useRef(false); // Tracks if the user is panning the chart
   const lastValidDragEnd = useRef(null);
   const keyboardShortcutsRef = useRef(null);
+  const keyboardButtonRef = useRef(null);
 
   let segmentBoundaries = {
     from: null,
@@ -292,9 +293,11 @@ const BeatChart = ({
   useEffect(() => {
   const handleClickOutside = (event) => {
     if (
-      showKeyboardShortcut &&
-      keyboardShortcutsRef.current &&
-      !keyboardShortcutsRef.current.contains(event.target)
+      showKeyboardShortcut && //is the popup currently open
+      keyboardShortcutsRef.current && //does the popup element exist in the dom
+      !keyboardShortcutsRef.current.contains(event.target) && //was the click outside the popup
+      keyboardButtonRef.current && //does the button exist in the dom
+      !keyboardButtonRef.current.contains(event.target) //was the click outside the button
     ) {
       setKeyboardShortcut(false);
     }
@@ -398,7 +401,7 @@ const BeatChart = ({
         {/* keyboard shortcuts */}
         <div className="keyboard-shortcuts-wrapper">
           <div>
-            <button className="shortcut-button" onClick={toggleKeyboardShortcut}>
+            <button className="shortcut-button" onClick={toggleKeyboardShortcut} ref={keyboardButtonRef}>
               <i className="fa-solid fa-keyboard fa-xl"></i>
             </button>
           </div>
