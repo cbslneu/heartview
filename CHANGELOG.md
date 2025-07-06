@@ -3,6 +3,29 @@ All notable changes to this project will be documented in this file. The
 format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [HeartView 2.0.2] - 2024-07-07
+
+### Added
+
+#### Dashboard
+- Dropdown for artifact identification method selection
+- Dropdown for beat detection algorithm selection
+- Progreess bar in "Export Summary" modal
+
+#### Beat Editor
+- Keyboard shortcuts 
+- Support for marking portions of segments 'unusable'
+- Support for automatically loading existing edits from a saved file on startup
+- Documentation pages for installation, quick start guide, and working with 
+  Beat Editor files
+
+### Changed
+
+#### Beat Editor
+- Legend label from "ECG" to "Signal" for broader cardiac signal type support
+- Code in `PlotBeatSegment.js` to `BeatChartContainer.jsx`
+
+
 ## [HeartView 2.0.1] - 2024-10-07
 
 ### Added

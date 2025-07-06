@@ -51,23 +51,21 @@ If you use this software in your research, please cite [this paper](https://link
 }
 ```
 
-## Latest Release [HeartView 2.0]
+## Latest Release [HeartView 2.0.2]
 
 ### Pipeline Enhancements:
-- Added beat detection algorithms for ECG and PPG pre-processing. 
-- Added default filters for ECG, PPG, and ACC.
-- Implemented artifact identification methods in the `SQA.py` module.
-- Added progress bars for real-time feedback.  
+- Added Beat Editor data I/O functions.
 
 ### Dashboard Improvements:
-- Enhanced handling of uploaded data files.
-- Added artifactual beats visualization and metrics. 
-- Improved segment view selection options. 
-- Enabled data downsampling for faster chart rendering.
+- Added dropdown menus for selecting artifact identification methods.
+- Added dropdown menus for selecting beat detection algorithms.
+
+### Beat Editor Improvements:
+- Added save functionality to preserve editing progress.
+- Added keyboard shortcuts for faster navigation and editing.
 
 ### Structural Refactoring:
-- Refactored functions into new classes for clarity. 
-- Updated function and package names in documentation.
+- Refactored modules for cleaner path handling and clarity.
 
 For a full list of changes, see the [full changelog](CHANGELOG.md).
 
@@ -76,8 +74,6 @@ We're constantly working on improving HeartView. Here's a glimpse of what's
 in store in the near future:
 
 - Automated beat correction functionality
-- Manual beat correction feature
-- Data imputation techniques
 - Electrodermal activity (EDA) data pre-processing and quality assessment
 
 ## Installation
@@ -88,8 +84,10 @@ cd <directory>  # replace <directory> with your directory
 ```
 git clone https://github.com/cbslneu/heartview.git
 ```
-2. Set up and activate a virtual environment in the `heartview` project directory.  
-❗️**Note:** If you do not have `virtualenv` installed, run `pip3 install virtualenv` before proceeding below.
+2. Set up and activate a virtual environment using Python 3.9 through 3.13 
+   inside the `heartview` project directory.  
+  ❗️**Note:** If you do not have `virtualenv` installed, run `pip3 install 
+virtualenv` before proceeding below.
 ```
 cd heartview
 ```
@@ -104,12 +102,13 @@ If you are a Windows user:
 ```
 venv\Scripts\activate
 ```
-3. Install all project dependencies.
+3. Install all project dependencies:
 ```
 pip3 install -r requirements.txt
 ```
-### Installation for Manual Beat Editor
-**Manual Beat Editor requires Node (v20.x.x +), please be sure to install before proceeding with the installation below**
+### Installation for Beat Editor
+**The Beat Editor requires Node (v20.x.x +). Please be sure to install 
+Node before proceeding with the installation below.**
 <br>
 <br> *Run the following code below to check if Node is installed on your machine:*
 ```
@@ -117,19 +116,19 @@ node --version
 ```
 If an error occurs, please refer to this link to install Node on your machine: https://nodejs.org/en/download/package-manager
 
-1. Go to the `beat-editor` directory
+1. Go to the `beat-editor` directory:
 ```
 cd beat-editor
 ```
-2. Install the required modules for beat-editor
+2. Install the required modules for the Beat Editor:
 ```
 npm install
 ```
-3. Go to the `server` folder
+3. Go to the `server` folder:
 ```
 cd server
 ```
-4. Install the required modules for beat-editor's backend
+4. Install the required modules for the Beat Editor's backend:
 ```
 npm install
 ```
@@ -141,16 +140,18 @@ npm install
 python3 app.py
 ```
 2. Open your web browser and go to: http://127.0.0.1:8050/
-### Executing Manual Beat Editor
-1. Navigate to the `server` directory
+
+## HeartView Beat Editor
+### Executing
+1. Navigate to the `beat-editor/server` directory and start the backend:
 ```
-cd server
+cd beat-editor/server
 ```
-2. Run the following line to start the backend
 ```
 npm start
 ```
-3. Open up another terminal tab or window and navigate back to `beat-editor`. Once there, run `npm start` again to start the frontend.
+2. Open another terminal tab or window and navigate back to `beat-editor/`. 
+Once there, run `npm start` again to start the front end.
 
 ### Terminating
 1. Kill the dashboard program: press `CTRL`+`c`.
