@@ -23,26 +23,28 @@ function BeatChartContainer() {
 
       if (!allFileData) throw new Error("No file data found.");
 
+      const addBeats = [];
+      const deleteBeats = [];
+      const unusableBeats = [];
+
       if (allSavedData) {
         const jsonData = allSavedData[0].data;
 
-        const addBeats = jsonData.filter(
-          (beat) => beat.editType === EDIT_TYPE_ADD
-        );
-        const deleteBeats = jsonData.filter(
+        addBeats = jsonData.filter((beat) => beat.editType === EDIT_TYPE_ADD);
+        deleteBeats = jsonData.filter(
           (beat) => beat.editType === EDIT_TYPE_DELETE
         );
-        const unusableBeats = jsonData.filter(
+        unusableBeats = jsonData.filter(
           (beat) => beat.editType === EDIT_TYPE_UNUSABLE
         );
-
-        setFileData(allFileData[0].data);
-        setFileName(allFileData[0].fileName);
-        setSegmentOptions(segmentOptions);
-        setAddBeatCoordinates(addBeats);
-        setDeleteBeatCoordinates(deleteBeats);
-        setUnusableBeats(unusableBeats);
       }
+
+      setFileData(allFileData[0].data);
+      setFileName(allFileData[0].fileName);
+      setSegmentOptions(segmentOptions);
+      setAddBeatCoordinates(addBeats);
+      setDeleteBeatCoordinates(deleteBeats);
+      setUnusableBeats(unusableBeats);
     } catch (err) {
       throw new Error(`Error fetching JSON file: ${err.message}`);
     }
