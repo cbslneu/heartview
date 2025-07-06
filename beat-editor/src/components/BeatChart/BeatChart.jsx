@@ -48,6 +48,7 @@ const BeatChart = ({
   const isDraggingRef = useRef(false); // Tracks drag during panning
   const isPanningRef = useRef(false); // Tracks if the user is panning the chart
   const lastValidDragEnd = useRef(null);
+  const keyboardShortcutsRef = useRef(null);
 
   let segmentBoundaries = {
     from: null,
@@ -287,6 +288,27 @@ const BeatChart = ({
     lastValidDragEnd.current = null;
   };
 
+  //useEffect listener for closing keyboard popup
+  useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (
+      showKeyboardShortcut &&
+      keyboardShortcutsRef.current &&
+      !keyboardShortcutsRef.current.contains(event.target)
+    ) {
+      setKeyboardShortcut(false);
+    }
+  };
+
+  if (showKeyboardShortcut) {
+    document.addEventListener('mousedown', handleClickOutside);
+  }
+
+  return () => {
+    document.removeEventListener('mousedown', handleClickOutside);
+  };
+}, [showKeyboardShortcut]);
+
   useEffect(() => {
     setAddModeCoordinates(addBeats);
     setDeleteModeCoordinates(deleteBeats);
@@ -377,11 +399,11 @@ const BeatChart = ({
         <div className="keyboard-shortcuts-wrapper">
           <div>
             <button className="shortcut-button" onClick={toggleKeyboardShortcut}>
-              <i class="fa-solid fa-keyboard fa-xl"></i>
+              <i className="fa-solid fa-keyboard fa-xl"></i>
             </button>
           </div>
           {showKeyboardShortcut && (
-            <div className="keyboard-shortcuts-popover">
+            <div className="keyboard-shortcuts-popover" ref={keyboardShortcutsRef}>
               <div className="popover-arrow"></div>
               <h2 className="popover-title">Keyboard Shortcuts</h2>
               
