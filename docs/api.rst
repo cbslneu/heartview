@@ -44,3 +44,13 @@ Empatica E4
 .. autoclass:: heartview.heartview.Empatica
     :members:
     :undoc-members:
+
+Beat Editor
+===========
+.. _write-beat-editor-file:
+
+.. autofunction:: heartview.heartview.write_beat_editor_file
+
+.. _process_beat_edits:
+
+.. autofunction:: heartview.heartview.process_beat_edits

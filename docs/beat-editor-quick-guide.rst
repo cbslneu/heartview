@@ -31,9 +31,9 @@ To mark an area of the chart as unusable, click ``Mark Unusable`` and select the
 
 Undo
 ====
-To undo the last action requires additional steps with how its set up.
+To undo an action, the mode in which it was performed must be activated first.
 
-To undo a ``Add Beat``
+Undo a beat insertion
 ---------------------
 1. Click on ``Add Beat``.
 2. Click ``Undo``.
@@ -42,8 +42,8 @@ To undo a ``Add Beat``
     :width: 600
     :align: center
 
-To undo a ``Delete Beat``
---------------------------
+Undo a beat deletion
+--------------------
 1. Click on ``Delete Beat``.
 2. Click ``Undo``.
 
@@ -51,8 +51,8 @@ To undo a ``Delete Beat``
     :width: 600
     :align: center
 
-To undo a ``Mark Unusable``
-----------------------------
+Undo an 'unusable' marking
+--------------------------
 1. Click on ``Mark Unusable``.
 2. Click ``Undo``.
 
@@ -62,7 +62,8 @@ To undo a ``Mark Unusable``
 
 Save
 ====
-To save changes, click the ``Save`` button after making edits. This will save the current state of the chart to the server.
+To save changes, click the ``Save`` button after making edits. This will
+save the current state of the chart to the server.
 
 .. image:: _static/beat-editor-gifs/Save.gif
     :width: 600
@@ -71,7 +72,7 @@ To save changes, click the ``Save`` button after making edits. This will save th
 
 Keyboard Shortcuts
 ==================
-The Beat Editor supports several keyboard shortcuts to enhance workflow. Here are some of the most useful ones:
+The Beat Editor supports several keyboard shortcuts to enhance workflow:
 
 - **A** - Add a new beat.
 - **D** - Delete the selected beat.
