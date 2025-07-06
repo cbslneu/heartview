@@ -40,6 +40,7 @@ const BeatChart = ({
   const [deleteModeCoordinates, setDeleteModeCoordinates] = useState([]);
   const [unusableSegments, setUnusableSegments] = useState([]);
   const [selectedSegment, setSelectedSegment] = useState("1");
+  const [showKeyboardShortcut, setKeyboardShortcut] = useState(false);
 
   const chartRef = useRef(null);
   const dragStartRef = useRef(null);
@@ -274,6 +275,10 @@ const BeatChart = ({
     setIsDeleteMode(false);
   };
 
+  const toggleKeyboardShortcut = () => {
+    setKeyboardShortcut(!showKeyboardShortcut);
+  }
+
   // Reset all drag and interaction states when toggling modes
   const resetInteractionState = () => {
     dragStartRef.current = null;
@@ -367,6 +372,61 @@ const BeatChart = ({
             deleteModeCoordinates={deleteModeCoordinates}
             unusableSegments={unusableSegments}
           />
+        
+        {/* keyboard shortcuts */}
+        <div className="keyboard-shortcuts-wrapper">
+          <button className="chart-buttons" onClick={toggleKeyboardShortcut}>
+            <i class="fa-solid fa-keyboard fa-xl"></i>
+          </button>
+          {showKeyboardShortcut && (
+            <div className="keyboard-shortcuts-popover">
+              <div className="keyboard-shortcuts">
+                <i class="fa-solid fa-a keybind"></i>
+                <h3>Add Beat</h3>
+              </div>
+              <div className="keyboard-shortcuts">
+                <i class="fa-solid fa-u keybind"></i>
+                <h3>Mark Unusable</h3>
+              </div>
+              <div className="keyboard-shortcuts">
+                <i class="fa-solid fa-d keybind"></i>
+                <h3>Delete Beat</h3>
+              </div>
+              <div className="keyboard-shortcuts">
+                <div className="keybind">
+                  <i class="fa-solid fa-c"></i>
+                  <i class="fa-solid fa-t"></i>
+                  <i class="fa-solid fa-r"></i>
+                  <i class="fa-solid fa-l"></i>
+                </div>
+                <i class="fa-solid fa-plus plus"></i>
+                <i class="fa-solid fa-z keybind"></i>
+              </div>
+              <h4>OR</h4>
+              <div className="keyboard-shortcuts">
+                <h3 className="command-keybind">⌘</h3>
+                <i class="fa-solid fa-plus plus"></i>
+                <i class="fa-solid fa-z keybind"></i>
+              </div>
+              <h3>Undo</h3>
+              <div className="keyboard-shortcuts">
+                <div className="keybind">
+                  <i class="fa-solid fa-s"></i>
+                  <i class="fa-solid fa-h"></i>
+                  <i class="fa-solid fa-i"></i>
+                  <i class="fa-solid fa-f"></i>
+                  <i class="fa-solid fa-t"></i>
+                </div>
+                <i class="fa-solid fa-plus plus"></i>
+                <i class="fa-solid fa-arrow-pointer keybind"></i>
+                <i class="fa-solid fa-plus plus"></i>
+                <h3>DRAG</h3>
+              </div>
+              <h3>PAN</h3>
+            </div>
+          )}
+        </div>
+        {/* end keyboard shortcuts */}
         </div>
         <div className="chart-info">
           <h3>Current Segment: {selectedSegment}</h3>

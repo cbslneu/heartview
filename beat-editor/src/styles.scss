@@ -120,8 +120,43 @@ button {
   font-family: 'Poppins', sans-serif !important;
 }
 
+.keyboard-shortcuts-wrapper {
+  
+}
 
+.keyboard-shortcuts {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
+.keyboard-shortcuts-popover {
+  border:2px solid #47555e;
+  border-radius: 5px;
+  position: absolute;
+  z-index: 1;
+  background-color: white;
+}
 
+.keybind {
+  border: 2px solid #47555e;
+  border-radius: 2px;
+  padding: 5px;
+  padding-left: 8px;
+  padding-right: 8px;
+  margin-right: 5px;
+}
+
+.command-keybind {
+  border: 2px solid #47555e;
+  border-radius: 2px;
+  padding-left: 8px;
+  padding-right: 8px;
+  margin-right: 5px;
+}
+
+.plus {
+  margin-right: 5px;
+}
 
   
