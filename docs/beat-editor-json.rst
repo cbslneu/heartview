@@ -65,4 +65,4 @@ example workflow:
     processed_data = heartview.process_beat_edits(orig_data, edits)
 
     # Write the processed data
-    processed_data.to_csv('')
+    processed_data.to_csv('processed_data.csv', index = False)
