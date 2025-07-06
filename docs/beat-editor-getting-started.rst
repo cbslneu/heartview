@@ -34,7 +34,7 @@ for the Beat Editor:
     $ cd beat-editor
     $ npm install
 
-Next we needs to install the backend server dependencies.
+Next we need to install the backend server dependencies.
 From the ``beat-editor`` subdirectory, navigate to the ``server``
 and run the following command to install all required modules:
 
