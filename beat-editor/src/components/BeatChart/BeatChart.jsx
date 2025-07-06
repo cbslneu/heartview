@@ -375,55 +375,73 @@ const BeatChart = ({
         
         {/* keyboard shortcuts */}
         <div className="keyboard-shortcuts-wrapper">
-          <button className="shortcut-button" onClick={toggleKeyboardShortcut}>
-            <i class="fa-solid fa-keyboard fa-xl"></i>
-          </button>
+          <div>
+            <button className="shortcut-button" onClick={toggleKeyboardShortcut}>
+              <i class="fa-solid fa-keyboard fa-xl"></i>
+            </button>
+          </div>
           {showKeyboardShortcut && (
             <div className="keyboard-shortcuts-popover">
               <div className="popover-arrow"></div>
-              <div className="keyboard-shortcuts">
-                <i class="fa-solid fa-a keybind"></i>
-                <h3>Add Beat</h3>
-              </div>
-              <div className="keyboard-shortcuts">
-                <i class="fa-solid fa-u keybind"></i>
-                <h3>Mark Unusable</h3>
-              </div>
-              <div className="keyboard-shortcuts">
-                <i class="fa-solid fa-d keybind"></i>
-                <h3>Delete Beat</h3>
-              </div>
-              <div className="keyboard-shortcuts">
-                <div className="keybind">
-                  <i class="fa-solid fa-c"></i>
-                  <i class="fa-solid fa-t"></i>
-                  <i class="fa-solid fa-r"></i>
-                  <i class="fa-solid fa-l"></i>
+              <h2 className="popover-title">Keyboard Shortcuts</h2>
+              
+              <div className="shortcuts-grid">
+                <div className="shortcut-item">
+                  <div className="shortcut-keys">
+                    <i className="fa-solid fa-a keybind"></i>
+                  </div>
+                  <div className="shortcut-label">Add Beat</div>
                 </div>
-                <i class="fa-solid fa-plus plus"></i>
-                <i class="fa-solid fa-z keybind"></i>
-              </div>
-              <h4>OR</h4>
-              <div className="keyboard-shortcuts">
-                <h3 className="command-keybind">⌘</h3>
-                <i class="fa-solid fa-plus plus"></i>
-                <i class="fa-solid fa-z keybind"></i>
-              </div>
-              <h3>Undo</h3>
-              <div className="keyboard-shortcuts">
-                <div className="keybind">
-                  <i class="fa-solid fa-s"></i>
-                  <i class="fa-solid fa-h"></i>
-                  <i class="fa-solid fa-i"></i>
-                  <i class="fa-solid fa-f"></i>
-                  <i class="fa-solid fa-t"></i>
+                
+                <div className="shortcut-item">
+                  <div className="shortcut-keys">
+                    <i className="fa-solid fa-u keybind"></i>
+                  </div>
+                  <div className="shortcut-label">Mark Unusable</div>
                 </div>
-                <i class="fa-solid fa-plus plus"></i>
-                <i class="fa-solid fa-arrow-pointer keybind"></i>
-                <i class="fa-solid fa-plus plus"></i>
-                <h3>DRAG</h3>
+                
+                <div className="shortcut-item">
+                  <div className="shortcut-keys">
+                    <i className="fa-solid fa-d keybind"></i>
+                  </div>
+                  <div className="shortcut-label">Delete Beat</div>
+                </div>
               </div>
-              <h3>PAN</h3>
+              
+              <div className="undo-section">
+                <div className="undo-option">
+                  <div className="shortcut-keys">
+                    <div className="keybind">CTRL</div>
+                    <i className="fa-solid fa-plus plus"></i>
+                    <i className="fa-solid fa-z keybind"></i>
+                  </div>
+                  <div className="shortcut-label">Undo</div>
+                </div>
+                
+                <div className="or-divider">OR</div>
+                
+                <div className="undo-option">
+                  <div className="shortcut-keys">
+                    <div className="command-keybind">⌘</div>
+                    <i className="fa-solid fa-plus plus"></i>
+                    <i className="fa-solid fa-z keybind"></i>
+                  </div>
+                  <div className="shortcut-label">Undo</div>
+                </div>
+              </div>
+              
+              <div className="pan-section">
+                <div className="undo-option">
+                  <div className="shortcut-keys">
+                    <div className="keybind">SHIFT</div>
+                    <i className="fa-solid fa-plus plus"></i>
+                    <i className="fa-solid fa-arrow-pointer keybind"></i>
+                    <i className="fa-solid fa-plus plus"></i>
+                    <span>DRAG</span>
+                  </div>
+                  <div className="shortcut-label">PAN</div>
+                </div>
+              </div>
             </div>
           )}
         </div>

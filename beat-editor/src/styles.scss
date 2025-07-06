@@ -137,30 +137,36 @@ button {
   }
 }
 
+.keyboard-shortcuts-wrapper {
+  position: relative;
+  margin-left: 10px;
+
+}
+
 .keyboard-shortcuts {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  margin: 20px;
+  margin-bottom: 8px;
 }
 
 .keyboard-shortcuts-popover {
-  border:2px solid #47555e;
+  border: 2px solid #47555e;
   border-radius: 10px;
   position: absolute;
-  z-index: 1;
+  z-index: 1000;
   background-color: white;
-  display: grid;
-  text-align: center;
-  margin-top: 20px;
-  left: 0; 
+
+  top: calc(100% + 15px);
+  left: 50%;            
+  transform: translateX(-50%); 
   right: auto;          
-  min-width: 300px;
+
+  width: 380px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  padding: 15px;
+
+  color: #47555e;
 }
 
 .keybind {
@@ -181,7 +187,7 @@ button {
 }
 
 .plus {
-  margin-right: 5px;
+  margin-right: 5px;  
 }
 
 .popover-arrow {
@@ -190,8 +196,97 @@ button {
   height: 0;
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
+
   border-bottom: 10px solid #47555e;
   top: -12px;
 
+  left: 50%;           
+  transform: translateX(-50%); 
   z-index: 1;
+}
+
+.popover-arrow::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid white; 
+  left: -10px;
+  top: 2px;
+  z-index: 2;
+}
+
+.shortcuts-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.shortcuts-right {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.popover-title {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.shortcuts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.shortcut-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.shortcut-keys {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.shortcut-label {
+  font-size: 12px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.undo-section {
+  border-top: 1px solid #ddd;
+  padding-top: 10px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.undo-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.or-divider {
+  font-size: 12px;
+  color: #666;
+  font-weight: bold;
+}
+
+.pan-section {
+  border-top: 1px solid #ddd;
+  padding-top: 10px;
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
 }
