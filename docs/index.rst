@@ -20,14 +20,14 @@ Contents
    contribute
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: HeartView Pipeline
 
    api
    examples
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
    :caption: HeartView Dashboard
 
    dashboard-gettingstarted
@@ -35,7 +35,7 @@ Contents
    dashboard-configs
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
    :caption: HeartView Beat Editor
 
    beat-editor-getting-started
