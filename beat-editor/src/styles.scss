@@ -120,22 +120,47 @@ button {
   font-family: 'Poppins', sans-serif !important;
 }
 
-.keyboard-shortcuts-wrapper {
-  
+.shortcut-button {
+  background-color: #47555e;
+
+  width: 50px;   
+  height: 40px;  
+  padding: 0;    
+
+  display: flex;          
+  justify-content: center; 
+  align-items: center;  
+
+  i {
+    margin: 0;
+    font-size: 1.2em;
+  }
 }
 
 .keyboard-shortcuts {
   display: flex;
   justify-content: center;
   align-items: center;
+  margin: 20px;
 }
 
 .keyboard-shortcuts-popover {
   border:2px solid #47555e;
-  border-radius: 5px;
+  border-radius: 10px;
   position: absolute;
   z-index: 1;
   background-color: white;
+  display: grid;
+  text-align: center;
+  margin-top: 20px;
+  left: 0; 
+  right: auto;          
+  min-width: 300px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .keybind {
@@ -159,4 +184,14 @@ button {
   margin-right: 5px;
 }
 
-  
+.popover-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid #47555e;
+  top: -12px;
+
+  z-index: 1;
+}

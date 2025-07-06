@@ -375,11 +375,12 @@ const BeatChart = ({
         
         {/* keyboard shortcuts */}
         <div className="keyboard-shortcuts-wrapper">
-          <button className="chart-buttons" onClick={toggleKeyboardShortcut}>
+          <button className="shortcut-button" onClick={toggleKeyboardShortcut}>
             <i class="fa-solid fa-keyboard fa-xl"></i>
           </button>
           {showKeyboardShortcut && (
             <div className="keyboard-shortcuts-popover">
+              <div className="popover-arrow"></div>
               <div className="keyboard-shortcuts">
                 <i class="fa-solid fa-a keybind"></i>
                 <h3>Add Beat</h3>
