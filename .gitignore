@@ -1,3 +1,22 @@
-_build
-__pycache__
+# Ignore runtime and scratch files
+temp/
+configs/
+cache/
+
+# Ignore Python artifacts
+__pycache__/
 *.pyc
+
+# Ignore Jupyter artifacts
+.ipynb_checkpoints/
+
+# Ignore virtual environment
+venv/
+
+# Ignore docs artifacts
+docs/_build/
+
+# Ignore all Beat Editor files except the sample
+beat-editor/data/*
+!beat-editor/data/sample_edit.json
+beat-editor/saved/
