@@ -69,6 +69,21 @@ save the current state of the chart to the server.
     :width: 600
     :align: center
 
+Zoom
+====
+To zoom in and out of the chart, use the ``Mouse Wheel`` or ``Drag-Select``.
+
+.. image:: _static/beat-editor-gifs/Zoom.gif
+    :width: 600
+    :align: center
+
+Panning
+=======
+To pan over the chart, hold down the ``Shift Key`` and then click and drag with the mouse.
+
+.. image:: _static/beat-editor-gifs/Drag.gif
+    :width: 600
+    :align: center
 
 Keyboard Shortcuts
 ==================
@@ -78,3 +93,5 @@ The Beat Editor supports several keyboard shortcuts to enhance workflow:
 - **D** - Delete the selected beat.
 - **U** - Mark the selected beat as unusable.
 - **CTRL + Z** OR **⌘ + Z** (For Mac Users) - Undo the last action.
+- **SHIFT + Left Mouse Click** - Pan over the chart.
+- **Mouse Wheel** OR **Drag-Select** - Zoom in and out of the chart.

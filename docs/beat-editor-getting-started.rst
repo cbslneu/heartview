@@ -5,7 +5,7 @@ Getting Started
 Overview
 ========
 HeartView Beat Editor is a user-friendly tool providing out-of-the-box
-functionalizasty for visualizing and editing electrocardiograph and
+functionality for visualizing and editing electrocardiograph and
 photoplethysmograph data.
 
 Manual Installation
@@ -34,6 +34,15 @@ for the Beat Editor:
     $ cd beat-editor
     $ npm install
 
+Next we need to install the backend server dependencies.
+From the ``beat-editor`` subdirectory, navigate to the ``server``
+and run the following command to install all required modules:
+
+.. code-block:: bash
+
+    $ cd server
+    $ npm install
+
 
 Launching the Beat Editor
 =========================
@@ -55,8 +64,8 @@ If the terminal displays this message, then the server is running successfully:
 
 .. code-block:: bash
   
-    server@1.0.0 start
-    node app.js
+    >server@1.0.0 start
+    >node app.js
 
     Server is running on port 3001
 
