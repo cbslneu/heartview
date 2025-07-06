@@ -23,9 +23,9 @@ function BeatChartContainer() {
 
       if (!allFileData) throw new Error("No file data found.");
 
-      const addBeats = [];
-      const deleteBeats = [];
-      const unusableBeats = [];
+      let addBeats = [];
+      let deleteBeats = [];
+      let unusableBeats = [];
 
       if (allSavedData) {
         const jsonData = allSavedData[0].data;
