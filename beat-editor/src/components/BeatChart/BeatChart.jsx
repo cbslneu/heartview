@@ -6,6 +6,7 @@ import _ from "lodash";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import KeyboardShortcuts from '../KeyboardShortcuts/KeyboardShortcuts';
 
 import SaveButton from "../SaveButton/SaveButton";
 import createChartOptions from "../../utils/CreateChartOptions";
@@ -40,7 +41,6 @@ const BeatChart = ({
   const [deleteModeCoordinates, setDeleteModeCoordinates] = useState([]);
   const [unusableSegments, setUnusableSegments] = useState([]);
   const [selectedSegment, setSelectedSegment] = useState("1");
-  const [showKeyboardShortcut, setKeyboardShortcut] = useState(false);
 
   const chartRef = useRef(null);
   const dragStartRef = useRef(null);
@@ -48,8 +48,6 @@ const BeatChart = ({
   const isDraggingRef = useRef(false); // Tracks drag during panning
   const isPanningRef = useRef(false); // Tracks if the user is panning the chart
   const lastValidDragEnd = useRef(null);
-  const keyboardShortcutsRef = useRef(null);
-  const keyboardButtonRef = useRef(null);
 
   let segmentBoundaries = {
     from: null,
@@ -277,10 +275,6 @@ const BeatChart = ({
     setIsDeleteMode(false);
   };
 
-  const toggleKeyboardShortcut = () => {
-    setKeyboardShortcut(!showKeyboardShortcut);
-  }
-
   // Reset all drag and interaction states when toggling modes
   const resetInteractionState = () => {
     dragStartRef.current = null;
@@ -288,29 +282,6 @@ const BeatChart = ({
     isPanningRef.current = false;
     lastValidDragEnd.current = null;
   };
-
-  //useEffect listener for closing keyboard popup
-  useEffect(() => {
-  const handleClickOutside = (event) => {
-    if (
-      showKeyboardShortcut && //is the popup currently open
-      keyboardShortcutsRef.current && //does the popup element exist in the dom
-      !keyboardShortcutsRef.current.contains(event.target) && //was the click outside the popup
-      keyboardButtonRef.current && //does the button exist in the dom
-      !keyboardButtonRef.current.contains(event.target) //was the click outside the button
-    ) {
-      setKeyboardShortcut(false);
-    }
-  };
-
-  if (showKeyboardShortcut) {
-    document.addEventListener('mousedown', handleClickOutside);
-  }
-
-  return () => {
-    document.removeEventListener('mousedown', handleClickOutside);
-  };
-}, [showKeyboardShortcut]);
 
   useEffect(() => {
     setAddModeCoordinates(addBeats);
@@ -398,79 +369,7 @@ const BeatChart = ({
             unusableSegments={unusableSegments}
           />
         
-        {/* keyboard shortcuts */}
-        <div className="keyboard-shortcuts-wrapper">
-          <div>
-            <button className="shortcut-button" onClick={toggleKeyboardShortcut} ref={keyboardButtonRef}>
-              <i className="fa-solid fa-keyboard fa-xl"></i>
-            </button>
-          </div>
-          {showKeyboardShortcut && (
-            <div className="keyboard-shortcuts-popover" ref={keyboardShortcutsRef}>
-              <div className="popover-arrow"></div>
-              <h2 className="popover-title">Keyboard Shortcuts</h2>
-              
-              <div className="shortcuts-grid">
-                <div className="shortcut-item">
-                  <div className="shortcut-keys">
-                    <i className="fa-solid fa-a keybind"></i>
-                  </div>
-                  <div className="shortcut-label">Add Beat</div>
-                </div>
-                
-                <div className="shortcut-item">
-                  <div className="shortcut-keys">
-                    <i className="fa-solid fa-u keybind"></i>
-                  </div>
-                  <div className="shortcut-label">Mark Unusable</div>
-                </div>
-                
-                <div className="shortcut-item">
-                  <div className="shortcut-keys">
-                    <i className="fa-solid fa-d keybind"></i>
-                  </div>
-                  <div className="shortcut-label">Delete Beat</div>
-                </div>
-              </div>
-              
-              <div className="undo-section">
-                <div className="undo-option">
-                  <div className="shortcut-keys">
-                    <div className="keybind">CTRL</div>
-                    <i className="fa-solid fa-plus plus"></i>
-                    <i className="fa-solid fa-z keybind"></i>
-                  </div>
-                  <div className="shortcut-label">Undo</div>
-                </div>
-                
-                <div className="or-divider">OR</div>
-                
-                <div className="undo-option">
-                  <div className="shortcut-keys">
-                    <div className="command-keybind">⌘</div>
-                    <i className="fa-solid fa-plus plus"></i>
-                    <i className="fa-solid fa-z keybind"></i>
-                  </div>
-                  <div className="shortcut-label">Undo</div>
-                </div>
-              </div>
-              
-              <div className="pan-section">
-                <div className="undo-option">
-                  <div className="shortcut-keys">
-                    <div className="keybind">SHIFT</div>
-                    <i className="fa-solid fa-plus plus"></i>
-                    <i className="fa-solid fa-arrow-pointer keybind"></i>
-                    <i className="fa-solid fa-plus plus"></i>
-                    <span>DRAG</span>
-                  </div>
-                  <div className="shortcut-label">PAN</div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        {/* end keyboard shortcuts */}
+        <KeyboardShortcuts />
         </div>
         <div className="chart-info">
           <h3>Current Segment: {selectedSegment}</h3>
