@@ -6,6 +6,7 @@ import _ from "lodash";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import KeyboardShortcuts from '../KeyboardShortcuts/KeyboardShortcuts';
 
 import SaveButton from "../SaveButton/SaveButton";
 import createChartOptions from "../../utils/CreateChartOptions";
@@ -367,6 +368,8 @@ const BeatChart = ({
             deleteModeCoordinates={deleteModeCoordinates}
             unusableSegments={unusableSegments}
           />
+        
+        <KeyboardShortcuts />
         </div>
         <div className="chart-info">
           <h3>Current Segment: {selectedSegment}</h3>
