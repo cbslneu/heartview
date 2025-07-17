@@ -7,6 +7,7 @@ A to-do list of planned features, improvements, and tasks for HeartView.
   [@nmy2103]
 - [ ] **BE:** Plotting of tasks/conditions in the signal chart [@tchen94]
 - [ ] **DB:** Automated beat correction functionality with UI component
+- [ ] **BE:** Functionality to flexibly edit added/deleted beats and unusable segments [@tchen94]
 
 ## 🐛 Bugs to Fix
 <!-- Add any bugs to fix with this checklist item: - [ ] -->
@@ -14,6 +15,7 @@ A to-do list of planned features, improvements, and tasks for HeartView.
 
 ## 🛠️ Improvements
 - [ ] **BE:** Migrate codebase to TypeScript
+- [ ] **BE:** Document or refactor to avoid confusion in the use of undo button
 
 
 ## 📕 Documentation
