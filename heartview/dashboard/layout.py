@@ -419,6 +419,7 @@ layout = html.Div(id = 'main', children = [
 
         # Bottom Panel: Raw ECG/BVP, IBI, and ACC Plots
         html.Div(className = 'raw-plots', children = [
+            dcc.Store(id = 'beat-correction-status', storage_type = 'memory', data = {'status': None}),
             html.Div(className = 'graph-settings', children = [
                 html.H4('Signal View', style = {'float': 'left'}),
                 html.Div(className = 'segment-view', children = [

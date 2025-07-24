@@ -792,16 +792,19 @@ def get_callbacks(app):
         [Output('raw-data', 'figure'),
          Output('segment-dropdown', 'value'),
          Output('prev-n-tooltip', 'is_open'),
-         Output('next-n-tooltip', 'is_open')],
+         Output('next-n-tooltip', 'is_open'),
+         Output('beat-correction-status', 'data')],
         Input('memory-db', 'data'),
         Input('segment-dropdown', 'value'),
         Input('prev-segment', 'n_clicks'),
         Input('next-segment', 'n_clicks'),
+        Input('beat-correction', 'n_clicks'),
+        State('beat-correction-status', 'data'),
         State('seg-size', 'value'),
         State('segment-dropdown', 'options')
     )
-    def update_signal_plots(data, selected_segment, prev_n, next_n,
-                            segment_size, segments):
+    def update_signal_plots(data, selected_segment, prev_n, next_n, beat_correction_n,
+                            beat_correction_status, segment_size, segments):
         """Update the raw data plot based on the selected segment view."""
         if data is None:
             raise PreventUpdate
@@ -843,19 +846,29 @@ def get_callbacks(app):
                         selected_segment += 1
                     else:
                         next_tt_open = True
+                # Correct beats if beat correction button is clicked
+                # TODO: Update ibi and ibi_corrected accordingly
+                if ctx.triggered_id == 'beat-correction':
+                    beats_ix = signal.loc[signal['Beat'] == 1].index.tolist()
+                    sqa = SQA.Cardio(fs)
+                    beats_ix_corrected, corrected_ibis, original, corrected = sqa.correct_interval(beats_ix, seg_size=seg_size, print_estimated_hr=False)
+                    signal.loc[beats_ix_corrected, 'Corrected'] = 1
+                    signal.to_csv(str(render_dir / 'signal.csv'), index = False)
+                    beat_correction_status['status'] = 'suggested'
                 else:
                     pass
 
                 # Create the signal subplots
+                overlay_corrected = beat_correction_status['status'] == 'suggested'
                 signal_plots = heartview.plot_cardio_signals(
                     signal, fs, ibi, data_type,
-                    x_axis, y_axis, acc, selected_segment, seg_size)
+                    x_axis, y_axis, acc, selected_segment, seg_size, overlay_corrected=overlay_corrected)
 
             # If EDA data was run
             else:
                 signal_plots = utils._blank_fig()
 
-            return signal_plots, selected_segment, prev_tt_open, next_tt_open
+            return signal_plots, selected_segment, prev_tt_open, next_tt_open, beat_correction_status
 
     # === Open export summary modal ===========================================
     @app.callback(

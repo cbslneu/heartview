@@ -935,7 +935,7 @@ def compute_ibis(data, fs, beats_ix, ts_col = None):
 
 def plot_cardio_signals(signal, fs, ibi, signal_type, x = 'Timestamp',
                         y = 'Filtered', acc = None, seg_num = 1,
-                        seg_size = 60, title = None):
+                        seg_size = 60, title = None, overlay_corrected = False):
     """
     Create subplots of the electrocardiograph (ECG) or photoplethysmograph
     (PPG), interbeat interval (IBI), and acceleration data (if any).
@@ -977,6 +977,9 @@ def plot_cardio_signals(signal, fs, ibi, signal_type, x = 'Timestamp',
     heartview.compute_ibis : Compute IBIs in a DataFrame time-aligned to its
     corresponding cardiovascular data.
     """
+
+    if overlay_corrected and 'Corrected' not in signal.columns:
+        raise NotImplementedError('To overlay corrected beats, beat correction must be performed first.')
 
     seg_start = int((seg_num - 1) * seg_size * fs)
     seg_end = int(seg_start + (fs * seg_size))
@@ -1091,6 +1094,19 @@ def plot_cardio_signals(signal, fs, ibi, signal_type, x = 'Timestamp',
                 marker = dict(color = 'red'),
                 hovertemplate = artifact_hover),
             row = 2, col = 1)
+
+        # Corrected beats
+        if overlay_corrected:
+            fig.add_trace(
+                go.Scatter(
+                    x = signal_segment.loc[signal_segment.Corrected == 1, x],
+                    y = signal_segment.loc[signal_segment.Corrected == 1, y],
+                    name = 'Corrected Beat',
+                    showlegend = True,
+                    mode = 'markers',
+                    marker = dict(color='rgba(250, 250, 250, 0.0)', line = dict(color = 'forestgreen', width = 1.5), size = 7),
+                    hovertemplate = beat_hover),
+                row = 2, col = 1)
 
     else:
         fig = make_subplots(rows = 2, cols = 1,
