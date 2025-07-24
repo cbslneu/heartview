@@ -422,6 +422,11 @@ layout = html.Div(id = 'main', children = [
             html.Div(className = 'graph-settings', children = [
                 html.H4('Signal View', style = {'float': 'left'}),
                 html.Div(className = 'segment-view', children = [
+                    html.Button(children = [
+                        html.I(className = 'fa-solid fa-wand-magic-sparkles'),
+                        html.Span('Correct Beats')
+                    ], id = 'beat-correction'),
+                    html.Span('|', className = 'separator'),
                     html.H5('Segment:'),
                     html.Button(
                         html.I(className = 'fa-solid fa-chevron-left'),
